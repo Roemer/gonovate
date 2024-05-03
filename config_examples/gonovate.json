@@ -1,0 +1,53 @@
+{
+    "platform": "gitlab",
+    "extends": [
+        "defaults",
+        "preset1"
+    ],
+    "ignorePatterns": [
+        "**/node_modules",
+        "**/bower_components",
+        "**/.git"
+    ],
+    "managers": [
+        {
+            "id": "dockerfile-versions",
+            "type": "regex",
+            "matchStrings": [
+                "^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<package>.*?)[[:blank:]]*$"
+            ],
+            "managerSettings": {
+                "filePatterns": [
+                    "**/[Dd]ockerfile"
+                ]
+            },
+            "packageSettings": {
+                "maxUpdateType": "major"
+            }
+        }
+    ],
+    "rules": [
+        {
+            "matches": {
+                "managers": [
+                    "dockerfile-versions"
+                ]
+            },
+            "managerSettings": {
+                "filePatterns": [
+                    "**/my.[Dd]ockerfile"
+                ]
+            }
+        },
+        {
+            "matches": {
+                "files": [
+                    "**/my.[Dd]ockerfile"
+                ]
+            },
+            "packageSettings": {
+                "maxUpdateType": "patch"
+            }
+        }
+    ]
+}
