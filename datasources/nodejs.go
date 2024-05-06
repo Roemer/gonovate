@@ -23,6 +23,10 @@ func NewNodeJsDatasource(logger *slog.Logger) *NodeJsDatasource {
 
 func (ds *NodeJsDatasource) SearchPackageUpdate(packageName string, currentVersion string, packageSettings *core.PackageSettings) (string, bool, error) {
 	baseUrl := "https://nodejs.org/dist"
+	if len(packageSettings.RegistryUrls) > 0 {
+		baseUrl = packageSettings.RegistryUrls[0]
+		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", baseUrl))
+	}
 	indexFilePath := "index.json"
 	useStable := false
 

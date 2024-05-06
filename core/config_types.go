@@ -50,6 +50,7 @@ type ManagerSettings struct {
 }
 
 type PackageSettings struct {
-	MaxUpdateType string `json:"maxUpdateType"`
-	AllowUnstable *bool  `json:"allowUnstable"`
+	MaxUpdateType string   `json:"maxUpdateType"`
+	AllowUnstable *bool    `json:"allowUnstable"`
+	RegistryUrls  []string `json:"registryUrls"`
 }
