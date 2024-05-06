@@ -13,12 +13,12 @@
         {
             "id": "dockerfile-versions",
             "type": "regex",
-            "matchStrings": [
-                "^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<package>.*?)[[:blank:]]*$"
-            ],
             "managerSettings": {
                 "filePatterns": [
                     "**/[Dd]ockerfile"
+                ],
+                "matchStrings": [
+                    "^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<package>.*?)[[:blank:]]*$"
                 ]
             },
             "packageSettings": {

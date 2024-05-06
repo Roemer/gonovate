@@ -54,7 +54,7 @@ func (manager *RegexManager) process() error {
 
 	// Precompile the regexes
 	precompiledRegexList := []*regexp.Regexp{}
-	for _, regStr := range manager.Config.MatchStrings {
+	for _, regStr := range managerSettings.MatchStrings {
 		regex, err := regexp.Compile(regStr)
 		if err != nil {
 			return err

@@ -49,9 +49,6 @@ func (configA *Config) MergeWith(configB *Config) {
 }
 
 func (managerA *Manager) MergeWith(managerB *Manager) {
-	// MatchStrings
-	managerA.MatchStrings = lo.Union(managerA.MatchStrings, managerB.MatchStrings)
-
 	// Manager Settings
 	managerA.ManagerSettings = managerA.ManagerSettings.MergeWith(managerB.ManagerSettings)
 
@@ -72,6 +69,8 @@ func (managerSettingsA *ManagerSettings) MergeWith(managerSettingsB *ManagerSett
 	managerSettingsA.Disabled = managerSettingsB.Disabled
 	// FilePatterns
 	managerSettingsA.FilePatterns = lo.Union(managerSettingsA.FilePatterns, managerSettingsB.FilePatterns)
+	// MatchStrings
+	managerSettingsA.MatchStrings = lo.Union(managerSettingsA.MatchStrings, managerSettingsB.MatchStrings)
 	return managerSettingsA
 }
 
