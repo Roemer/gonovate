@@ -28,7 +28,10 @@ func (ds *NodeJsDatasource) SearchPackageUpdate(packageName string, currentVersi
 		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", baseUrl))
 	}
 	indexFilePath := "index.json"
-	useStable := false
+	useUnstable := false
+	if packageSettings.UseUnstable != nil {
+		useUnstable = *packageSettings.UseUnstable
+	}
 
 	// Download the index file
 	downloadUrl, err := url.JoinPath(baseUrl, indexFilePath)
@@ -67,10 +70,10 @@ func (ds *NodeJsDatasource) SearchPackageUpdate(packageName string, currentVersi
 	refVersion := ds.getReferenceVersionForUpdateType(packageSettings.MaxUpdateType, curr)
 	// Search for an update
 	var maxValidVersion *gover.Version
-	if useStable {
-		maxValidVersion = gover.FindMax(ltsVersions, refVersion, true)
-	} else {
+	if useUnstable {
 		maxValidVersion = gover.FindMax(allVersions, refVersion, true)
+	} else {
+		maxValidVersion = gover.FindMax(ltsVersions, refVersion, true)
 	}
 
 	if maxValidVersion.Equals(curr) {

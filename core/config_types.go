@@ -53,4 +53,5 @@ type PackageSettings struct {
 	MaxUpdateType string   `json:"maxUpdateType"`
 	AllowUnstable *bool    `json:"allowUnstable"`
 	RegistryUrls  []string `json:"registryUrls"`
+	UseUnstable   *bool    `json:"useUnstable"`
 }

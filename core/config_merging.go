@@ -93,5 +93,9 @@ func (packageSettingsA *PackageSettings) MergeWith(packageSettingsB *PackageSett
 	}
 	// RegistryUrls
 	packageSettingsA.RegistryUrls = lo.Union(packageSettingsA.RegistryUrls, packageSettingsB.RegistryUrls)
+	// UseUnstable
+	if packageSettingsB.UseUnstable != nil {
+		packageSettingsA.UseUnstable = packageSettingsB.UseUnstable
+	}
 	return packageSettingsA
 }
