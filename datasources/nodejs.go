@@ -21,7 +21,7 @@ func NewNodeJsDatasource(logger *slog.Logger) *NodeJsDatasource {
 	return newDatasource
 }
 
-func (ds *NodeJsDatasource) SearchPackageUpdate(packageName string, currentVersion string, packageSettings *core.PackageSettings) (string, bool, error) {
+func (ds *NodeJsDatasource) SearchPackageUpdate(packageName string, currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (string, bool, error) {
 	baseUrl := "https://nodejs.org/dist"
 	if len(packageSettings.RegistryUrls) > 0 {
 		baseUrl = packageSettings.RegistryUrls[0]
@@ -38,7 +38,7 @@ func (ds *NodeJsDatasource) SearchPackageUpdate(packageName string, currentVersi
 	if err != nil {
 		return "", false, err
 	}
-	indexFileBytes, err := ds.DownloadToMemory(downloadUrl)
+	indexFileBytes, err := core.HttpUtil{}.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return "", false, err
 	}

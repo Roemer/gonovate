@@ -136,7 +136,7 @@ func (manager *RegexManager) process() error {
 				}
 
 				// Search for a new version for the package
-				newVersion, hasUpdate, err := manager.searchPackageUpdate(datasourceObject.value, packageObject.value, versionObject.value, packageSettings)
+				newVersion, hasUpdate, err := manager.searchPackageUpdate(datasourceObject.value, packageObject.value, versionObject.value, packageSettings, manager.GlobalConfig.HostRules)
 				if err != nil {
 					return err
 				}

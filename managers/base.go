@@ -14,7 +14,7 @@ type managerBase struct {
 }
 
 // Searches for a new package version with the correct datasource.
-func (manager *managerBase) searchPackageUpdate(datasourceName string, packageName string, currentVersion string, packageSettings *core.PackageSettings) (string, bool, error) {
+func (manager *managerBase) searchPackageUpdate(datasourceName string, packageName string, currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (string, bool, error) {
 	manager.logger.Info(fmt.Sprintf("Searching a '%s' update for '%s' with version '%s' on datasource '%s'", packageSettings.MaxUpdateType, packageName, currentVersion, datasourceName))
 
 	// Lookup the correct datasource
@@ -24,7 +24,7 @@ func (manager *managerBase) searchPackageUpdate(datasourceName string, packageNa
 	}
 
 	// Search for a new version
-	newVersion, hasNewVersion, err := ds.SearchPackageUpdate(packageName, currentVersion, packageSettings)
+	newVersion, hasNewVersion, err := ds.SearchPackageUpdate(packageName, currentVersion, packageSettings, hostRules)
 
 	// Return the result
 	return newVersion, hasNewVersion, err

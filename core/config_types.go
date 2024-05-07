@@ -5,11 +5,12 @@ import (
 )
 
 type Config struct {
-	Platform       string     `json:"platform"`
-	Extends        []string   `json:"extends"`
-	IgnorePatterns []string   `json:"ignorePatterns"`
-	Managers       []*Manager `json:"managers"`
-	Rules          []*Rule    `json:"rules"`
+	Platform       string      `json:"platform"`
+	Extends        []string    `json:"extends"`
+	IgnorePatterns []string    `json:"ignorePatterns"`
+	Managers       []*Manager  `json:"managers"`
+	Rules          []*Rule     `json:"rules"`
+	HostRules      []*HostRule `json:"hostRules"`
 }
 
 func (c *Config) String() string {
@@ -20,7 +21,7 @@ func (c *Config) String() string {
 type Manager struct {
 	Id   string `json:"id"`
 	Type string `json:"type"`
-	// The settings are converted to rules to keep the right order, so they should not be used outside
+	// The settings are converted to rules to keep the right order, so they should not be used directly
 	ManagerSettings *ManagerSettings `json:"managerSettings"`
 	PackageSettings *PackageSettings `json:"packageSettings"`
 }
@@ -54,4 +55,11 @@ type PackageSettings struct {
 	AllowUnstable *bool    `json:"allowUnstable"`
 	RegistryUrls  []string `json:"registryUrls"`
 	UseUnstable   *bool    `json:"useUnstable"`
+}
+
+type HostRule struct {
+	MatchHost string `json:"matchHost"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	Token     string `json:"token"`
 }

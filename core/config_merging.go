@@ -46,6 +46,8 @@ func (configA *Config) MergeWith(configB *Config) {
 	}
 	// Rules
 	configA.Rules = append(configA.Rules, configB.Rules...)
+	// Host Rules
+	configA.HostRules = append(configA.HostRules, configB.HostRules...)
 }
 
 func (managerA *Manager) MergeWith(managerB *Manager) {
