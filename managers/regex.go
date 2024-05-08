@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"regexp"
+	"slices"
 )
 
 type RegexManager struct {
@@ -102,9 +103,11 @@ func (manager *RegexManager) process() error {
 				}
 				packageObject, packageOk := m["package"]
 				if !packageOk {
-					// The c field is mandatory
+					// The package field is mandatory
 					return fmt.Errorf("the field 'package' did not match on line '%s'", line)
 				}
+				//  Optional fields
+				versioningObject, versioningOk := m["versioning"]
 
 				fileLogger.Debug(fmt.Sprintf("Found a match for regex '%s'", regex.String()),
 					slog.String("version", versionObject.value),
@@ -116,23 +119,41 @@ func (manager *RegexManager) process() error {
 				packageSettings := &core.PackageSettings{}
 				// Loop thru the rules and apply the ones that match
 				for _, rule := range possiblePackageRules {
-					// Check if there are conditions which coulde exclude the rule
-					if rule.Matches != nil {
+					isAnyMatch := rule.Matches.IsMatchAll()
+					// Check if there is at least one condition that matches
+					if !isAnyMatch && rule.Matches != nil {
+						// Manager
+						if !isAnyMatch && len(rule.Matches.Managers) > 0 {
+							if slices.Contains(rule.Matches.Managers, core.MANAGER_TYPE_REGEX) {
+								isAnyMatch = true
+							}
+						}
 						// Files
-						if len(rule.Matches.Files) > 0 {
+						if !isAnyMatch && len(rule.Matches.Files) > 0 {
 							isMatch, err := core.FilePathMatchesPattern(candidate, rule.Matches.Files...)
 							if err != nil {
 								return err
 							}
-							if !isMatch {
-								continue
+							if isMatch {
+								isAnyMatch = true
+							}
+						}
+						// Package
+						if !isAnyMatch && len(rule.Matches.Packages) > 0 {
+							if slices.Contains(rule.Matches.Packages, packageObject.value) {
+								isAnyMatch = true
 							}
 						}
 						// TODO: Datasource
-						// TODO: Packagename
 					}
-					// The rule is not excluded so merge it
-					packageSettings.MergeWith(rule.PackageSettings)
+					// The rule has at least one match, add it
+					if isAnyMatch {
+						packageSettings.MergeWith(rule.PackageSettings)
+					}
+				}
+				// Overwrite with optional fields (if any)
+				if versioningOk {
+					packageSettings.Versioning = versioningObject.value
 				}
 
 				// Search for a new version for the package

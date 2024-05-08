@@ -2,6 +2,7 @@ package core
 
 import (
 	"slices"
+	"strings"
 )
 
 // Filters all rules, creating a combined settings object for the manager and a list of possible rules for packages.
@@ -25,4 +26,13 @@ func (config *Config) FilterForManager(managerConfig *Manager) (*ManagerSettings
 		}
 	}
 	return managerSettings, possiblePackageRules
+}
+
+func FilterHostConfigsForHost(host string, hostRules []*HostRule) *HostRule {
+	for _, hostRule := range hostRules {
+		if strings.Contains(host, hostRule.MatchHost) {
+			return hostRule
+		}
+	}
+	return nil
 }

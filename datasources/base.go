@@ -20,6 +20,9 @@ func GetDatasource(logger *slog.Logger, datasource string) (datasource, error) {
 	if datasource == core.DATASOURCE_TYPE_NODEJS {
 		return NewNodeJsDatasource(logger), nil
 	}
+	if datasource == core.DATASOURCE_TYPE_DOCKER {
+		return NewDockerDatasource(logger), nil
+	}
 	return nil, fmt.Errorf("no datasource defined for '%s'", datasource)
 }
 

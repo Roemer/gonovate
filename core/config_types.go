@@ -40,6 +40,12 @@ type Rule struct {
 type RuleMatch struct {
 	Managers []string `json:"managers"`
 	Files    []string `json:"files"`
+	Packages []string `json:"packages"`
+}
+
+// A MatchAll rule is a rule that has no matches defined at all, so it will match all.
+func (rm *RuleMatch) IsMatchAll() bool {
+	return rm == nil || (len(rm.Managers) == 0 && len(rm.Files) == 0 && len(rm.Packages) == 0)
 }
 
 type ManagerSettings struct {
@@ -51,10 +57,12 @@ type ManagerSettings struct {
 }
 
 type PackageSettings struct {
-	MaxUpdateType string   `json:"maxUpdateType"`
-	AllowUnstable *bool    `json:"allowUnstable"`
-	RegistryUrls  []string `json:"registryUrls"`
-	UseUnstable   *bool    `json:"useUnstable"`
+	MaxUpdateType     string   `json:"maxUpdateType"`
+	AllowUnstable     *bool    `json:"allowUnstable"`
+	RegistryUrls      []string `json:"registryUrls"`
+	UseUnstable       *bool    `json:"useUnstable"`
+	Versioning        string   `json:"versioning"`
+	IgnoreNonMatching *bool    `json:"ignoreNonMatching"`
 }
 
 type HostRule struct {

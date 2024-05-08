@@ -99,5 +99,13 @@ func (packageSettingsA *PackageSettings) MergeWith(packageSettingsB *PackageSett
 	if packageSettingsB.UseUnstable != nil {
 		packageSettingsA.UseUnstable = packageSettingsB.UseUnstable
 	}
+	// Versioning
+	if packageSettingsB.Versioning != "" {
+		packageSettingsA.Versioning = packageSettingsB.Versioning
+	}
+	// IgnoreNonMatching
+	if packageSettingsB.IgnoreNonMatching != nil {
+		packageSettingsA.IgnoreNonMatching = packageSettingsB.IgnoreNonMatching
+	}
 	return packageSettingsA
 }

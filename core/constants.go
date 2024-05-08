@@ -10,6 +10,7 @@ const (
 
 const (
 	DATASOURCE_TYPE_NODEJS string = "nodejs"
+	DATASOURCE_TYPE_DOCKER string = "docker"
 )
 
 const (

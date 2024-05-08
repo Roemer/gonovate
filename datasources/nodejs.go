@@ -38,7 +38,7 @@ func (ds *NodeJsDatasource) SearchPackageUpdate(packageName string, currentVersi
 	if err != nil {
 		return "", false, err
 	}
-	indexFileBytes, err := core.HttpUtil{}.DownloadToMemory(downloadUrl)
+	indexFileBytes, err := core.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return "", false, err
 	}
@@ -50,20 +50,20 @@ func (ds *NodeJsDatasource) SearchPackageUpdate(packageName string, currentVersi
 	}
 
 	// Convert all entries to objects
-	nodeVersionRegex := regexp.MustCompile(`(?m:^v(?P<d1>\d+)(?:\.(?P<d2>\d+))?(?:\.(?P<d3>\d+))?$)`)
+	versionRegex := regexp.MustCompile(`(?m:^v(?P<d1>\d+)(?:\.(?P<d2>\d+))?(?:\.(?P<d3>\d+))?$)`)
 	allVersions := []*gover.Version{}
 	ltsVersions := []*gover.Version{}
 	for _, entry := range jsonData {
 		versionString := entry["version"].(string)
 		ltsValue := entry["lts"]
-		version := gover.MustParseVersionFromRegex(versionString, nodeVersionRegex)
+		version := gover.MustParseVersionFromRegex(versionString, versionRegex)
 		allVersions = append(allVersions, version)
 		if ltsValue != false {
 			ltsVersions = append(ltsVersions, version)
 		}
 	}
 
-	curr, err := gover.ParseVersionFromRegex(currentVersion, nodeVersionRegex)
+	curr, err := gover.ParseVersionFromRegex(currentVersion, versionRegex)
 	if err != nil {
 		return "", false, err
 	}
