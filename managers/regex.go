@@ -1,13 +1,13 @@
 package managers
 
 import (
-	"bufio"
 	"fmt"
 	"gonovate/core"
 	"log/slog"
 	"os"
 	"regexp"
 	"slices"
+	"strings"
 )
 
 type RegexManager struct {
@@ -62,44 +62,40 @@ func (manager *RegexManager) process() error {
 		}
 		precompiledRegexList = append(precompiledRegexList, regex)
 	}
-	manager.logger.Debug(fmt.Sprintf("Found %d line pattern(s) to process", len(precompiledRegexList)))
+	manager.logger.Debug(fmt.Sprintf("Found %d match pattern(s) to process", len(precompiledRegexList)))
 
 	// Process all candidates
 	for _, candidate := range candidates {
 		fileLogger := manager.logger.With(slog.String("file", candidate))
 		fileLogger.Debug(fmt.Sprintf("Processing file '%s'", candidate))
-		// Open the file
-		f, err := os.OpenFile(candidate, os.O_RDONLY, os.ModePerm)
+
+		// Read the entire file
+		fileContentBytes, err := os.ReadFile(candidate)
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		fileContent := string(fileContentBytes)
 
-		// Process the file line by line
-		var outputLines []string
-		sc := bufio.NewScanner(f)
-		for sc.Scan() {
-			// Get the line
-			line := sc.Text()
-			// Loop thru the regexes
-			for _, regex := range precompiledRegexList {
-				// Execute the regex and get the matches with the needed info
-				m := findNamedMatchesWithIndex(regex, line, false)
-				if m == nil {
-					// The line did not match the regex
-					continue
-				}
-
+		// Loop thru all regex patterns
+		for _, regex := range precompiledRegexList {
+			matchList := findAllNamedMatchesWithIndex(regex, fileContent, false)
+			if matchList == nil {
+				// The regex was not matched, go to the next
+				continue
+			}
+			// Process the individual matches in reverse order so the indexes do not break when replacing text
+			slices.Reverse(matchList)
+			for _, match := range matchList {
 				// The version must be found with the regexp on the line
-				versionObject, versionOk := m["version"]
+				versionObject, versionOk := match["version"]
 				if !versionOk {
 					// The version field is mandatory
-					return fmt.Errorf("the field 'version' did not match on line '%s'", line)
+					return fmt.Errorf("the field 'version' did not match")
 				}
 				//  Optional fields
-				datasourceObject, datasourceOk := m["datasource"]
-				packageObject, packageOk := m["package"]
-				versioningObject, versioningOk := m["versioning"]
+				datasourceObject, datasourceOk := match["datasource"]
+				packageObject, packageOk := match["package"]
+				versioningObject, versioningOk := match["versioning"]
 
 				// Log
 				fileLogger.Debug(fmt.Sprintf("Found a match for regex '%s'", regex.String()))
@@ -174,29 +170,14 @@ func (manager *RegexManager) process() error {
 					return err
 				}
 				if hasUpdate {
-					// Build the new line with the new version number
-					line = line[:versionObject.startIndex] + newVersion + line[versionObject.endIndex:]
+					// Build the new content with the new version number
+					fileContent = fileContent[:versionObject.startIndex] + newVersion + fileContent[versionObject.endIndex:]
 				}
 			}
-			// Add the original or modified line back to the output
-			outputLines = append(outputLines, line)
-		}
-		if err := sc.Err(); err != nil {
-			return err
 		}
 
 		// Write the file back
-		file, err := os.Create(candidate + "2")
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		w := bufio.NewWriter(file)
-		for _, line := range outputLines {
-			fmt.Fprintln(w, line)
-		}
-		if err := w.Flush(); err != nil {
+		if err := os.WriteFile(candidate+"2", []byte(fileContent), os.ModePerm); err != nil {
 			return err
 		}
 	}
@@ -204,39 +185,49 @@ func (manager *RegexManager) process() error {
 	return nil
 }
 
-// Find all named matches in the given index, returning an object with start/end-index and the value for each named match
-func findNamedMatchesWithIndex(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) map[string]*capturedGroup {
-	matchIndexPairs := regex.FindStringSubmatchIndex(str)
-	if matchIndexPairs == nil {
+// Find all named matches in the given string, returning an list of objects with start/end-index and the value for each named match
+func findAllNamedMatchesWithIndex(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) []map[string]*capturedGroup {
+	matchIndexPairsList := regex.FindAllStringSubmatchIndex(str, -1)
+	if matchIndexPairsList == nil {
 		// No matches
 		return nil
 	}
+
 	subexpNames := regex.SubexpNames()
-	results := map[string]*capturedGroup{}
-	// Loop thru the subexp names (skipping the first empty one which is the full match)
-	for i, name := range (subexpNames)[1:] {
-		if name == "" {
-			// No name, so skip it
-			continue
-		}
-		startIndex := matchIndexPairs[(i+1)*2]
-		endIndex := matchIndexPairs[(i+1)*2+1]
-		if startIndex == -1 || endIndex == -1 {
-			// No match found
-			if includeNotMatchedOptional {
-				// Add anyways
-				results[name] = &capturedGroup{startIndex: -1, endIndex: -1, value: ""}
+	allResults := []map[string]*capturedGroup{}
+	for _, matchIndexPairs := range matchIndexPairsList {
+		results := map[string]*capturedGroup{}
+		// Loop thru the subexp names (skipping the first empty one which is the full match)
+		for i, name := range (subexpNames)[1:] {
+			if name == "" {
+				// No name, so skip it
+				continue
 			}
-			continue
+			startIndex := matchIndexPairs[(i+1)*2]
+			endIndex := matchIndexPairs[(i+1)*2+1]
+			if startIndex == -1 || endIndex == -1 {
+				// No match found
+				if includeNotMatchedOptional {
+					// Add anyways
+					results[name] = &capturedGroup{startIndex: -1, endIndex: -1, value: ""}
+				}
+				continue
+			}
+			// Assign the correct value
+			results[name] = &capturedGroup{startIndex: startIndex, endIndex: endIndex, value: str[startIndex:endIndex]}
 		}
-		// Assign the correct value
-		results[name] = &capturedGroup{startIndex: startIndex, endIndex: endIndex, value: str[startIndex:endIndex]}
+		allResults = append(allResults, results)
 	}
-	return results
+
+	return allResults
 }
 
 type capturedGroup struct {
 	startIndex int
 	endIndex   int
 	value      string
+}
+
+func (cg capturedGroup) String() string {
+	return fmt.Sprintf("%d->%d:%s", cg.startIndex, cg.endIndex, strings.ReplaceAll(strings.ReplaceAll(cg.value, "\r", "\\r"), "\n", "\\n"))
 }
