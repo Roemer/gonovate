@@ -96,7 +96,6 @@ func getPresetPath(currentPath string, presetPath string) (string, error) {
 		}
 		// Search based on the current executable directory but in the presets subfolder
 		tempPresetPath = filepath.Clean(filepath.Join(filepath.Dir(executablePath), "presets", presetPath))
-		fmt.Println(tempPresetPath)
 		if exists, err := FileExists(tempPresetPath); err != nil {
 			return "", err
 		} else if exists {
