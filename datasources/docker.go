@@ -22,7 +22,7 @@ func NewDockerDatasource(logger *slog.Logger) *DockerDatasource {
 	return newDatasource
 }
 
-func (ds *DockerDatasource) GetVersionStrings(packageName string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]string, error) {
+func (ds *DockerDatasource) GetReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
 	// Default to Docker registry
 	baseUrlString := "https://index.docker.io/v2"
 	if packageSettings != nil && len(packageSettings.RegistryUrls) > 0 {
@@ -40,28 +40,28 @@ func (ds *DockerDatasource) GetVersionStrings(packageName string, packageSetting
 	// Different handling for different sites
 	var tags []string
 	if strings.Contains(baseUrl.Host, "hub.docker.com") {
-		tags, err = ds.getTagsForDockerHub(baseUrl, packageName, relevantHostRule)
+		tags, err = ds.getTagsForDockerHub(baseUrl, packageSettings.PackageName, relevantHostRule)
 		if err != nil {
 			return nil, err
 		}
 	} else if strings.Contains(baseUrl.Host, "index.docker.io") {
-		tags, err = ds.getTagsForDocker(baseUrl, packageName, relevantHostRule)
+		tags, err = ds.getTagsForDocker(baseUrl, packageSettings.PackageName, relevantHostRule)
 		if err != nil {
 			return nil, err
 		}
 	} else if strings.Contains(baseUrl.Host, "ghcr.io") {
-		tags, err = ds.getTagsForGhcr(baseUrl, packageName, relevantHostRule)
+		tags, err = ds.getTagsForGhcr(baseUrl, packageSettings.PackageName, relevantHostRule)
 		if err != nil {
 			return nil, err
 		}
 	} else if strings.Contains(baseUrl.Host, "gcr.io") {
-		tags, err = ds.getTagsForGcr(baseUrl, packageName, relevantHostRule)
+		tags, err = ds.getTagsForGcr(baseUrl, packageSettings.PackageName, relevantHostRule)
 		if err != nil {
 			return nil, err
 		}
 	} else if strings.Contains(baseUrl.Host, "quay.io") {
 		// For quay we need a special token
-		tags, err = ds.getTagsForQuay(baseUrl, packageName, relevantHostRule)
+		tags, err = ds.getTagsForQuay(baseUrl, packageSettings.PackageName, relevantHostRule)
 		if err != nil {
 			return nil, err
 		}
@@ -71,12 +71,18 @@ func (ds *DockerDatasource) GetVersionStrings(packageName string, packageSetting
 		if relevantHostRule != nil {
 			bearerToken = relevantHostRule.TokendExpanded()
 		}
-		tags, err = ds.getTagsWithToken(baseUrl, packageName, bearerToken)
+		tags, err = ds.getTagsWithToken(baseUrl, packageSettings.PackageName, bearerToken)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return tags, nil
+	releases := []*core.ReleaseInfo{}
+	for _, tag := range tags {
+		releases = append(releases, &core.ReleaseInfo{
+			VersionString: tag,
+		})
+	}
+	return releases, nil
 }
 
 // Docker Hub does not implement the Docker Registry API and has a different way...

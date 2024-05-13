@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type NodeJsDatasource struct {
@@ -20,14 +21,14 @@ func NewNodeJsDatasource(logger *slog.Logger) *NodeJsDatasource {
 	return newDatasource
 }
 
-func (ds *NodeJsDatasource) GetVersionStrings(packageName string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]string, error) {
+func (ds *NodeJsDatasource) GetReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
 	baseUrl := "https://nodejs.org/dist"
 	if len(packageSettings.RegistryUrls) > 0 {
 		baseUrl = packageSettings.RegistryUrls[0]
 		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", baseUrl))
 	}
 	indexFilePath := "index.json"
-	ltsOnly := strings.HasSuffix(packageName, "lts")
+	ltsOnly := strings.HasSuffix(packageSettings.PackageName, "lts")
 
 	// Download the index file
 	downloadUrl, err := url.JoinPath(baseUrl, indexFilePath)
@@ -46,14 +47,22 @@ func (ds *NodeJsDatasource) GetVersionStrings(packageName string, packageSetting
 	}
 
 	// Convert all entries to objects
-	versions := []string{}
+	releases := []*core.ReleaseInfo{}
 	for _, entry := range jsonData {
 		versionString := entry["version"].(string)
 		ltsValue := entry["lts"]
+		dateString := entry["date"].(string)
 		if ltsOnly && ltsValue == false {
 			continue
 		}
-		versions = append(versions, versionString)
+		releaseDate, err := time.Parse(time.DateOnly, dateString)
+		if err != nil {
+			return nil, fmt.Errorf("failed parsing date '%s': %w", dateString, err)
+		}
+		releases = append(releases, &core.ReleaseInfo{
+			ReleaseDate:   releaseDate,
+			VersionString: versionString,
+		})
 	}
-	return versions, nil
+	return releases, nil
 }

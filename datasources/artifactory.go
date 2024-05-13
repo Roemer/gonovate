@@ -23,10 +23,10 @@ func NewArtifactoryDatasource(logger *slog.Logger) *ArtifactoryDatasource {
 	return newDatasource
 }
 
-func (ds *ArtifactoryDatasource) GetVersionStrings(packageName string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]string, error) {
+func (ds *ArtifactoryDatasource) GetReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
 	// Get the base url for artifactory
 	if packageSettings == nil || len(packageSettings.RegistryUrls) == 0 {
-		return nil, fmt.Errorf("no registry url for artifactory for package '%s'", packageName)
+		return nil, fmt.Errorf("no registry url for artifactory for package '%s'", packageSettings.PackageName)
 	}
 	registryUrl := packageSettings.RegistryUrls[0]
 
@@ -45,18 +45,25 @@ func (ds *ArtifactoryDatasource) GetVersionStrings(packageName string, packageSe
 
 	// Search with the pattern
 	params := services.NewSearchParams()
-	params.Pattern = packageName
+	params.Pattern = packageSettings.PackageName
 	items, err := ds.getSearchResults(artifactoryManager, params)
 	if err != nil {
 		return nil, err
 	}
 
-	// Build the list of versions
-	versions := []string{}
+	// Build the list of releases
+	releases := []*core.ReleaseInfo{}
 	for _, item := range items {
-		versions = append(versions, item.Name)
+		releases = append(releases, &core.ReleaseInfo{
+			VersionString: item.Name,
+			ReleaseDate:   item.Modified,
+			Hashes: map[string]string{
+				"md5":    item.Md5,
+				"sha256": item.Sha256,
+			},
+		})
 	}
-	return versions, nil
+	return releases, nil
 }
 
 ////////////////////////////////////////////////////////////

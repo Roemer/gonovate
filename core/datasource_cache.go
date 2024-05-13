@@ -1,14 +1,12 @@
 package core
 
-import "github.com/roemer/gover"
-
-var DatasourceCache *datasourceCache = &datasourceCache{entries: map[string]map[string][]*gover.Version{}}
+var DatasourceCache *datasourceCache = &datasourceCache{entries: map[string]map[string][]*ReleaseInfo{}}
 
 type datasourceCache struct {
-	entries map[string]map[string][]*gover.Version
+	entries map[string]map[string][]*ReleaseInfo
 }
 
-func (cache *datasourceCache) GetCache(datasourceType string, identifier string) []*gover.Version {
+func (cache *datasourceCache) GetCache(datasourceType string, identifier string) []*ReleaseInfo {
 	entriesForDatasource, ok := cache.entries[datasourceType]
 	if !ok {
 		return nil
@@ -20,9 +18,9 @@ func (cache *datasourceCache) GetCache(datasourceType string, identifier string)
 	return entriesForId
 }
 
-func (cache *datasourceCache) SetCache(datasourceType string, identifier string, versions []*gover.Version) {
+func (cache *datasourceCache) SetCache(datasourceType string, identifier string, versions []*ReleaseInfo) {
 	if _, ok := cache.entries[datasourceType]; !ok {
-		cache.entries[datasourceType] = map[string][]*gover.Version{}
+		cache.entries[datasourceType] = map[string][]*ReleaseInfo{}
 	}
 	cache.entries[datasourceType][identifier] = versions
 }

@@ -17,7 +17,7 @@ type datasourceBase struct {
 type datasource interface {
 	GetLogger() *slog.Logger
 	GetName() string
-	GetVersionStrings(packageName string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]string, error)
+	GetReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error)
 }
 
 func (ds *datasourceBase) GetLogger() *slog.Logger {
@@ -53,44 +53,45 @@ func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *
 		}
 	}
 
-	// Try get versions from the cache
-	availableVersions := core.DatasourceCache.GetCache(name, cacheIdentifier)
-	if availableVersions == nil {
+	// Try get releases from the cache
+	avaliableReleases := core.DatasourceCache.GetCache(name, cacheIdentifier)
+	if avaliableReleases == nil {
 		// No data in cache, fetch new data
-		logger.Debug("Lookup versions from remote")
-		versionStrings, err := ds.GetVersionStrings(packageSettings.PackageName, packageSettings, hostRules)
+		logger.Debug("Lookup releases from remote")
+		releases, err := ds.GetReleases(packageSettings, hostRules)
 		if err != nil {
 			return "", false, err
 		}
 		// Convert the raw strings to versions
-		availableVersions = []*gover.Version{}
-		for _, versionString := range versionStrings {
+		avaliableReleases = []*core.ReleaseInfo{}
+		for _, release := range releases {
 			// Extract the version number from the raw string if needed
 			if extractVersionRegex != nil {
-				m := extractVersionRegex.FindStringSubmatch(versionString)
+				m := extractVersionRegex.FindStringSubmatch(release.VersionString)
 				if m == nil {
 					if ignoreNoneMatching {
 						continue
 					} else {
-						return "", false, fmt.Errorf("could not extract version from '%s'", versionString)
+						return "", false, fmt.Errorf("could not extract version from '%s'", release.VersionString)
 					}
 				}
 				// Continue with only the matched part
-				versionString = m[1]
+				release.VersionString = m[1]
 			}
-			version, err := gover.ParseVersionFromRegex(versionString, versionRegex)
+			version, err := gover.ParseVersionFromRegex(release.VersionString, versionRegex)
 			if err != nil {
 				if ignoreNoneMatching {
 					continue
 				}
-				return "", false, fmt.Errorf("failed parsing the version from '%s': %w", versionString, err)
+				return "", false, fmt.Errorf("failed parsing the version from '%s': %w", release.VersionString, err)
 			}
-			availableVersions = append(availableVersions, version)
+			release.Version = version
+			avaliableReleases = append(avaliableReleases, release)
 		}
 		// Store in cache
-		core.DatasourceCache.SetCache(name, cacheIdentifier, availableVersions)
+		core.DatasourceCache.SetCache(name, cacheIdentifier, avaliableReleases)
 	} else {
-		logger.Debug("Returned versions from cache")
+		logger.Debug("Returned releases from cache")
 	}
 
 	// Parse the current version
@@ -102,7 +103,7 @@ func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *
 	refVersion := getReferenceVersionForUpdateType(packageSettings.MaxUpdateType, curr)
 
 	// Search for an update
-	maxValidVersion := gover.FindMax(availableVersions, refVersion, !allowUnstable)
+	maxValidVersion := gover.FindMaxGeneric(avaliableReleases, func(x *core.ReleaseInfo) *gover.Version { return x.Version }, refVersion, !allowUnstable)
 
 	// Check if the version is the same
 	if maxValidVersion.Equals(curr) {
