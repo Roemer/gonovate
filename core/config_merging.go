@@ -103,6 +103,10 @@ func (packageSettingsA *PackageSettings) MergeWith(packageSettingsB *PackageSett
 	if packageSettingsB.Versioning != "" {
 		packageSettingsA.Versioning = packageSettingsB.Versioning
 	}
+	// ExtractVersion
+	if packageSettingsB.ExtractVersion != "" {
+		packageSettingsA.ExtractVersion = packageSettingsB.ExtractVersion
+	}
 	// IgnoreNonMatching
 	if packageSettingsB.IgnoreNonMatching != nil {
 		packageSettingsA.IgnoreNonMatching = packageSettingsB.IgnoreNonMatching

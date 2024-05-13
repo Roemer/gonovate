@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"os"
 )
 
 type Config struct {
@@ -38,14 +39,18 @@ type Rule struct {
 }
 
 type RuleMatch struct {
-	Managers []string `json:"managers"`
-	Files    []string `json:"files"`
-	Packages []string `json:"packages"`
+	Managers    []string `json:"managers"`
+	Files       []string `json:"files"`
+	Packages    []string `json:"packages"`
+	Datasources []string `json:"datasources"`
 }
 
 // A MatchAll rule is a rule that has no matches defined at all, so it will match all.
 func (rm *RuleMatch) IsMatchAll() bool {
-	return rm == nil || (len(rm.Managers) == 0 && len(rm.Files) == 0 && len(rm.Packages) == 0)
+	return rm == nil || (len(rm.Managers) == 0 &&
+		len(rm.Files) == 0 &&
+		len(rm.Packages) == 0 &&
+		len(rm.Datasources) == 0)
 }
 
 type ManagerSettings struct {
@@ -62,6 +67,7 @@ type PackageSettings struct {
 	RegistryUrls      []string `json:"registryUrls"`
 	UseUnstable       *bool    `json:"useUnstable"`
 	Versioning        string   `json:"versioning"`
+	ExtractVersion    string   `json:"extractVersion"`
 	IgnoreNonMatching *bool    `json:"ignoreNonMatching"`
 }
 
@@ -70,4 +76,16 @@ type HostRule struct {
 	Username  string `json:"username"`
 	Password  string `json:"password"`
 	Token     string `json:"token"`
+}
+
+func (hr *HostRule) UsernameExpanded() string {
+	return os.ExpandEnv(hr.Username)
+}
+
+func (hr *HostRule) PasswordExpanded() string {
+	return os.ExpandEnv(hr.Password)
+}
+
+func (hr *HostRule) TokendExpanded() string {
+	return os.ExpandEnv(hr.Token)
 }

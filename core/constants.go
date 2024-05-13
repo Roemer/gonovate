@@ -9,8 +9,9 @@ const (
 )
 
 const (
-	DATASOURCE_TYPE_NODEJS string = "nodejs"
-	DATASOURCE_TYPE_DOCKER string = "docker"
+	DATASOURCE_TYPE_ARTIFACTORY string = "artifactory"
+	DATASOURCE_TYPE_DOCKER      string = "docker"
+	DATASOURCE_TYPE_NODEJS      string = "nodejs"
 )
 
 const (
