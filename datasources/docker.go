@@ -71,7 +71,7 @@ func (ds *DockerDatasource) SearchPackageUpdate(packageName string, currentVersi
 		// For everything else we just use a bearer token (if provided), eg. Artifactory
 		bearerToken := ""
 		if relevantHostRule != nil {
-			bearerToken = relevantHostRule.Token
+			bearerToken = relevantHostRule.TokendExpanded()
 		}
 		tags, err = ds.getTagsWithToken(baseUrl, packageName, bearerToken)
 		if err != nil {
@@ -127,8 +127,8 @@ func (ds *DockerDatasource) getTagsForDockerHub(baseUrl *url.URL, packageName st
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}{
-		Username: hostRule.Username,
-		Password: hostRule.Password,
+		Username: hostRule.UsernameExpanded(),
+		Password: hostRule.PasswordExpanded(),
 	}); err != nil {
 		return nil, err
 	}
