@@ -28,14 +28,14 @@ func (ds *datasourceBase) GetName() string {
 	return ds.name
 }
 
-func SearchPackageUpdate(ds datasource, packageName string, currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (string, bool, error) {
+func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (string, bool, error) {
 	// Setup
 	name := ds.GetName()
 	logger := ds.GetLogger()
-	cacheIdentifier := name + "|" + packageName
-	useUnstable := false
-	if packageSettings.UseUnstable != nil {
-		useUnstable = *packageSettings.UseUnstable
+	cacheIdentifier := name + "|" + packageSettings.PackageName
+	allowUnstable := false
+	if packageSettings.AllowUnstable != nil {
+		allowUnstable = *packageSettings.AllowUnstable
 	}
 	ignoreNoneMatching := false
 	if packageSettings.IgnoreNonMatching != nil {
@@ -58,7 +58,7 @@ func SearchPackageUpdate(ds datasource, packageName string, currentVersion strin
 	if availableVersions == nil {
 		// No data in cache, fetch new data
 		logger.Debug("Lookup versions from remote")
-		versionStrings, err := ds.GetVersionStrings(packageName, packageSettings, hostRules)
+		versionStrings, err := ds.GetVersionStrings(packageSettings.PackageName, packageSettings, hostRules)
 		if err != nil {
 			return "", false, err
 		}
@@ -102,7 +102,7 @@ func SearchPackageUpdate(ds datasource, packageName string, currentVersion strin
 	refVersion := getReferenceVersionForUpdateType(packageSettings.MaxUpdateType, curr)
 
 	// Search for an update
-	maxValidVersion := gover.FindMax(availableVersions, refVersion, !useUnstable)
+	maxValidVersion := gover.FindMax(availableVersions, refVersion, !allowUnstable)
 
 	// Check if the version is the same
 	if maxValidVersion.Equals(curr) {

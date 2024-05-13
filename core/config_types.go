@@ -62,13 +62,22 @@ type ManagerSettings struct {
 }
 
 type PackageSettings struct {
-	MaxUpdateType     string   `json:"maxUpdateType"`
-	AllowUnstable     *bool    `json:"allowUnstable"`
-	RegistryUrls      []string `json:"registryUrls"`
-	UseUnstable       *bool    `json:"useUnstable"`
-	Versioning        string   `json:"versioning"`
-	ExtractVersion    string   `json:"extractVersion"`
-	IgnoreNonMatching *bool    `json:"ignoreNonMatching"`
+	// Defines how much the dependency is allowed to update. Can be "major", "minor", or "patch".
+	MaxUpdateType string `json:"maxUpdateType"`
+	// This flag defines if unstable releases are allowed. Unstable usually means a version that also has parts with text.
+	AllowUnstable *bool `json:"allowUnstable"`
+	// A list of registry urls to use. Allows overwriting the default. Depends on the datasource.
+	RegistryUrls []string `json:"registryUrls"`
+	// Defines the regexp to use to parse the version into separate parts. See gover for more details.
+	Versioning string `json:"versioning"`
+	// An optional regexp that is used to separate the version part from the rest from the raw string from external sources.
+	ExtractVersion string `json:"extractVersion"`
+	// A flag to indicate if versions from a remote that do not match the versioning should be ignored or give an exception.
+	IgnoreNonMatching *bool `json:"ignoreNonMatching"`
+	// Allows hard-coding a package name in rules. Is used if it is not captured via matchString.
+	PackageName string `json:"packageName"`
+	// Allows hard-coding a datasource in rules. Is used if it is not captured via matchString.
+	Datasource string `json:"datasource"`
 }
 
 type HostRule struct {

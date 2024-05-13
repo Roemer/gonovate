@@ -90,33 +90,34 @@ func (manager *RegexManager) process() error {
 					continue
 				}
 
-				// Validate the all needed values were found
+				// The version must be found with the regexp on the line
 				versionObject, versionOk := m["version"]
 				if !versionOk {
 					// The version field is mandatory
 					return fmt.Errorf("the field 'version' did not match on line '%s'", line)
 				}
-				datasourceObject, datasourceOk := m["datasource"]
-				if !datasourceOk {
-					// The datasource field is mandatory
-					return fmt.Errorf("the field 'datasource' did not match on line '%s'", line)
-				}
-				packageObject, packageOk := m["package"]
-				if !packageOk {
-					// The package field is mandatory
-					return fmt.Errorf("the field 'package' did not match on line '%s'", line)
-				}
 				//  Optional fields
+				datasourceObject, datasourceOk := m["datasource"]
+				packageObject, packageOk := m["package"]
 				versioningObject, versioningOk := m["versioning"]
 
-				fileLogger.Debug(fmt.Sprintf("Found a match for regex '%s'", regex.String()),
-					slog.String("version", versionObject.value),
-					slog.String("datasource", datasourceObject.value),
-					slog.String("package", packageObject.value),
-				)
+				// Log
+				fileLogger.Debug(fmt.Sprintf("Found a match for regex '%s'", regex.String()))
 
 				// Build the packageSettings with all relevant rules
 				packageSettings := &core.PackageSettings{}
+				// Initially add the package settings from the manager (if any)
+				packageSettings.MergeWith(manager.Config.PackageSettings)
+				// Initially set the fields that can be defined from matches from the regexp
+				if packageOk {
+					packageSettings.PackageName = packageObject.value
+				}
+				if datasourceOk {
+					packageSettings.Datasource = datasourceObject.value
+				}
+				if versioningOk {
+					packageSettings.Versioning = versioningObject.value
+				}
 				// Loop thru the rules and apply the ones that match
 				for _, rule := range possiblePackageRules {
 					isAnyMatch := rule.Matches.IsMatchAll()
@@ -140,13 +141,13 @@ func (manager *RegexManager) process() error {
 						}
 						// Package
 						if !isAnyMatch && len(rule.Matches.Packages) > 0 {
-							if slices.Contains(rule.Matches.Packages, packageObject.value) {
+							if packageSettings.PackageName != "" && slices.Contains(rule.Matches.Packages, packageSettings.PackageName) {
 								isAnyMatch = true
 							}
 						}
 						// Datasource
 						if !isAnyMatch && len(rule.Matches.Datasources) > 0 {
-							if slices.Contains(rule.Matches.Datasources, datasourceObject.value) {
+							if packageSettings.Datasource != "" && slices.Contains(rule.Matches.Datasources, packageSettings.Datasource) {
 								isAnyMatch = true
 							}
 						}
@@ -154,15 +155,21 @@ func (manager *RegexManager) process() error {
 					// The rule has at least one match, add it
 					if isAnyMatch {
 						packageSettings.MergeWith(rule.PackageSettings)
+						// Make sure that the optional fields from the match are not overwritten
+						if packageOk {
+							packageSettings.PackageName = packageObject.value
+						}
+						if datasourceOk {
+							packageSettings.Datasource = datasourceObject.value
+						}
+						if versioningOk {
+							packageSettings.Versioning = versioningObject.value
+						}
 					}
-				}
-				// Overwrite with optional fields (if any)
-				if versioningOk {
-					packageSettings.Versioning = versioningObject.value
 				}
 
 				// Search for a new version for the package
-				newVersion, hasUpdate, err := manager.searchPackageUpdate(datasourceObject.value, packageObject.value, versionObject.value, packageSettings, manager.GlobalConfig.HostRules)
+				newVersion, hasUpdate, err := manager.searchPackageUpdate(versionObject.value, packageSettings, manager.GlobalConfig.HostRules)
 				if err != nil {
 					return err
 				}

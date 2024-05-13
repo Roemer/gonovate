@@ -95,10 +95,6 @@ func (packageSettingsA *PackageSettings) MergeWith(packageSettingsB *PackageSett
 	}
 	// RegistryUrls
 	packageSettingsA.RegistryUrls = lo.Union(packageSettingsA.RegistryUrls, packageSettingsB.RegistryUrls)
-	// UseUnstable
-	if packageSettingsB.UseUnstable != nil {
-		packageSettingsA.UseUnstable = packageSettingsB.UseUnstable
-	}
 	// Versioning
 	if packageSettingsB.Versioning != "" {
 		packageSettingsA.Versioning = packageSettingsB.Versioning
@@ -110,6 +106,14 @@ func (packageSettingsA *PackageSettings) MergeWith(packageSettingsB *PackageSett
 	// IgnoreNonMatching
 	if packageSettingsB.IgnoreNonMatching != nil {
 		packageSettingsA.IgnoreNonMatching = packageSettingsB.IgnoreNonMatching
+	}
+	// PackageName
+	if packageSettingsB.PackageName != "" {
+		packageSettingsA.PackageName = packageSettingsB.PackageName
+	}
+	// Datasource
+	if packageSettingsB.Datasource != "" {
+		packageSettingsA.Datasource = packageSettingsB.Datasource
 	}
 	return packageSettingsA
 }
