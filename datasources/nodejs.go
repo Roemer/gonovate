@@ -6,82 +6,54 @@ import (
 	"gonovate/core"
 	"log/slog"
 	"net/url"
-	"regexp"
-
-	"github.com/roemer/gover"
+	"strings"
 )
 
 type NodeJsDatasource struct {
-	datasourcesBase
+	datasourceBase
 }
 
 func NewNodeJsDatasource(logger *slog.Logger) *NodeJsDatasource {
 	newDatasource := &NodeJsDatasource{}
 	newDatasource.logger = logger
+	newDatasource.name = core.DATASOURCE_TYPE_NODEJS
 	return newDatasource
 }
 
-func (ds *NodeJsDatasource) SearchPackageUpdate(packageName string, currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (string, bool, error) {
+func (ds *NodeJsDatasource) GetVersionStrings(packageName string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]string, error) {
 	baseUrl := "https://nodejs.org/dist"
 	if len(packageSettings.RegistryUrls) > 0 {
 		baseUrl = packageSettings.RegistryUrls[0]
 		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", baseUrl))
 	}
 	indexFilePath := "index.json"
-	useUnstable := false
-	if packageSettings.UseUnstable != nil {
-		useUnstable = *packageSettings.UseUnstable
-	}
+	ltsOnly := strings.HasSuffix(packageName, "lts")
 
 	// Download the index file
 	downloadUrl, err := url.JoinPath(baseUrl, indexFilePath)
 	if err != nil {
-		return "", false, err
+		return nil, err
 	}
 	indexFileBytes, err := core.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
-		return "", false, err
+		return nil, err
 	}
 
 	// Parse the data as json
 	var jsonData []map[string]interface{}
 	if err := json.Unmarshal(indexFileBytes, &jsonData); err != nil {
-		return "", false, err
+		return nil, err
 	}
 
 	// Convert all entries to objects
-	versionRegex := regexp.MustCompile(`(?m:^v(?P<d1>\d+)(?:\.(?P<d2>\d+))?(?:\.(?P<d3>\d+))?$)`)
-	allVersions := []*gover.Version{}
-	ltsVersions := []*gover.Version{}
+	versions := []string{}
 	for _, entry := range jsonData {
 		versionString := entry["version"].(string)
 		ltsValue := entry["lts"]
-		version := gover.MustParseVersionFromRegex(versionString, versionRegex)
-		allVersions = append(allVersions, version)
-		if ltsValue != false {
-			ltsVersions = append(ltsVersions, version)
+		if ltsOnly && ltsValue == false {
+			continue
 		}
+		versions = append(versions, versionString)
 	}
-
-	curr, err := gover.ParseVersionFromRegex(currentVersion, versionRegex)
-	if err != nil {
-		return "", false, err
-	}
-	refVersion := ds.getReferenceVersionForUpdateType(packageSettings.MaxUpdateType, curr)
-	// Search for an update
-	var maxValidVersion *gover.Version
-	if useUnstable {
-		maxValidVersion = gover.FindMax(allVersions, refVersion, true)
-	} else {
-		maxValidVersion = gover.FindMax(ltsVersions, refVersion, true)
-	}
-
-	if maxValidVersion.Equals(curr) {
-		ds.logger.Debug("Found no new version")
-		return "", false, nil
-	}
-
-	ds.logger.Info(fmt.Sprintf("Found a new version: %s", maxValidVersion.Original))
-
-	return maxValidVersion.Original, true, nil
+	return versions, nil
 }

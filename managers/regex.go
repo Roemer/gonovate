@@ -144,7 +144,12 @@ func (manager *RegexManager) process() error {
 								isAnyMatch = true
 							}
 						}
-						// TODO: Datasource
+						// Datasource
+						if !isAnyMatch && len(rule.Matches.Datasources) > 0 {
+							if slices.Contains(rule.Matches.Datasources, datasourceObject.value) {
+								isAnyMatch = true
+							}
+						}
 					}
 					// The rule has at least one match, add it
 					if isAnyMatch {

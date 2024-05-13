@@ -8,23 +8,21 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
-
-	"github.com/roemer/gover"
 )
 
 type DockerDatasource struct {
-	datasourcesBase
+	datasourceBase
 }
 
 func NewDockerDatasource(logger *slog.Logger) *DockerDatasource {
 	newDatasource := &DockerDatasource{}
 	newDatasource.logger = logger
+	newDatasource.name = core.DATASOURCE_TYPE_DOCKER
 	return newDatasource
 }
 
-func (ds *DockerDatasource) SearchPackageUpdate(packageName string, currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (string, bool, error) {
+func (ds *DockerDatasource) GetVersionStrings(packageName string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]string, error) {
 	// Default to Docker registry
 	baseUrlString := "https://index.docker.io/v2"
 	if packageSettings != nil && len(packageSettings.RegistryUrls) > 0 {
@@ -33,7 +31,7 @@ func (ds *DockerDatasource) SearchPackageUpdate(packageName string, currentVersi
 	}
 	baseUrl, err := url.Parse(baseUrlString)
 	if err != nil {
-		return "", false, err
+		return nil, err
 	}
 
 	// Get a host rule if any was defined
@@ -44,28 +42,28 @@ func (ds *DockerDatasource) SearchPackageUpdate(packageName string, currentVersi
 	if strings.Contains(baseUrl.Host, "hub.docker.com") {
 		tags, err = ds.getTagsForDockerHub(baseUrl, packageName, relevantHostRule)
 		if err != nil {
-			return "", false, err
+			return nil, err
 		}
 	} else if strings.Contains(baseUrl.Host, "index.docker.io") {
 		tags, err = ds.getTagsForDocker(baseUrl, packageName, relevantHostRule)
 		if err != nil {
-			return "", false, err
+			return nil, err
 		}
 	} else if strings.Contains(baseUrl.Host, "ghcr.io") {
 		tags, err = ds.getTagsForGhcr(baseUrl, packageName, relevantHostRule)
 		if err != nil {
-			return "", false, err
+			return nil, err
 		}
 	} else if strings.Contains(baseUrl.Host, "gcr.io") {
 		tags, err = ds.getTagsForGcr(baseUrl, packageName, relevantHostRule)
 		if err != nil {
-			return "", false, err
+			return nil, err
 		}
 	} else if strings.Contains(baseUrl.Host, "quay.io") {
 		// For quay we need a special token
 		tags, err = ds.getTagsForQuay(baseUrl, packageName, relevantHostRule)
 		if err != nil {
-			return "", false, err
+			return nil, err
 		}
 	} else {
 		// For everything else we just use a bearer token (if provided), eg. Artifactory
@@ -75,47 +73,10 @@ func (ds *DockerDatasource) SearchPackageUpdate(packageName string, currentVersi
 		}
 		tags, err = ds.getTagsWithToken(baseUrl, packageName, bearerToken)
 		if err != nil {
-			return "", false, err
+			return nil, err
 		}
 	}
-
-	// Search for an updated version
-
-	// Convert all entries to objects
-	ignoreNoneMatching := false
-	if packageSettings.IgnoreNonMatching != nil {
-		ignoreNoneMatching = *packageSettings.IgnoreNonMatching
-	}
-	// TODO: Define default versioning
-	versionRegex := regexp.MustCompile(packageSettings.Versioning)
-	versions := []*gover.Version{}
-	for _, tag := range tags {
-		version, err := gover.ParseVersionFromRegex(tag, versionRegex)
-		if err != nil {
-			if ignoreNoneMatching {
-				continue
-			}
-			return "", false, err
-		}
-		versions = append(versions, version)
-	}
-
-	curr, err := gover.ParseVersionFromRegex(currentVersion, versionRegex)
-	if err != nil {
-		return "", false, err
-	}
-	refVersion := ds.getReferenceVersionForUpdateType(packageSettings.MaxUpdateType, curr)
-	// Search for an update
-	maxValidVersion := gover.FindMax(versions, refVersion, false)
-
-	if maxValidVersion.Equals(curr) {
-		ds.logger.Debug("Found no new version")
-		return "", false, nil
-	}
-
-	ds.logger.Info(fmt.Sprintf("Found a new version: %s", maxValidVersion.Original))
-
-	return maxValidVersion.Original, true, nil
+	return tags, nil
 }
 
 // Docker Hub does not implement the Docker Registry API and has a different way...

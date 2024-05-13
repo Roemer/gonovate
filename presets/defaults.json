@@ -2,7 +2,18 @@
     "rules": [
         {
             "packageSettings": {
-                "maxUpdateType": "minor"
+                "maxUpdateType": "minor",
+                "versioning": "(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?"
+            }
+        },
+        {
+            "matches": {
+                "datasources": [
+                    "nodejs"
+                ]
+            },
+            "packageSettings": {
+                "versioning": "^v(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$"
             }
         }
     ]
