@@ -1,6 +1,7 @@
 package managers
 
 import (
+	"cmp"
 	"fmt"
 	"gonovate/core"
 	"log/slog"
@@ -64,6 +65,17 @@ func (manager *RegexManager) process() error {
 	}
 	manager.logger.Debug(fmt.Sprintf("Found %d match pattern(s) to process", len(precompiledRegexList)))
 
+	// Precompile Post-Upgrade regexes
+	precompiledPostUpgradeRegexList := []*regexp.Regexp{}
+	for _, regStr := range managerSettings.PostUpgradeReplacements {
+		regex, err := regexp.Compile(regStr)
+		if err != nil {
+			return err
+		}
+		precompiledPostUpgradeRegexList = append(precompiledPostUpgradeRegexList, regex)
+	}
+	manager.logger.Debug(fmt.Sprintf("Found %d post-upgrade-replacement pattern(s) to process", len(precompiledPostUpgradeRegexList)))
+
 	// Process all candidates
 	for _, candidate := range candidates {
 		fileLogger := manager.logger.With(slog.String("file", candidate))
@@ -106,13 +118,13 @@ func (manager *RegexManager) process() error {
 				packageSettings.MergeWith(manager.Config.PackageSettings)
 				// Initially set the fields that can be defined from matches from the regexp
 				if packageOk {
-					packageSettings.PackageName = packageObject.value
+					packageSettings.PackageName = packageObject[0].value
 				}
 				if datasourceOk {
-					packageSettings.Datasource = datasourceObject.value
+					packageSettings.Datasource = datasourceObject[0].value
 				}
 				if versioningOk {
-					packageSettings.Versioning = versioningObject.value
+					packageSettings.Versioning = versioningObject[0].value
 				}
 				// Loop thru the rules and apply the ones that match
 				for _, rule := range possiblePackageRules {
@@ -153,25 +165,36 @@ func (manager *RegexManager) process() error {
 						packageSettings.MergeWith(rule.PackageSettings)
 						// Make sure that the optional fields from the match are not overwritten
 						if packageOk {
-							packageSettings.PackageName = packageObject.value
+							packageSettings.PackageName = packageObject[0].value
 						}
 						if datasourceOk {
-							packageSettings.Datasource = datasourceObject.value
+							packageSettings.Datasource = datasourceObject[0].value
 						}
 						if versioningOk {
-							packageSettings.Versioning = versioningObject.value
+							packageSettings.Versioning = versioningObject[0].value
 						}
 					}
 				}
 
 				// Search for a new version for the package
-				newReleaseInfo, err := manager.searchPackageUpdate(versionObject.value, packageSettings, manager.GlobalConfig.HostRules)
+				newReleaseInfo, err := manager.searchPackageUpdate(versionObject[0].value, packageSettings, manager.GlobalConfig.HostRules)
 				if err != nil {
 					return err
 				}
 				if newReleaseInfo != nil {
 					// Build the new content with the new version number
-					fileContent = fileContent[:versionObject.startIndex] + newReleaseInfo.Version.Raw + fileContent[versionObject.endIndex:]
+					fileContent = fileContent[:versionObject[0].startIndex] + newReleaseInfo.Version.Raw + fileContent[versionObject[0].endIndex:]
+
+					// Run Post-Upgrade replacements
+					if len(precompiledPostUpgradeRegexList) > 0 {
+						for _, re := range precompiledPostUpgradeRegexList {
+							fileContent = replaceMatchesInRegex(re, fileContent, map[string]string{
+								"version": newReleaseInfo.Version.Raw,
+								"sha256":  newReleaseInfo.Hashes["sha256"],
+								"md5":     newReleaseInfo.Hashes["md5"],
+							})
+						}
+					}
 				}
 			}
 		}
@@ -185,8 +208,28 @@ func (manager *RegexManager) process() error {
 	return nil
 }
 
+func replaceMatchesInRegex(regex *regexp.Regexp, str string, replacementMap map[string]string) string {
+	matchList := findAllNamedMatchesWithIndex(regex, str, true)
+	orderedCaptures := []*capturedGroup{}
+	for _, match := range matchList {
+		for _, value := range match {
+			orderedCaptures = append(orderedCaptures, value...)
+		}
+	}
+	// Make sure the sorting is correct (by startIndex)
+	slices.SortFunc(orderedCaptures, func(a, b *capturedGroup) int {
+		return cmp.Compare(a.startIndex, b.startIndex)
+	})
+	diff := 0
+	for _, value := range orderedCaptures {
+		str = str[:(value.startIndex+diff)] + replacementMap[value.key] + str[value.endIndex+diff:]
+		diff += len(replacementMap[value.key]) - len(value.value)
+	}
+	return str
+}
+
 // Find all named matches in the given string, returning an list of objects with start/end-index and the value for each named match
-func findAllNamedMatchesWithIndex(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) []map[string]*capturedGroup {
+func findAllNamedMatchesWithIndex(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) []map[string][]*capturedGroup {
 	matchIndexPairsList := regex.FindAllStringSubmatchIndex(str, -1)
 	if matchIndexPairsList == nil {
 		// No matches
@@ -194,9 +237,9 @@ func findAllNamedMatchesWithIndex(regex *regexp.Regexp, str string, includeNotMa
 	}
 
 	subexpNames := regex.SubexpNames()
-	allResults := []map[string]*capturedGroup{}
+	allResults := []map[string][]*capturedGroup{}
 	for _, matchIndexPairs := range matchIndexPairsList {
-		results := map[string]*capturedGroup{}
+		results := map[string][]*capturedGroup{}
 		// Loop thru the subexp names (skipping the first empty one which is the full match)
 		for i, name := range (subexpNames)[1:] {
 			if name == "" {
@@ -209,12 +252,12 @@ func findAllNamedMatchesWithIndex(regex *regexp.Regexp, str string, includeNotMa
 				// No match found
 				if includeNotMatchedOptional {
 					// Add anyways
-					results[name] = &capturedGroup{startIndex: -1, endIndex: -1, value: ""}
+					results[name] = append(results[name], &capturedGroup{startIndex: -1, endIndex: -1, key: name, value: ""})
 				}
 				continue
 			}
 			// Assign the correct value
-			results[name] = &capturedGroup{startIndex: startIndex, endIndex: endIndex, value: str[startIndex:endIndex]}
+			results[name] = append(results[name], &capturedGroup{startIndex: startIndex, endIndex: endIndex, key: name, value: str[startIndex:endIndex]})
 		}
 		allResults = append(allResults, results)
 	}
@@ -225,9 +268,10 @@ func findAllNamedMatchesWithIndex(regex *regexp.Regexp, str string, includeNotMa
 type capturedGroup struct {
 	startIndex int
 	endIndex   int
+	key        string
 	value      string
 }
 
 func (cg capturedGroup) String() string {
-	return fmt.Sprintf("%d->%d:%s", cg.startIndex, cg.endIndex, strings.ReplaceAll(strings.ReplaceAll(cg.value, "\r", "\\r"), "\n", "\\n"))
+	return fmt.Sprintf("%d->%d:%s:%s", cg.startIndex, cg.endIndex, cg.key, strings.ReplaceAll(strings.ReplaceAll(cg.value, "\r", "\\r"), "\n", "\\n"))
 }

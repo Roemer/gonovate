@@ -73,6 +73,8 @@ func (managerSettingsA *ManagerSettings) MergeWith(managerSettingsB *ManagerSett
 	managerSettingsA.FilePatterns = lo.Union(managerSettingsA.FilePatterns, managerSettingsB.FilePatterns)
 	// MatchStrings
 	managerSettingsA.MatchStrings = lo.Union(managerSettingsA.MatchStrings, managerSettingsB.MatchStrings)
+	// PostUpgradeReplacements
+	managerSettingsA.PostUpgradeReplacements = lo.Union(managerSettingsA.PostUpgradeReplacements, managerSettingsB.PostUpgradeReplacements)
 	return managerSettingsA
 }
 

@@ -58,7 +58,8 @@ type ManagerSettings struct {
 	Disabled     bool     `json:"disabled"`
 	FilePatterns []string `json:"filePatterns"`
 	// Specific settings for RegexManager
-	MatchStrings []string `json:"matchStrings"`
+	MatchStrings            []string `json:"matchStrings"`
+	PostUpgradeReplacements []string `json:"postUpgradeReplacements"`
 }
 
 type PackageSettings struct {
