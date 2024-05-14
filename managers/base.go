@@ -14,16 +14,16 @@ type managerBase struct {
 }
 
 // Searches for a new package version with the correct datasource.
-func (manager *managerBase) searchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (string, bool, error) {
+func (manager *managerBase) searchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, error) {
 	// Validate the mandatory fields
 	if len(currentVersion) == 0 {
-		return "", false, fmt.Errorf("no version defined")
+		return nil, fmt.Errorf("no version defined")
 	}
 	if len(packageSettings.PackageName) == 0 {
-		return "", false, fmt.Errorf("no packageName defined")
+		return nil, fmt.Errorf("no packageName defined")
 	}
 	if len(packageSettings.Datasource) == 0 {
-		return "", false, fmt.Errorf("no datasource defined")
+		return nil, fmt.Errorf("no datasource defined")
 	}
 	// Log
 	manager.logger.Info(fmt.Sprintf("Searching a '%s' update for '%s' with version '%s' on datasource '%s'", packageSettings.MaxUpdateType, packageSettings.PackageName, currentVersion, packageSettings.Datasource))
@@ -31,12 +31,12 @@ func (manager *managerBase) searchPackageUpdate(currentVersion string, packageSe
 	// Lookup the correct datasource
 	ds, err := datasources.GetDatasource(manager.logger, packageSettings.Datasource)
 	if err != nil {
-		return "", false, err
+		return nil, err
 	}
 
 	// Search for a new version
-	newVersion, hasNewVersion, err := datasources.SearchPackageUpdate(ds, currentVersion, packageSettings, hostRules)
+	newReleaseInfo, err := datasources.SearchPackageUpdate(ds, currentVersion, packageSettings, hostRules)
 
 	// Return the result
-	return newVersion, hasNewVersion, err
+	return newReleaseInfo, err
 }

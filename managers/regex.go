@@ -165,13 +165,13 @@ func (manager *RegexManager) process() error {
 				}
 
 				// Search for a new version for the package
-				newVersion, hasUpdate, err := manager.searchPackageUpdate(versionObject.value, packageSettings, manager.GlobalConfig.HostRules)
+				newReleaseInfo, err := manager.searchPackageUpdate(versionObject.value, packageSettings, manager.GlobalConfig.HostRules)
 				if err != nil {
 					return err
 				}
-				if hasUpdate {
+				if newReleaseInfo != nil {
 					// Build the new content with the new version number
-					fileContent = fileContent[:versionObject.startIndex] + newVersion + fileContent[versionObject.endIndex:]
+					fileContent = fileContent[:versionObject.startIndex] + newReleaseInfo.Version.Raw + fileContent[versionObject.endIndex:]
 				}
 			}
 		}

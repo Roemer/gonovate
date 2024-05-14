@@ -6,7 +6,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.6.1
 	github.com/jfrog/jfrog-client-go v1.40.1
 	github.com/roemer/gotaskr v0.4.2
-	github.com/roemer/gover v0.4.0
+	github.com/roemer/gover v0.5.0
 	github.com/samber/lo v1.39.0
 	github.com/stretchr/testify v1.9.0
 )

@@ -28,7 +28,7 @@ func (ds *datasourceBase) GetName() string {
 	return ds.name
 }
 
-func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (string, bool, error) {
+func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, error) {
 	// Setup
 	name := ds.GetName()
 	logger := ds.GetLogger()
@@ -43,13 +43,13 @@ func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *
 	}
 	versionRegex, err := regexp.Compile(packageSettings.Versioning)
 	if err != nil {
-		return "", false, fmt.Errorf("failed parsing the 'versioning' regexp '%s': %w", packageSettings.Versioning, err)
+		return nil, fmt.Errorf("failed parsing the 'versioning' regexp '%s': %w", packageSettings.Versioning, err)
 	}
 	var extractVersionRegex *regexp.Regexp
 	if packageSettings != nil && len(packageSettings.ExtractVersion) > 0 {
 		extractVersionRegex, err = regexp.Compile(packageSettings.ExtractVersion)
 		if err != nil {
-			return "", false, fmt.Errorf("failed parsing the 'extractVersion' regexp '%s': %w", packageSettings.ExtractVersion, err)
+			return nil, fmt.Errorf("failed parsing the 'extractVersion' regexp '%s': %w", packageSettings.ExtractVersion, err)
 		}
 	}
 
@@ -60,7 +60,7 @@ func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *
 		logger.Debug("Lookup releases from remote")
 		releases, err := ds.GetReleases(packageSettings, hostRules)
 		if err != nil {
-			return "", false, err
+			return nil, err
 		}
 		// Convert the raw strings to versions
 		avaliableReleases = []*core.ReleaseInfo{}
@@ -72,7 +72,7 @@ func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *
 					if ignoreNoneMatching {
 						continue
 					} else {
-						return "", false, fmt.Errorf("could not extract version from '%s'", release.VersionString)
+						return nil, fmt.Errorf("could not extract version from '%s'", release.VersionString)
 					}
 				}
 				// Continue with only the matched part
@@ -83,7 +83,7 @@ func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *
 				if ignoreNoneMatching {
 					continue
 				}
-				return "", false, fmt.Errorf("failed parsing the version from '%s': %w", release.VersionString, err)
+				return nil, fmt.Errorf("failed parsing the version from '%s': %w", release.VersionString, err)
 			}
 			release.Version = version
 			avaliableReleases = append(avaliableReleases, release)
@@ -94,26 +94,36 @@ func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *
 		logger.Debug("Returned releases from cache")
 	}
 
+	if len(avaliableReleases) == 0 {
+		logger.Warn("No releases found to check for versions")
+		return nil, nil
+	}
+
 	// Parse the current version
 	curr, err := gover.ParseVersionFromRegex(currentVersion, versionRegex)
 	if err != nil {
-		return "", false, fmt.Errorf("failed parsing the current version '%s: %w", currentVersion, err)
+		return nil, fmt.Errorf("failed parsing the current version '%s: %w", currentVersion, err)
 	}
 	// Get the reference version to search
 	refVersion := getReferenceVersionForUpdateType(packageSettings.MaxUpdateType, curr)
 
 	// Search for an update
-	maxValidVersion := gover.FindMaxGeneric(avaliableReleases, func(x *core.ReleaseInfo) *gover.Version { return x.Version }, refVersion, !allowUnstable)
+	maxValidRelease := gover.FindMaxGeneric(avaliableReleases, func(x *core.ReleaseInfo) *gover.Version { return x.Version }, refVersion, !allowUnstable)
+
+	if maxValidRelease == nil {
+		logger.Warn("No valid releases found within the desired limits")
+		return nil, nil
+	}
 
 	// Check if the version is the same
-	if maxValidVersion.Equals(curr) {
+	if maxValidRelease.Version.Equals(curr) {
 		logger.Debug("Found no new version")
-		return "", false, nil
+		return nil, nil
 	}
 
 	// It is not the same, return the new version
-	logger.Info(fmt.Sprintf("Found a new version: %s", maxValidVersion.Original))
-	return maxValidVersion.Original, true, nil
+	logger.Info(fmt.Sprintf("Found a new version: %s", maxValidRelease.Version.Raw))
+	return maxValidRelease, nil
 }
 
 func GetDatasource(logger *slog.Logger, datasource string) (datasource, error) {
