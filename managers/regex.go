@@ -15,7 +15,7 @@ type RegexManager struct {
 	managerBase
 }
 
-func NewRegexManager(logger *slog.Logger, globalConfig *core.Config, managerConfig *core.Manager) *RegexManager {
+func NewRegexManager(logger *slog.Logger, globalConfig *core.Config, managerConfig *core.Manager) IManager {
 	manager := &RegexManager{
 		managerBase: managerBase{
 			logger:       logger.With(slog.String("handlerId", managerConfig.Id)),
@@ -23,15 +23,8 @@ func NewRegexManager(logger *slog.Logger, globalConfig *core.Config, managerConf
 			Config:       managerConfig,
 		},
 	}
+	manager.impl = manager
 	return manager
-}
-
-func (manager *RegexManager) Run() error {
-	err := manager.process()
-	if err != nil {
-		manager.logger.Error(fmt.Sprintf("Manager failed with error: %s", err.Error()))
-	}
-	return err
 }
 
 func (manager *RegexManager) process() error {

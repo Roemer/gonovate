@@ -26,14 +26,14 @@ func process() error {
 	// Create a logger
 	logger := slog.New(core.NewReadableTextHandler(os.Stdout, &core.ReadableTextHandlerOptions{Level: slog.LevelDebug}))
 
-	for _, manager := range config.Managers {
-		// Handle the different manager types
-		switch manager.Type {
-		case core.MANAGER_TYPE_REGEX:
-			managerInstance := managers.NewRegexManager(logger, config, manager)
-			if err := managerInstance.Run(); err != nil {
-				return err
-			}
+	for _, managerConfig := range config.Managers {
+		manager, err := managers.GetManager(logger, config, managerConfig)
+		if err != nil {
+			return err
+		}
+		// Run the manager
+		if err := manager.Run(); err != nil {
+			return err
 		}
 	}
 
