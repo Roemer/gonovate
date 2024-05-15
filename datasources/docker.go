@@ -15,14 +15,18 @@ type DockerDatasource struct {
 	datasourceBase
 }
 
-func NewDockerDatasource(logger *slog.Logger) *DockerDatasource {
-	newDatasource := &DockerDatasource{}
-	newDatasource.logger = logger
-	newDatasource.name = core.DATASOURCE_TYPE_DOCKER
+func NewDockerDatasource(logger *slog.Logger) IDatasource {
+	newDatasource := &DockerDatasource{
+		datasourceBase: datasourceBase{
+			logger: logger,
+			name:   core.DATASOURCE_TYPE_DOCKER,
+		},
+	}
+	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *DockerDatasource) GetReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
+func (ds *DockerDatasource) getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
 	// Default to Docker registry
 	baseUrlString := "https://index.docker.io/v2"
 	if packageSettings != nil && len(packageSettings.RegistryUrls) > 0 {

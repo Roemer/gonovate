@@ -14,14 +14,18 @@ type NodeJsDatasource struct {
 	datasourceBase
 }
 
-func NewNodeJsDatasource(logger *slog.Logger) *NodeJsDatasource {
-	newDatasource := &NodeJsDatasource{}
-	newDatasource.logger = logger
-	newDatasource.name = core.DATASOURCE_TYPE_NODEJS
+func NewNodeJsDatasource(logger *slog.Logger) IDatasource {
+	newDatasource := &NodeJsDatasource{
+		datasourceBase: datasourceBase{
+			logger: logger,
+			name:   core.DATASOURCE_TYPE_NODEJS,
+		},
+	}
+	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *NodeJsDatasource) GetReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
+func (ds *NodeJsDatasource) getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
 	baseUrl := "https://nodejs.org/dist"
 	if len(packageSettings.RegistryUrls) > 0 {
 		baseUrl = packageSettings.RegistryUrls[0]

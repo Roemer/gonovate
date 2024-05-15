@@ -9,29 +9,21 @@ import (
 	"github.com/roemer/gover"
 )
 
+type IDatasource interface {
+	getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error)
+	SearchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, error)
+}
+
 type datasourceBase struct {
 	logger *slog.Logger
 	name   string
+	impl   IDatasource
 }
 
-type datasource interface {
-	GetLogger() *slog.Logger
-	GetName() string
-	GetReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error)
-}
-
-func (ds *datasourceBase) GetLogger() *slog.Logger {
-	return ds.logger
-}
-
-func (ds *datasourceBase) GetName() string {
-	return ds.name
-}
-
-func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, error) {
+func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, error) {
 	// Setup
-	name := ds.GetName()
-	logger := ds.GetLogger()
+	name := ds.name
+	logger := ds.logger
 	cacheIdentifier := name + "|" + packageSettings.PackageName
 	allowUnstable := false
 	if packageSettings.AllowUnstable != nil {
@@ -58,7 +50,7 @@ func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *
 	if avaliableReleases == nil {
 		// No data in cache, fetch new data
 		logger.Debug("Lookup releases from remote")
-		releases, err := ds.GetReleases(packageSettings, hostRules)
+		releases, err := ds.impl.getReleases(packageSettings, hostRules)
 		if err != nil {
 			return nil, err
 		}
@@ -126,7 +118,7 @@ func SearchPackageUpdate(ds datasource, currentVersion string, packageSettings *
 	return maxValidRelease, nil
 }
 
-func GetDatasource(logger *slog.Logger, datasource string) (datasource, error) {
+func GetDatasource(logger *slog.Logger, datasource string) (IDatasource, error) {
 	switch datasource {
 	case core.DATASOURCE_TYPE_ARTIFACTORY:
 		return NewArtifactoryDatasource(logger), nil

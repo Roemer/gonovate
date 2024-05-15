@@ -57,7 +57,7 @@ func (manager *managerBase) searchPackageUpdate(currentVersion string, packageSe
 	}
 
 	// Search for a new version
-	newReleaseInfo, err := datasources.SearchPackageUpdate(ds, currentVersion, packageSettings, hostRules)
+	newReleaseInfo, err := ds.SearchPackageUpdate(currentVersion, packageSettings, hostRules)
 
 	// Return the result
 	return newReleaseInfo, err

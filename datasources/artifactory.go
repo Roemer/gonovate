@@ -16,14 +16,18 @@ type ArtifactoryDatasource struct {
 	datasourceBase
 }
 
-func NewArtifactoryDatasource(logger *slog.Logger) *ArtifactoryDatasource {
-	newDatasource := &ArtifactoryDatasource{}
-	newDatasource.logger = logger
-	newDatasource.name = core.DATASOURCE_TYPE_ARTIFACTORY
+func NewArtifactoryDatasource(logger *slog.Logger) IDatasource {
+	newDatasource := &ArtifactoryDatasource{
+		datasourceBase: datasourceBase{
+			logger: logger,
+			name:   core.DATASOURCE_TYPE_ARTIFACTORY,
+		},
+	}
+	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *ArtifactoryDatasource) GetReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
+func (ds *ArtifactoryDatasource) getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
 	// Get the base url for artifactory
 	if packageSettings == nil || len(packageSettings.RegistryUrls) == 0 {
 		return nil, fmt.Errorf("no registry url for artifactory for package '%s'", packageSettings.PackageName)
