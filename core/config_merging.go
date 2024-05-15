@@ -68,7 +68,9 @@ func (managerSettingsA *ManagerSettings) MergeWith(managerSettingsB *ManagerSett
 	}
 	// Both are set, so merge them
 	// Disabled
-	managerSettingsA.Disabled = managerSettingsB.Disabled
+	if managerSettingsB.Disabled != nil {
+		managerSettingsA.Disabled = managerSettingsB.Disabled
+	}
 	// FilePatterns
 	managerSettingsA.FilePatterns = lo.Union(managerSettingsA.FilePatterns, managerSettingsB.FilePatterns)
 	// MatchStrings

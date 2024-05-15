@@ -15,7 +15,7 @@ func TestSomething(t *testing.T) {
 			{
 				Id:              "Manager A",
 				Type:            MANAGER_TYPE_REGEX,
-				ManagerSettings: &ManagerSettings{Disabled: false},
+				ManagerSettings: &ManagerSettings{Disabled: Ptr(false)},
 			},
 		},
 		Rules: []*Rule{
@@ -24,7 +24,7 @@ func TestSomething(t *testing.T) {
 					Managers: []string{"Manager A"},
 				},
 				ManagerSettings: &ManagerSettings{
-					Disabled: true,
+					Disabled: Ptr(true),
 				},
 			},
 		},
@@ -32,6 +32,10 @@ func TestSomething(t *testing.T) {
 	assert.NotNil(config)
 	managerSettings, packageRules := config.FilterForManager(config.Managers[0])
 	assert.NotNil(managerSettings)
-	assert.True(managerSettings.Disabled)
+	assert.True(*managerSettings.Disabled)
 	assert.Len(packageRules, 0)
+}
+
+func Ptr[T any](value T) *T {
+	return &value
 }

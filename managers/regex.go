@@ -34,7 +34,7 @@ func (manager *RegexManager) process() error {
 	managerSettings, possiblePackageRules := manager.GlobalConfig.FilterForManager(manager.Config)
 
 	// Skip if it is disabled
-	if managerSettings.Disabled {
+	if managerSettings.Disabled != nil && *managerSettings.Disabled {
 		manager.logger.Info(fmt.Sprintf("Skipping Manager '%s' (%s) as it is disabled", manager.Config.Id, manager.Config.Type))
 		return nil
 	}

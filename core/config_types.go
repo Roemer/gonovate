@@ -55,7 +55,7 @@ func (rm *RuleMatch) IsMatchAll() bool {
 
 type ManagerSettings struct {
 	// General settings
-	Disabled     bool     `json:"disabled"`
+	Disabled     *bool    `json:"disabled"`
 	FilePatterns []string `json:"filePatterns"`
 	// Specific settings for RegexManager
 	MatchStrings            []string `json:"matchStrings"`
