@@ -16,6 +16,17 @@
                 "extractVersion": "v(.*)",
                 "versioning": "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$"
             }
+        },
+        {
+            "matches": {
+                "datasources": [
+                    "go-version"
+                ]
+            },
+            "packageSettings": {
+                "extractVersion": "go(.*)",
+                "versioning": "(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+)?)?$"
+            }
         }
     ]
 }

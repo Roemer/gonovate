@@ -11,6 +11,7 @@ const (
 const (
 	DATASOURCE_TYPE_ARTIFACTORY string = "artifactory"
 	DATASOURCE_TYPE_DOCKER      string = "docker"
+	DATASOURCE_TYPE_GOVERSION   string = "go-version"
 	DATASOURCE_TYPE_NODEJS      string = "nodejs"
 )
 
