@@ -5,7 +5,8 @@ const (
 )
 
 const (
-	MANAGER_TYPE_REGEX string = "regex"
+	MANAGER_TYPE_INLINE string = "inline"
+	MANAGER_TYPE_REGEX  string = "regex"
 )
 
 const (
@@ -13,6 +14,7 @@ const (
 	DATASOURCE_TYPE_DOCKER      string = "docker"
 	DATASOURCE_TYPE_GOVERSION   string = "go-version"
 	DATASOURCE_TYPE_NODEJS      string = "nodejs"
+	DATASOURCE_TYPE_NPM         string = "npm"
 )
 
 const (

@@ -100,7 +100,10 @@ func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSett
 		return nil, fmt.Errorf("failed parsing the current version '%s': %w", currentVersion, err)
 	}
 	// Get the reference version to search
-	refVersion := getReferenceVersionForUpdateType(packageSettings.MaxUpdateType, curr)
+	refVersion, err := getReferenceVersionForUpdateType(packageSettings.MaxUpdateType, curr)
+	if err != nil {
+		return nil, err
+	}
 
 	// Search for an update
 	maxValidRelease := gover.FindMaxGeneric(avaliableReleases, func(x *core.ReleaseInfo) *gover.Version { return x.Version }, refVersion, !allowUnstable)
@@ -137,19 +140,21 @@ func GetDatasource(logger *slog.Logger, datasource string) (IDatasource, error) 
 		return NewGoVersionDatasource(logger), nil
 	case core.DATASOURCE_TYPE_NODEJS:
 		return NewNodeJsDatasource(logger), nil
+	case core.DATASOURCE_TYPE_NPM:
+		return NewNpmDatasource(logger), nil
 	}
 	return nil, fmt.Errorf("no datasource defined for '%s'", datasource)
 }
 
-func getReferenceVersionForUpdateType(updateType string, currentVersion *gover.Version) *gover.Version {
+func getReferenceVersionForUpdateType(updateType string, currentVersion *gover.Version) (*gover.Version, error) {
 	if updateType == core.UPDATE_TYPE_MAJOR {
-		return gover.EmptyVersion
+		return gover.EmptyVersion, nil
 	}
 	if updateType == core.UPDATE_TYPE_MINOR {
-		return gover.ParseSimple(currentVersion.Major())
+		return gover.ParseSimple(currentVersion.Major()), nil
 	}
 	if updateType == core.UPDATE_TYPE_PATCH {
-		return gover.ParseSimple(currentVersion.Major(), currentVersion.Minor())
+		return gover.ParseSimple(currentVersion.Major(), currentVersion.Minor()), nil
 	}
-	return nil
+	return nil, fmt.Errorf("missing updateType")
 }

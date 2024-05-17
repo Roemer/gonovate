@@ -20,6 +20,16 @@
         {
             "matches": {
                 "datasources": [
+                    "npm"
+                ]
+            },
+            "packageSettings": {
+                "versioning": "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-(.+?))?(?:[-\\.](\\d+))?(?:[-\\.](\\d+))?$"
+            }
+        },
+        {
+            "matches": {
+                "datasources": [
                     "go-version"
                 ]
             },
