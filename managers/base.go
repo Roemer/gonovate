@@ -29,6 +29,8 @@ func (manager *managerBase) Run() error {
 
 func GetManager(logger *slog.Logger, config *core.Config, managerConfig *core.Manager) (IManager, error) {
 	switch managerConfig.Type {
+	case core.MANAGER_TYPE_INLINE:
+		return NewInlineManager(logger, config, managerConfig), nil
 	case core.MANAGER_TYPE_REGEX:
 		return NewRegexManager(logger, config, managerConfig), nil
 	}

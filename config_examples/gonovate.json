@@ -10,6 +10,18 @@
     ],
     "managers": [
         {
+            "id": "devcontainer-json",
+            "type": "inline",
+            "managerSettings":{
+                "filePatterns": [
+                    "**/devcontainer.json"
+                ]
+            },
+            "packageSettings": {
+                "ignoreNonMatching": true
+            }
+        },
+        {
             "id": "dockerfile-versions",
             "type": "regex",
             "managerSettings": {

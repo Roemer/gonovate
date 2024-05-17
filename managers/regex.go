@@ -8,7 +8,6 @@ import (
 	"os"
 	"regexp"
 	"slices"
-	"strings"
 )
 
 type RegexManager struct {
@@ -83,7 +82,7 @@ func (manager *RegexManager) process() error {
 
 		// Loop thru all regex patterns
 		for _, regex := range precompiledRegexList {
-			matchList := findAllNamedMatchesWithIndex(regex, fileContent, false)
+			matchList := findAllNamedMatchesWithIndex(regex, fileContent, false, -1)
 			if matchList == nil {
 				// The regex was not matched, go to the next
 				continue
@@ -105,78 +104,31 @@ func (manager *RegexManager) process() error {
 				// Log
 				fileLogger.Debug(fmt.Sprintf("Found a match for regex '%s'", regex.String()))
 
-				// Build the packageSettings with all relevant rules
-				packageSettings := &core.PackageSettings{}
-				// Initially add the package settings from the manager (if any)
-				packageSettings.MergeWith(manager.Config.PackageSettings)
-				// Initially set the fields that can be defined from matches from the regexp
+				// Build a package settings from the direct match. This rule always has the highest priority
+				priorityPackageSettings := &core.PackageSettings{}
 				if packageOk {
-					packageSettings.PackageName = packageObject[0].value
+					priorityPackageSettings.PackageName = packageObject[0].Value
 				}
 				if datasourceOk {
-					packageSettings.Datasource = datasourceObject[0].value
+					priorityPackageSettings.Datasource = datasourceObject[0].Value
 				}
 				if versioningOk {
-					packageSettings.Versioning = versioningObject[0].value
+					priorityPackageSettings.Versioning = versioningObject[0].Value
 				}
-				// Loop thru the rules and apply the ones that match
-				for _, rule := range possiblePackageRules {
-					isAnyMatch := rule.Matches.IsMatchAll()
-					// Check if there is at least one condition that matches
-					if !isAnyMatch && rule.Matches != nil {
-						// Manager
-						if !isAnyMatch && len(rule.Matches.Managers) > 0 {
-							if slices.Contains(rule.Matches.Managers, core.MANAGER_TYPE_REGEX) {
-								isAnyMatch = true
-							}
-						}
-						// Files
-						if !isAnyMatch && len(rule.Matches.Files) > 0 {
-							isMatch, err := core.FilePathMatchesPattern(candidate, rule.Matches.Files...)
-							if err != nil {
-								return err
-							}
-							if isMatch {
-								isAnyMatch = true
-							}
-						}
-						// Package
-						if !isAnyMatch && len(rule.Matches.Packages) > 0 {
-							if packageSettings.PackageName != "" && slices.Contains(rule.Matches.Packages, packageSettings.PackageName) {
-								isAnyMatch = true
-							}
-						}
-						// Datasource
-						if !isAnyMatch && len(rule.Matches.Datasources) > 0 {
-							if packageSettings.Datasource != "" && slices.Contains(rule.Matches.Datasources, packageSettings.Datasource) {
-								isAnyMatch = true
-							}
-						}
-					}
-					// The rule has at least one match, add it
-					if isAnyMatch {
-						packageSettings.MergeWith(rule.PackageSettings)
-						// Make sure that the optional fields from the match are not overwritten
-						if packageOk {
-							packageSettings.PackageName = packageObject[0].value
-						}
-						if datasourceOk {
-							packageSettings.Datasource = datasourceObject[0].value
-						}
-						if versioningOk {
-							packageSettings.Versioning = versioningObject[0].value
-						}
-					}
+				// Build the merge package settings
+				packageSettings, err := buildMergedPackageSettings(manager.Config.PackageSettings, priorityPackageSettings, possiblePackageRules, candidate)
+				if err != nil {
+					return err
 				}
 
 				// Search for a new version for the package
-				newReleaseInfo, err := manager.searchPackageUpdate(versionObject[0].value, packageSettings, manager.GlobalConfig.HostRules)
+				newReleaseInfo, err := manager.searchPackageUpdate(versionObject[0].Value, packageSettings, manager.GlobalConfig.HostRules)
 				if err != nil {
 					return err
 				}
 				if newReleaseInfo != nil {
 					// Build the new content with the new version number
-					fileContent = fileContent[:versionObject[0].startIndex] + newReleaseInfo.Version.Raw + fileContent[versionObject[0].endIndex:]
+					fileContent = fileContent[:versionObject[0].StartIndex] + newReleaseInfo.Version.Raw + fileContent[versionObject[0].EndIndex:]
 
 					// Run Post-Upgrade replacements
 					if len(precompiledPostUpgradeRegexList) > 0 {
@@ -202,7 +154,7 @@ func (manager *RegexManager) process() error {
 }
 
 func replaceMatchesInRegex(regex *regexp.Regexp, str string, replacementMap map[string]string) string {
-	matchList := findAllNamedMatchesWithIndex(regex, str, true)
+	matchList := findAllNamedMatchesWithIndex(regex, str, true, -1)
 	orderedCaptures := []*capturedGroup{}
 	for _, match := range matchList {
 		for _, value := range match {
@@ -211,60 +163,12 @@ func replaceMatchesInRegex(regex *regexp.Regexp, str string, replacementMap map[
 	}
 	// Make sure the sorting is correct (by startIndex)
 	slices.SortFunc(orderedCaptures, func(a, b *capturedGroup) int {
-		return cmp.Compare(a.startIndex, b.startIndex)
+		return cmp.Compare(a.StartIndex, b.StartIndex)
 	})
 	diff := 0
 	for _, value := range orderedCaptures {
-		str = str[:(value.startIndex+diff)] + replacementMap[value.key] + str[value.endIndex+diff:]
-		diff += len(replacementMap[value.key]) - len(value.value)
+		str = str[:(value.StartIndex+diff)] + replacementMap[value.Key] + str[value.EndIndex+diff:]
+		diff += len(replacementMap[value.Key]) - len(value.Value)
 	}
 	return str
-}
-
-// Find all named matches in the given string, returning an list of objects with start/end-index and the value for each named match
-func findAllNamedMatchesWithIndex(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) []map[string][]*capturedGroup {
-	matchIndexPairsList := regex.FindAllStringSubmatchIndex(str, -1)
-	if matchIndexPairsList == nil {
-		// No matches
-		return nil
-	}
-
-	subexpNames := regex.SubexpNames()
-	allResults := []map[string][]*capturedGroup{}
-	for _, matchIndexPairs := range matchIndexPairsList {
-		results := map[string][]*capturedGroup{}
-		// Loop thru the subexp names (skipping the first empty one which is the full match)
-		for i, name := range (subexpNames)[1:] {
-			if name == "" {
-				// No name, so skip it
-				continue
-			}
-			startIndex := matchIndexPairs[(i+1)*2]
-			endIndex := matchIndexPairs[(i+1)*2+1]
-			if startIndex == -1 || endIndex == -1 {
-				// No match found
-				if includeNotMatchedOptional {
-					// Add anyways
-					results[name] = append(results[name], &capturedGroup{startIndex: -1, endIndex: -1, key: name, value: ""})
-				}
-				continue
-			}
-			// Assign the correct value
-			results[name] = append(results[name], &capturedGroup{startIndex: startIndex, endIndex: endIndex, key: name, value: str[startIndex:endIndex]})
-		}
-		allResults = append(allResults, results)
-	}
-
-	return allResults
-}
-
-type capturedGroup struct {
-	startIndex int
-	endIndex   int
-	key        string
-	value      string
-}
-
-func (cg capturedGroup) String() string {
-	return fmt.Sprintf("%d->%d:%s:%s", cg.startIndex, cg.endIndex, cg.key, strings.ReplaceAll(strings.ReplaceAll(cg.value, "\r", "\\r"), "\n", "\\n"))
 }

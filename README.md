@@ -64,7 +64,7 @@ Example:
             "**/[Dd]ockerfile"
         ],
         "matchStrings": [
-            "^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<package>.*?)[[:blank:]]*$"
+            "^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<packageName>.*?)[[:blank:]]*$"
         ]
     },
     "packageSettings": {
