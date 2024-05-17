@@ -13,7 +13,8 @@
                 ]
             },
             "packageSettings": {
-                "versioning": "^v(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$"
+                "extractVersion": "v(.*)",
+                "versioning": "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$"
             }
         }
     ]

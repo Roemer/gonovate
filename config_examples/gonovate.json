@@ -1,8 +1,7 @@
 {
     "platform": "gitlab",
     "extends": [
-        "defaults",
-        "preset1"
+        "defaults"
     ],
     "ignorePatterns": [
         "**/node_modules",
