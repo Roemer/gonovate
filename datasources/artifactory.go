@@ -30,7 +30,7 @@ func NewArtifactoryDatasource(logger *slog.Logger) IDatasource {
 func (ds *ArtifactoryDatasource) getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
 	// Get the base url for artifactory
 	if packageSettings == nil || len(packageSettings.RegistryUrls) == 0 {
-		return nil, fmt.Errorf("no registry url for artifactory for package '%s'", packageSettings.PackageName)
+		return nil, fmt.Errorf("no registry url for artifactory for packageName '%s'", packageSettings.PackageName)
 	}
 	registryUrl := packageSettings.RegistryUrls[0]
 

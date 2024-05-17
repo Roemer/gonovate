@@ -35,7 +35,3 @@ func TestSomething(t *testing.T) {
 	assert.True(*managerSettings.Disabled)
 	assert.Len(packageRules, 0)
 }
-
-func Ptr[T any](value T) *T {
-	return &value
-}

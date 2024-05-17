@@ -99,7 +99,7 @@ func (manager *RegexManager) process() error {
 				}
 				//  Optional fields
 				datasourceObject, datasourceOk := match["datasource"]
-				packageObject, packageOk := match["package"]
+				packageObject, packageOk := match["packageName"]
 				versioningObject, versioningOk := match["versioning"]
 
 				// Log

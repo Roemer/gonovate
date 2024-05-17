@@ -39,17 +39,17 @@ type Rule struct {
 }
 
 type RuleMatch struct {
-	Managers    []string `json:"managers"`
-	Files       []string `json:"files"`
-	Packages    []string `json:"packages"`
-	Datasources []string `json:"datasources"`
+	Managers     []string `json:"managers"`
+	Files        []string `json:"files"`
+	PackageNames []string `json:"packageNames"`
+	Datasources  []string `json:"datasources"`
 }
 
 // A MatchAll rule is a rule that has no matches defined at all, so it will match all.
 func (rm *RuleMatch) IsMatchAll() bool {
 	return rm == nil || (len(rm.Managers) == 0 &&
 		len(rm.Files) == 0 &&
-		len(rm.Packages) == 0 &&
+		len(rm.PackageNames) == 0 &&
 		len(rm.Datasources) == 0)
 }
 
@@ -75,7 +75,7 @@ type PackageSettings struct {
 	ExtractVersion string `json:"extractVersion"`
 	// A flag to indicate if versions from a remote that do not match the versioning should be ignored or give an exception.
 	IgnoreNonMatching *bool `json:"ignoreNonMatching"`
-	// Allows hard-coding a package name in rules. Is used if it is not captured via matchString.
+	// Allows hard-coding a packageName in rules. Is used if it is not captured via matchString.
 	PackageName string `json:"packageName"`
 	// Allows hard-coding a datasource in rules. Is used if it is not captured via matchString.
 	Datasource string `json:"datasource"`

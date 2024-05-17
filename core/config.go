@@ -114,3 +114,7 @@ func getPresetPath(currentPath string, presetPath string) (string, error) {
 	}
 	return "", fmt.Errorf("preset file not found for '%s'", presetPath)
 }
+
+func Ptr[T any](value T) *T {
+	return &value
+}
