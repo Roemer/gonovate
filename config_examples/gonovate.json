@@ -14,7 +14,8 @@
             "type": "inline",
             "managerSettings":{
                 "filePatterns": [
-                    "**/devcontainer.json"
+                    ".devcontainer/Dockerfile",
+                    ".devcontainer/devcontainer.json"
                 ]
             },
             "packageSettings": {

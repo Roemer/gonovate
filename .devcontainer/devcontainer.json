@@ -1,0 +1,24 @@
+{
+	"name": "gonovate-dev",
+	"initializeCommand": {
+		"user-env": "touch ${localWorkspaceFolder}/.devcontainer/.env"
+	},
+	"dockerFile": "Dockerfile",
+	"runArgs": [
+		"--env-file=./.devcontainer/.env"
+	],
+	"features": {
+		// gonovate: { "datasource":"docker", "matchstring":"(?m)^\\s*\"(?P<packageName>.*):(?P<version>.*)\".*$" }
+		"ghcr.io/devcontainers/features/go:1": {
+			// gonovate: { "datasource":"go-version", "packageName":"stable", "matchstring":"(?m)^\\s*\"version\":\\s*\"(?P<version>.*)\".*$" }
+			"version": "1.21"
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"roemer.gotaskr-vscode"
+			]
+		}
+	}
+}

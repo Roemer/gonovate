@@ -21,6 +21,9 @@ The follownig managers are currently implemented:
 ### Regex
 This manager allows to use regular expressions to search for package names and versions which are used to find updates.
 
+### Inline
+This manager allows to use inline comments in files with all the information on how to find and update versions.
+
 ## Configuration
 There is usually a `gonovate.json` file which contains your specific configuration. The basic structure of this file is:
 ```json
