@@ -22,6 +22,7 @@ func NewGithubPlatform(logger *slog.Logger, config *core.Config) IPlatform {
 				logger: logger,
 				Config: config,
 			},
+			BaseBranch: "main",
 		},
 	}
 	return platform
@@ -79,7 +80,7 @@ func (p *GithubPlatform) NotifyChanges(change *core.Change) error {
 	client := github.NewClient(nil).WithAuthToken(token)
 	existingRequest, _, err := client.PullRequests.List(context.Background(), owner, repository, &github.PullRequestListOptions{
 		Head:  change.Data["branchName"],
-		Base:  "main",
+		Base:  p.BaseBranch,
 		State: "open",
 	})
 	if err != nil {
@@ -92,7 +93,7 @@ func (p *GithubPlatform) NotifyChanges(change *core.Change) error {
 		pr, _, err := client.PullRequests.Create(context.Background(), owner, repository, &github.NewPullRequest{
 			Title: github.String(change.Data["msg"]),
 			Head:  github.String(change.Data["branchName"]),
-			Base:  github.String("main"),
+			Base:  github.String(p.BaseBranch),
 		})
 		if err != nil {
 			return err

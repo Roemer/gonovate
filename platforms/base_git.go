@@ -11,6 +11,7 @@ import (
 
 type gitPlatform struct {
 	platformBase
+	BaseBranch string
 }
 
 func (p *gitPlatform) CreateBranch(change *core.Change) error {
@@ -60,7 +61,7 @@ func (p *gitPlatform) PushBranch() error {
 }
 
 func (p *gitPlatform) CheckoutBaseBranch() error {
-	err := p.runGitCommand("checkout", "main")
+	err := p.runGitCommand("checkout", p.BaseBranch)
 	if err != nil {
 		return err
 	}

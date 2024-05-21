@@ -16,6 +16,7 @@ func NewGitlabPlatform(logger *slog.Logger, config *core.Config) IPlatform {
 				logger: logger,
 				Config: config,
 			},
+			BaseBranch: "main",
 		},
 	}
 	return platform
