@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gonovate/core"
+	"gonovate/platforms"
 	"log/slog"
 	"os"
 	"regexp"
@@ -25,7 +26,7 @@ func NewInlineManager(logger *slog.Logger, globalConfig *core.Config, managerCon
 	return manager
 }
 
-func (manager *InlineManager) process() error {
+func (manager *InlineManager) process(platform platforms.IPlatform) error {
 	manager.logger.Info(fmt.Sprintf("Starting InlineManager with Id %s", manager.Config.Id))
 
 	// Process all rules to apply the ones relevant for the manager and store the ones relevant for packages.
@@ -127,19 +128,32 @@ func (manager *InlineManager) process() error {
 				return err
 			}
 			if newReleaseInfo != nil {
-				// Build the new content with the new version number
+				if err := platform.PrepareForChanges(packageSettings.PackageName, versionObject[0].Value, newReleaseInfo.Version.Raw); err != nil {
+					return err
+				}
+
+				// Prepare the changes
 				replaceStart := versionObject[0].StartIndex + contentSearchStart
 				replaceEnd := versionObject[0].EndIndex + contentSearchStart
 				fileContent = fileContent[:replaceStart] + newReleaseInfo.Version.Raw + fileContent[replaceEnd:]
 				oldLength := len(versionObject[0].Value)
 				newLength := len(newReleaseInfo.Version.Raw)
 				indexOffset += newLength - oldLength
-			}
-		}
+				// Write the file with the changes
+				if err := os.WriteFile(candidate, []byte(fileContent), os.ModePerm); err != nil {
+					return err
+				}
 
-		// Write the file back
-		if err := os.WriteFile(candidate+"2", []byte(fileContent), os.ModePerm); err != nil {
-			return err
+				if err := platform.SubmitChanges(packageSettings.PackageName, versionObject[0].Value, newReleaseInfo.Version.Raw); err != nil {
+					return err
+				}
+				if err := platform.PublishChanges(); err != nil {
+					return err
+				}
+				if err := platform.ResetToBase(); err != nil {
+					return err
+				}
+			}
 		}
 	}
 

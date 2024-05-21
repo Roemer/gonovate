@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"fmt"
 	"gonovate/core"
+	"gonovate/platforms"
 	"log/slog"
 	"os"
 	"regexp"
@@ -26,7 +27,7 @@ func NewRegexManager(logger *slog.Logger, globalConfig *core.Config, managerConf
 	return manager
 }
 
-func (manager *RegexManager) process() error {
+func (manager *RegexManager) process(platform platforms.IPlatform) error {
 	manager.logger.Info(fmt.Sprintf("Starting RegexManager with Id %s", manager.Config.Id))
 
 	// Process all rules to apply the ones relevant for the manager and store the ones relevant for packages.

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gonovate/core"
 	"gonovate/managers"
+	"gonovate/platforms"
 	"log/slog"
 	"os"
 )
@@ -26,13 +27,20 @@ func process() error {
 	// Create a logger
 	logger := slog.New(core.NewReadableTextHandler(os.Stdout, &core.ReadableTextHandlerOptions{Level: slog.LevelDebug}))
 
+	// Prepare the platform
+	platform, err := platforms.GetPlatform(logger, config)
+	if err != nil {
+		return err
+	}
+
+	// Process the managers
 	for _, managerConfig := range config.Managers {
 		manager, err := managers.GetManager(logger, config, managerConfig)
 		if err != nil {
 			return err
 		}
 		// Run the manager
-		if err := manager.Run(); err != nil {
+		if err := manager.Run(platform); err != nil {
 			return err
 		}
 	}

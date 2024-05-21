@@ -10,7 +10,7 @@
     ],
     "managers": [
         {
-            "id": "devcontainer-json",
+            "id": "devcontainer",
             "type": "inline",
             "managerSettings":{
                 "filePatterns": [
@@ -21,45 +21,20 @@
             "packageSettings": {
                 "ignoreNonMatching": true
             }
-        },
-        {
-            "id": "dockerfile-versions",
-            "type": "regex",
-            "managerSettings": {
-                "filePatterns": [
-                    "**/[Dd]ockerfile"
-                ],
-                "matchStrings": [
-                    "^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<package>.*?)[[:blank:]]*$"
-                ]
-            },
-            "packageSettings": {
-                "maxUpdateType": "major"
-            }
         }
     ],
     "rules": [
+    ],
+    "hostRules": [
         {
-            "matches": {
-                "managers": [
-                    "dockerfile-versions"
-                ]
-            },
-            "managerSettings": {
-                "filePatterns": [
-                    "**/my.[Dd]ockerfile"
-                ]
-            }
+            "matchHost": "index.docker.io",
+            "username": "$GONOVATE_DOCKERIO_USER",
+            "password": "$GONOVATE_DOCKERIO_TOKEN"
         },
         {
-            "matches": {
-                "files": [
-                    "**/my.[Dd]ockerfile"
-                ]
-            },
-            "packageSettings": {
-                "maxUpdateType": "patch"
-            }
+            "matchHost": "ghcr.io",
+            "username": "$GONOVATE_GHCRIO_USER",
+            "password": "$GONOVATE_GHCRIO_TOKEN"
         }
     ]
 }

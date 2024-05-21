@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"gonovate/core"
 	"gonovate/datasources"
+	"gonovate/platforms"
 	"log/slog"
 	"strings"
 )
 
 type IManager interface {
-	Run() error
-	process() error
+	Run(platform platforms.IPlatform) error
+	process(platform platforms.IPlatform) error
 }
 
 type managerBase struct {
@@ -20,8 +21,8 @@ type managerBase struct {
 	impl         IManager
 }
 
-func (manager *managerBase) Run() error {
-	err := manager.impl.process()
+func (manager *managerBase) Run(platform platforms.IPlatform) error {
+	err := manager.impl.process(platform)
 	if err != nil {
 		manager.logger.Error(fmt.Sprintf("Manager failed with error: %s", err.Error()))
 	}
