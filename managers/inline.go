@@ -133,6 +133,7 @@ func (manager *InlineManager) process(platform platforms.IPlatform) error {
 					PackageName: packageSettings.PackageName,
 					OldVersion:  currentVersion,
 					NewVersion:  newReleaseInfo.Version.Raw,
+					Data:        map[string]string{},
 				}
 				if err := platform.PrepareForChanges(change); err != nil {
 					return err
