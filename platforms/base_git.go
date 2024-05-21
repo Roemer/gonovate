@@ -21,6 +21,8 @@ func (p *gitPlatform) CreateBranch(change *core.Change) error {
 
 	change.Data["branchName"] = branchName
 
+	p.logger.Debug(fmt.Sprintf("Creating branch '%s'", branchName))
+
 	_, _, err := p.runGitCommand("checkout", "-B", branchName)
 	return err
 }

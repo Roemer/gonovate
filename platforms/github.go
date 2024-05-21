@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v62/github"
+	"github.com/samber/lo"
 )
 
 type GithubPlatform struct {
@@ -86,7 +87,9 @@ func (p *GithubPlatform) NotifyChanges(change *core.Change) error {
 	if err != nil {
 		return err
 	}
-	if len(existingRequest) > 0 {
+	// The Head search parameter does not work without "user:", so just make sure that the returned list really contains the branch
+	prExists := lo.ContainsBy(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == change.Data["branchName"] })
+	if prExists {
 		p.logger.Info(fmt.Sprintf("PR already exists: %s", *existingRequest[0].HTMLURL))
 	} else {
 		// Create the PR
