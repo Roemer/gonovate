@@ -14,9 +14,8 @@ type gitPlatform struct {
 }
 
 func (p *gitPlatform) CreateBranch(change *core.Change) error {
-	branchName := fmt.Sprintf("gonovate/update-%s-%s-to-%s",
-		p.normalizeString(change.PackageName, 30),
-		p.normalizeString(change.OldVersion, 0),
+	branchName := fmt.Sprintf("gonovate/%s-%s",
+		p.normalizeString(change.PackageName, 40),
 		p.normalizeString(change.NewVersion, 0))
 
 	change.Data["branchName"] = branchName
