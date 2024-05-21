@@ -1,7 +1,7 @@
 {
     "platform": "github",
     "platformSettings": {
-        "token": "$GITHUB_TOKEN",
+        "token": "$GONOVATE_GITHUB_LOCAL_TOKEN",
         "owner": "roemer",
         "repository": "gonovate"
     },
