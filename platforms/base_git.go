@@ -15,7 +15,7 @@ type gitPlatform struct {
 func (p *gitPlatform) CreateBranch(packageName, oldVersion, newVersion string) error {
 	branchName := fmt.Sprintf("gonovate/update-%s-%s-%s", p.normalizeString(packageName, 30), p.normalizeString(oldVersion, 0), p.normalizeString(newVersion, 0))
 
-	err := p.runGitCommand("checkout", "-b", branchName)
+	err := p.runGitCommand("checkout", "-B", branchName)
 	if err != nil {
 		return err
 	}
