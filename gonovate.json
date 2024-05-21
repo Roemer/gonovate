@@ -3,7 +3,8 @@
     "platformSettings": {
         "token": "$GONOVATE_GITHUB_LOCAL_TOKEN",
         "owner": "roemer",
-        "repository": "gonovate"
+        "repository": "gonovate",
+        "gitAuthor": "gonovate-bot <bot@gonovate.org>"
     },
     "extends": [
         "defaults"

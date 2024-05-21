@@ -1,9 +1,9 @@
 package platforms
 
 import (
+	"bytes"
 	"fmt"
 	"gonovate/core"
-	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -21,60 +21,57 @@ func (p *gitPlatform) CreateBranch(change *core.Change) error {
 
 	change.Data["branchName"] = branchName
 
-	err := p.runGitCommand("checkout", "-B", branchName)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, _, err := p.runGitCommand("checkout", "-B", branchName)
+	return err
 }
 
 func (p *gitPlatform) AddAll() error {
-	err := p.runGitCommand("add", "--all")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, _, err := p.runGitCommand("add", "--all")
+	return err
 }
 
 func (p *gitPlatform) Commit(change *core.Change) error {
+	// Build the commit message
 	msg := fmt.Sprintf("Update %s from %s to %s", change.PackageName, change.OldVersion, change.NewVersion)
-
+	// Store it for later use
 	change.Data["msg"] = msg
 
-	err := p.runGitCommand("commit", "-m", msg)
-	if err != nil {
-		return err
+	// Build the arguments
+	args := []string{
+		"commit",
+		"--message=" + msg,
+	}
+	// Optionally add the author if it is set
+	if p.Config.PlatformSettings != nil && p.Config.PlatformSettings.GitAuthor != "" {
+		args = append(args, "--author="+p.Config.PlatformSettings.GitAuthor)
 	}
 
-	return nil
+	// Execute the command
+	_, _, err := p.runGitCommand(args...)
+	return err
 }
 
 func (p *gitPlatform) PushBranch() error {
-	err := p.runGitCommand("push", "-u", "origin", "HEAD", "--force")
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, _, err := p.runGitCommand("push", "-u", "origin", "HEAD", "--force")
+	return err
 }
 
 func (p *gitPlatform) CheckoutBaseBranch() error {
-	err := p.runGitCommand("checkout", p.BaseBranch)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, _, err := p.runGitCommand("checkout", p.BaseBranch)
+	return err
 }
 
-func (p *gitPlatform) runGitCommand(arguments ...string) error {
+func (p *gitPlatform) runGitCommand(arguments ...string) (string, string, error) {
 	cmd := exec.Command("git", arguments...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	var stdoutBuf, stderrBuf bytes.Buffer
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
 	err := cmd.Run()
-	return err
+	outStr, errStr := p.processOutputString(stdoutBuf.String()), p.processOutputString(stderrBuf.String())
+	if err != nil {
+		err = fmt.Errorf("git command failed: %w", err)
+	}
+	return outStr, errStr, err
 }
 
 func (p *gitPlatform) normalizeString(value string, maxLength int) string {
@@ -108,4 +105,8 @@ func (p *gitPlatform) normalizeString(value string, maxLength int) string {
 	// Make sure it does not end with a any of the defined chars (again)
 	normalizedString = invalidEndingMatcher.ReplaceAllString(normalizedString, "")
 	return normalizedString
+}
+
+func (p *gitPlatform) processOutputString(value string) string {
+	return strings.TrimRight(value, "\r\n")
 }

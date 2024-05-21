@@ -24,6 +24,7 @@ type PlatformSettings struct {
 	Token      string `json:"token"`
 	Owner      string `json:"owner"`
 	Repository string `json:"repository"`
+	GitAuthor  string `json:"gitAuthor"`
 }
 
 func (ps *PlatformSettings) TokendExpanded() string {

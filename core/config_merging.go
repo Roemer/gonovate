@@ -73,6 +73,10 @@ func (platformSettingsA *PlatformSettings) MergeWith(platformSettingsB *Platform
 	if platformSettingsB.Repository != "" {
 		platformSettingsA.Repository = platformSettingsB.Repository
 	}
+	// GitAuthor
+	if platformSettingsB.GitAuthor != "" {
+		platformSettingsA.GitAuthor = platformSettingsB.GitAuthor
+	}
 	return platformSettingsA
 }
 
