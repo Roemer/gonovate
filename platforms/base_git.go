@@ -83,11 +83,14 @@ func (p *gitPlatform) normalizeString(value string, maxLength int) string {
 	// Make it lowercase
 	normalizedString = strings.ToLower(normalizedString)
 	// Remove all sort of invalid characters
-	punctuationMatcher := regexp.MustCompile("[][!\"#$%&'()*+,./:;<=>?@\\\\^_`{|}~]")
+	punctuationMatcher := regexp.MustCompile("[][!\"#$%&'()*+,/:;<=>?@\\\\^_`{|}~]")
 	normalizedString = punctuationMatcher.ReplaceAllString(normalizedString, "-")
 	// Replace multiple-hyphens with a single one
 	repeatingHyphenMatcher := regexp.MustCompile("-{2,}")
 	normalizedString = repeatingHyphenMatcher.ReplaceAllString(normalizedString, "-")
+	// Replace multiple-dots with a single one
+	repeatingDotMatcher := regexp.MustCompile(`\.{2,}`)
+	normalizedString = repeatingDotMatcher.ReplaceAllString(normalizedString, ".")
 	// Replace other invalid characters
 	normalizedString = strings.ReplaceAll(normalizedString, "ä", "a")
 	normalizedString = strings.ReplaceAll(normalizedString, "ö", "o")
