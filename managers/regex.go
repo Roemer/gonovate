@@ -123,7 +123,8 @@ func (manager *RegexManager) process(platform platforms.IPlatform) error {
 				}
 
 				// Search for a new version for the package
-				newReleaseInfo, err := manager.searchPackageUpdate(versionObject[0].Value, packageSettings, manager.GlobalConfig.HostRules)
+				currentVersion := manager.sanitizeString(versionObject[0].Value)
+				newReleaseInfo, err := manager.searchPackageUpdate(currentVersion, packageSettings, manager.GlobalConfig.HostRules)
 				if err != nil {
 					return err
 				}

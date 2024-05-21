@@ -89,7 +89,9 @@ func (p *gitPlatform) normalizeString(value string, maxLength int) string {
 	normalizedString = invalidEndingMatcher.ReplaceAllString(normalizedString, "")
 	// Shorten if needed
 	if maxLength > 0 && len(normalizedString) > maxLength {
-		normalizedString = normalizedString[0 : maxLength-1]
+		normalizedString = normalizedString[0:maxLength]
 	}
+	// Make sure it does not end with a hyphen (again)
+	normalizedString = invalidEndingMatcher.ReplaceAllString(normalizedString, "")
 	return normalizedString
 }

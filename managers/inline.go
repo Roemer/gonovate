@@ -123,12 +123,13 @@ func (manager *InlineManager) process(platform platforms.IPlatform) error {
 			}
 
 			// Search for a new version for the package
-			newReleaseInfo, err := manager.searchPackageUpdate(versionObject[0].Value, packageSettings, manager.GlobalConfig.HostRules)
+			currentVersion := manager.sanitizeString(versionObject[0].Value)
+			newReleaseInfo, err := manager.searchPackageUpdate(currentVersion, packageSettings, manager.GlobalConfig.HostRules)
 			if err != nil {
 				return err
 			}
 			if newReleaseInfo != nil {
-				if err := platform.PrepareForChanges(packageSettings.PackageName, versionObject[0].Value, newReleaseInfo.Version.Raw); err != nil {
+				if err := platform.PrepareForChanges(packageSettings.PackageName, currentVersion, newReleaseInfo.Version.Raw); err != nil {
 					return err
 				}
 
@@ -144,7 +145,7 @@ func (manager *InlineManager) process(platform platforms.IPlatform) error {
 					return err
 				}
 
-				if err := platform.SubmitChanges(packageSettings.PackageName, versionObject[0].Value, newReleaseInfo.Version.Raw); err != nil {
+				if err := platform.SubmitChanges(packageSettings.PackageName, currentVersion, newReleaseInfo.Version.Raw); err != nil {
 					return err
 				}
 				if err := platform.PublishChanges(); err != nil {
