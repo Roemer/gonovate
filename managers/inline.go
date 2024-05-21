@@ -123,7 +123,7 @@ func (manager *InlineManager) process(platform platforms.IPlatform) error {
 			}
 
 			// Search for a new version for the package
-			currentVersion := manager.sanitizeString(versionObject[0].Value)
+			currentVersion, _ := manager.sanitizeString(versionObject[0].Value)
 			newReleaseInfo, err := manager.searchPackageUpdate(currentVersion, packageSettings, manager.GlobalConfig.HostRules)
 			if err != nil {
 				return err
@@ -142,12 +142,10 @@ func (manager *InlineManager) process(platform platforms.IPlatform) error {
 				// Prepare the changes
 				replaceStart := versionObject[0].StartIndex + contentSearchStart
 				replaceEnd := versionObject[0].EndIndex + contentSearchStart
-				fileContent = fileContent[:replaceStart] + newReleaseInfo.Version.Raw + fileContent[replaceEnd:]
-				oldLength := len(versionObject[0].Value)
-				newLength := len(newReleaseInfo.Version.Raw)
-				indexOffset += newLength - oldLength
+				newFileContent := fileContent[:replaceStart] + newReleaseInfo.Version.Raw + fileContent[replaceEnd:]
+
 				// Write the file with the changes
-				if err := os.WriteFile(candidate, []byte(fileContent), os.ModePerm); err != nil {
+				if err := os.WriteFile(candidate, []byte(newFileContent), os.ModePerm); err != nil {
 					return err
 				}
 

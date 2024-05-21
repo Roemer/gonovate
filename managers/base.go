@@ -52,7 +52,7 @@ func (manager *managerBase) searchPackageUpdate(currentVersion string, packageSe
 		return nil, fmt.Errorf("no datasource defined")
 	}
 	// Sanitize some values like trimming (eg. for forgotten \r in Windows files...)
-	currentVersion = manager.sanitizeString(currentVersion)
+	currentVersion, _ = manager.sanitizeString(currentVersion)
 	// Log
 	manager.logger.Info(fmt.Sprintf("Searching a '%s' update for '%s' with version '%s' on datasource '%s'", packageSettings.MaxUpdateType, packageSettings.PackageName, currentVersion, packageSettings.Datasource))
 
@@ -70,6 +70,7 @@ func (manager *managerBase) searchPackageUpdate(currentVersion string, packageSe
 }
 
 // Sanitize the value with trimming (eg. for forgotten \r in Windows files...)
-func (manager *managerBase) sanitizeString(value string) string {
-	return strings.Trim(value, " \r\n")
+func (manager *managerBase) sanitizeString(value string) (string, int) {
+	newValue := strings.Trim(value, " \r\n")
+	return newValue, len(value) - len(newValue)
 }
