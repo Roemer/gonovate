@@ -30,6 +30,8 @@ type platformBase struct {
 
 func GetPlatform(logger *slog.Logger, config *core.Config) (IPlatform, error) {
 	switch config.Platform {
+	case core.PLATFORM_TYPE_GITHUB:
+		return NewGithubPlatform(logger, config), nil
 	case core.PLATFORM_TYPE_GITLAB:
 		return NewGitlabPlatform(logger, config), nil
 	}

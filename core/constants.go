@@ -1,6 +1,7 @@
 package core
 
 const (
+	PLATFORM_TYPE_GITHUB string = "github"
 	PLATFORM_TYPE_GITLAB string = "gitlab"
 )
 
