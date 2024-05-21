@@ -17,7 +17,7 @@ func main() {
 }
 
 func process() error {
-	config, err := core.ReadConfig("config_examples/gonovate.json")
+	config, err := core.ReadConfig("gonovate.json")
 	if err != nil {
 		return err
 	}

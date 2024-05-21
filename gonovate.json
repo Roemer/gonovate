@@ -8,11 +8,6 @@
     "extends": [
         "defaults"
     ],
-    "ignorePatterns": [
-        "**/node_modules",
-        "**/bower_components",
-        "**/.git"
-    ],
     "managers": [
         {
             "id": "devcontainer",
