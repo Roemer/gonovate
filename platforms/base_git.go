@@ -44,7 +44,7 @@ func (p *gitPlatform) Commit(packageName, oldVersion, newVersion string) error {
 }
 
 func (p *gitPlatform) PushBranch() error {
-	err := p.runGitCommand("push", "-u", "origin", "HEAD")
+	err := p.runGitCommand("push", "-u", "origin", "HEAD", "--force")
 	if err != nil {
 		return err
 	}
