@@ -77,16 +77,28 @@ func (p *GithubPlatform) NotifyChanges(change *core.Change) error {
 
 	// Create the client
 	client := github.NewClient(nil).WithAuthToken(token)
-	// Create the PR
-	pr, _, err := client.PullRequests.Create(context.Background(), owner, repository, &github.NewPullRequest{
-		Title: github.String(change.Data["msg"]),
-		Head:  github.String(change.Data["branchName"]),
-		Base:  github.String("main"),
+	existingRequest, _, err := client.PullRequests.List(context.Background(), owner, repository, &github.PullRequestListOptions{
+		Head:  change.Data["branchName"],
+		Base:  "main",
+		State: "open",
 	})
 	if err != nil {
 		return err
 	}
-	p.logger.Info(fmt.Sprintf("Created PR: %s", *pr.URL))
+	if len(existingRequest) > 0 {
+		p.logger.Info(fmt.Sprintf("PR already exists: %s", *existingRequest[0].HTMLURL))
+	} else {
+		// Create the PR
+		pr, _, err := client.PullRequests.Create(context.Background(), owner, repository, &github.NewPullRequest{
+			Title: github.String(change.Data["msg"]),
+			Head:  github.String(change.Data["branchName"]),
+			Base:  github.String("main"),
+		})
+		if err != nil {
+			return err
+		}
+		p.logger.Info(fmt.Sprintf("Created PR: %s", *pr.HTMLURL))
+	}
 	return nil
 }
 
