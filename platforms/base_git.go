@@ -92,17 +92,17 @@ func (p *gitPlatform) normalizeString(value string, maxLength int) string {
 	normalizedString = strings.ReplaceAll(normalizedString, "ä", "a")
 	normalizedString = strings.ReplaceAll(normalizedString, "ö", "o")
 	normalizedString = strings.ReplaceAll(normalizedString, "ü", "u")
-	// Make sure it does not end with a hyphen
-	invalidEndingMatcher := regexp.MustCompile("-+$")
+	// Make sure it does not end with a any of the defined chars
+	invalidEndingMatcher := regexp.MustCompile(`[:\-./]+$`)
 	normalizedString = invalidEndingMatcher.ReplaceAllString(normalizedString, "")
 	// Shorten if needed
 	if maxLength > 0 && len(normalizedString) > maxLength {
 		middle := maxLength / 2
 		firstBit := normalizedString[0:middle]
 		lastBit := normalizedString[len(normalizedString)-(maxLength-middle)+2:]
-		normalizedString = fmt.Sprintf("%s..%s", firstBit, lastBit)
+		normalizedString = fmt.Sprintf("%s__%s", firstBit, lastBit)
 	}
-	// Make sure it does not end with a hyphen (again)
+	// Make sure it does not end with a any of the defined chars (again)
 	normalizedString = invalidEndingMatcher.ReplaceAllString(normalizedString, "")
 	return normalizedString
 }
