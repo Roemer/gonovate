@@ -215,7 +215,7 @@ func (ds *DockerDatasource) getJwtToken(authUrl string, packageName string, host
 	}
 	if hostRule != nil && len(hostRule.Username) > 0 && len(hostRule.Password) > 0 {
 		// Add basic authentication for eg. private images
-		core.HttpUtil.AddBasicAuth(req, hostRule.Username, hostRule.Password)
+		core.HttpUtil.AddBasicAuth(req, hostRule.UsernameExpanded(), hostRule.PasswordExpanded())
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
