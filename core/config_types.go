@@ -6,17 +6,28 @@ import (
 )
 
 type Config struct {
-	Platform       string      `json:"platform"`
-	Extends        []string    `json:"extends"`
-	IgnorePatterns []string    `json:"ignorePatterns"`
-	Managers       []*Manager  `json:"managers"`
-	Rules          []*Rule     `json:"rules"`
-	HostRules      []*HostRule `json:"hostRules"`
+	Platform         string            `json:"platform"`
+	PlatformSettings *PlatformSettings `json:"platformSettings"`
+	Extends          []string          `json:"extends"`
+	IgnorePatterns   []string          `json:"ignorePatterns"`
+	Managers         []*Manager        `json:"managers"`
+	Rules            []*Rule           `json:"rules"`
+	HostRules        []*HostRule       `json:"hostRules"`
 }
 
 func (c *Config) String() string {
 	b, _ := json.MarshalIndent(c, "", "  ")
 	return string(b)
+}
+
+type PlatformSettings struct {
+	Token      string `json:"token"`
+	Owner      string `json:"owner"`
+	Repository string `json:"repository"`
+}
+
+func (ps *PlatformSettings) TokendExpanded() string {
+	return os.ExpandEnv(ps.Token)
 }
 
 type Manager struct {

@@ -14,6 +14,7 @@ func NewGitlabPlatform(logger *slog.Logger, config *core.Config) IPlatform {
 		gitPlatform: gitPlatform{
 			platformBase: platformBase{
 				logger: logger,
+				Config: config,
 			},
 		},
 	}
@@ -30,19 +31,24 @@ func (p *GitlabPlatform) FetchProject(project *core.Project) error {
 	return nil
 }
 
-func (p *GitlabPlatform) PrepareForChanges(packageName, oldVersion, newVersion string) error {
-	return p.CreateBranch(packageName, oldVersion, newVersion)
+func (p *GitlabPlatform) PrepareForChanges(change *core.Change) error {
+	return p.CreateBranch(change)
 }
 
-func (p *GitlabPlatform) SubmitChanges(packageName, oldVersion, newVersion string) error {
+func (p *GitlabPlatform) SubmitChanges(change *core.Change) error {
 	if err := p.AddAll(); err != nil {
 		return err
 	}
-	return p.Commit(packageName, oldVersion, newVersion)
+	return p.Commit(change)
 }
 
-func (p *GitlabPlatform) PublishChanges() error {
+func (p *GitlabPlatform) PublishChanges(change *core.Change) error {
 	return p.PushBranch()
+}
+
+func (p *GitlabPlatform) NotifyChanges(change *core.Change) error {
+	// TODO: Create MR
+	return nil
 }
 
 func (p *GitlabPlatform) ResetToBase() error {

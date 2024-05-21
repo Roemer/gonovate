@@ -4,6 +4,7 @@ go 1.22.1
 
 require (
 	github.com/bmatcuk/doublestar/v4 v4.6.1
+	github.com/google/go-github/v62 v62.0.0
 	github.com/jfrog/jfrog-client-go v1.40.1
 	github.com/roemer/gotaskr v0.4.2
 	github.com/roemer/gover v0.5.2
@@ -30,6 +31,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jfrog/archiver/v3 v3.6.0 // indirect

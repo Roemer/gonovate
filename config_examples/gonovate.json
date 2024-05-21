@@ -1,5 +1,10 @@
 {
-    "platform": "gitlab",
+    "platform": "github",
+    "platformSettings": {
+        "token": "$GITHUB_TOKEN",
+        "owner": "roemer",
+        "repository": "gonovate"
+    },
     "extends": [
         "defaults"
     ],

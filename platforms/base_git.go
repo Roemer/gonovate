@@ -2,6 +2,7 @@ package platforms
 
 import (
 	"fmt"
+	"gonovate/core"
 	"os"
 	"os/exec"
 	"regexp"
@@ -12,8 +13,13 @@ type gitPlatform struct {
 	platformBase
 }
 
-func (p *gitPlatform) CreateBranch(packageName, oldVersion, newVersion string) error {
-	branchName := fmt.Sprintf("gonovate/update-%s-%s-%s", p.normalizeString(packageName, 30), p.normalizeString(oldVersion, 0), p.normalizeString(newVersion, 0))
+func (p *gitPlatform) CreateBranch(change *core.Change) error {
+	branchName := fmt.Sprintf("gonovate/update-%s-%s-to-%s",
+		p.normalizeString(change.PackageName, 30),
+		p.normalizeString(change.OldVersion, 0),
+		p.normalizeString(change.NewVersion, 0))
+
+	change.Data["branchName"] = branchName
 
 	err := p.runGitCommand("checkout", "-B", branchName)
 	if err != nil {
@@ -32,8 +38,10 @@ func (p *gitPlatform) AddAll() error {
 	return nil
 }
 
-func (p *gitPlatform) Commit(packageName, oldVersion, newVersion string) error {
-	msg := fmt.Sprintf("Update %s from %s to %s", packageName, oldVersion, newVersion)
+func (p *gitPlatform) Commit(change *core.Change) error {
+	msg := fmt.Sprintf("Update %s from %s to %s", change.PackageName, change.OldVersion, change.NewVersion)
+
+	change.Data["msg"] = msg
 
 	err := p.runGitCommand("commit", "-m", msg)
 	if err != nil {
@@ -89,7 +97,10 @@ func (p *gitPlatform) normalizeString(value string, maxLength int) string {
 	normalizedString = invalidEndingMatcher.ReplaceAllString(normalizedString, "")
 	// Shorten if needed
 	if maxLength > 0 && len(normalizedString) > maxLength {
-		normalizedString = normalizedString[0:maxLength]
+		middle := maxLength / 2
+		firstBit := normalizedString[0:middle]
+		lastBit := normalizedString[len(normalizedString)-(maxLength-middle)+2:]
+		normalizedString = fmt.Sprintf("%s..%s", firstBit, lastBit)
 	}
 	// Make sure it does not end with a hyphen (again)
 	normalizedString = invalidEndingMatcher.ReplaceAllString(normalizedString, "")

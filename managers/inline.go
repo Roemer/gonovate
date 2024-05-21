@@ -129,7 +129,12 @@ func (manager *InlineManager) process(platform platforms.IPlatform) error {
 				return err
 			}
 			if newReleaseInfo != nil {
-				if err := platform.PrepareForChanges(packageSettings.PackageName, currentVersion, newReleaseInfo.Version.Raw); err != nil {
+				change := &core.Change{
+					PackageName: packageSettings.PackageName,
+					OldVersion:  currentVersion,
+					NewVersion:  newReleaseInfo.Version.Raw,
+				}
+				if err := platform.PrepareForChanges(change); err != nil {
 					return err
 				}
 
@@ -145,10 +150,13 @@ func (manager *InlineManager) process(platform platforms.IPlatform) error {
 					return err
 				}
 
-				if err := platform.SubmitChanges(packageSettings.PackageName, currentVersion, newReleaseInfo.Version.Raw); err != nil {
+				if err := platform.SubmitChanges(change); err != nil {
 					return err
 				}
-				if err := platform.PublishChanges(); err != nil {
+				if err := platform.PublishChanges(change); err != nil {
+					return err
+				}
+				if err := platform.NotifyChanges(change); err != nil {
 					return err
 				}
 				if err := platform.ResetToBase(); err != nil {

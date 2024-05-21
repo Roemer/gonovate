@@ -14,6 +14,8 @@ func (configA *Config) MergeWith(configB *Config) {
 	if configB.Platform != "" {
 		configA.Platform = configB.Platform
 	}
+	// PlatformSettings
+	configA.PlatformSettings = configA.PlatformSettings.MergeWith(configB.PlatformSettings)
 	// Extends
 	configA.Extends = lo.Union(configA.Extends, configB.Extends)
 	// IgnorePatterns
@@ -48,6 +50,30 @@ func (configA *Config) MergeWith(configB *Config) {
 	configA.Rules = append(configA.Rules, configB.Rules...)
 	// Host Rules
 	configA.HostRules = append(configA.HostRules, configB.HostRules...)
+}
+
+func (platformSettingsA *PlatformSettings) MergeWith(platformSettingsB *PlatformSettings) *PlatformSettings {
+	// Check if any of the objects is nil and if so, return the other (which might also be nil)
+	if platformSettingsA == nil {
+		return platformSettingsB
+	}
+	if platformSettingsB == nil {
+		return platformSettingsA
+	}
+	// Both are set, so merge them
+	// Token
+	if platformSettingsB.Token != "" {
+		platformSettingsA.Token = platformSettingsB.Token
+	}
+	// Owner
+	if platformSettingsB.Owner != "" {
+		platformSettingsA.Owner = platformSettingsB.Owner
+	}
+	// Repository
+	if platformSettingsB.Repository != "" {
+		platformSettingsA.Repository = platformSettingsB.Repository
+	}
+	return platformSettingsA
 }
 
 func (managerA *Manager) MergeWith(managerB *Manager) {
