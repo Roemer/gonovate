@@ -12,11 +12,12 @@ type IChange interface {
 
 // Contains metadata for a change
 type ChangeMeta struct {
-	Datasource     string
-	PackageName    string
-	File           string
-	CurrentVersion *gover.Version
-	NewRelease     *ReleaseInfo
+	Datasource              string
+	PackageName             string
+	File                    string
+	CurrentVersion          *gover.Version
+	NewRelease              *ReleaseInfo
+	PostUpgradeReplacements []string
 	// Contains data that is generated while the change is processed and which is needed by other steps
 	Data map[string]string
 }

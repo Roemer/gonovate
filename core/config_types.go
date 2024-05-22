@@ -70,8 +70,7 @@ type ManagerSettings struct {
 	Disabled     *bool    `json:"disabled"`
 	FilePatterns []string `json:"filePatterns"`
 	// Specific settings for RegexManager
-	MatchStrings            []string `json:"matchStrings"`
-	PostUpgradeReplacements []string `json:"postUpgradeReplacements"`
+	MatchStrings []string `json:"matchStrings"`
 }
 
 type PackageSettings struct {
@@ -91,6 +90,8 @@ type PackageSettings struct {
 	PackageName string `json:"packageName"`
 	// Allows hard-coding a datasource in rules. Is used if it is not captured via matchString.
 	Datasource string `json:"datasource"`
+	// Allows defining regexes that replace further information from packages (like hash) after updating
+	PostUpgradeReplacements []string `json:"postUpgradeReplacements"`
 }
 
 type HostRule struct {

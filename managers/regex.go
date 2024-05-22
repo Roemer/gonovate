@@ -9,6 +9,8 @@ import (
 	"os"
 	"regexp"
 	"slices"
+
+	"github.com/samber/lo"
 )
 
 type RegexManager struct {
@@ -59,18 +61,8 @@ func (manager *RegexManager) process() error {
 	}
 	manager.logger.Debug(fmt.Sprintf("Found %d match pattern(s) to process", len(precompiledRegexList)))
 
-	// Precompile Post-Upgrade regexes
-	precompiledPostUpgradeRegexList := []*regexp.Regexp{}
-	for _, regStr := range managerSettings.PostUpgradeReplacements {
-		regex, err := regexp.Compile(regStr)
-		if err != nil {
-			return err
-		}
-		precompiledPostUpgradeRegexList = append(precompiledPostUpgradeRegexList, regex)
-	}
-	manager.logger.Debug(fmt.Sprintf("Found %d post-upgrade-replacement pattern(s) to process", len(precompiledPostUpgradeRegexList)))
-
 	// Process all candidates
+	changes := []core.IChange{}
 	for _, candidate := range candidates {
 		fileLogger := manager.logger.With(slog.String("file", candidate))
 		fileLogger.Debug(fmt.Sprintf("Processing file '%s'", candidate))
@@ -89,8 +81,6 @@ func (manager *RegexManager) process() error {
 				// The regex was not matched, go to the next
 				continue
 			}
-			// Process the individual matches in reverse order so the indexes do not break when replacing text
-			slices.Reverse(matchList)
 			for _, match := range matchList {
 				// The version must be found with the regexp on the line
 				versionObject, versionOk := match["version"]
@@ -125,46 +115,104 @@ func (manager *RegexManager) process() error {
 
 				// Search for a new version for the package
 				currentVersionString, _ := manager.sanitizeString(versionObject[0].Value)
-				newReleaseInfo, _, err := manager.searchPackageUpdate(currentVersionString, packageSettings, manager.GlobalConfig.HostRules)
+				newReleaseInfo, currentVersion, err := manager.searchPackageUpdate(currentVersionString, packageSettings, manager.GlobalConfig.HostRules)
 				if err != nil {
 					return err
 				}
 				if newReleaseInfo != nil {
-					// Build the new content with the new version number
-					fileContent = fileContent[:versionObject[0].StartIndex] + newReleaseInfo.Version.Raw + fileContent[versionObject[0].EndIndex:]
-
-					// Run Post-Upgrade replacements
-					if len(precompiledPostUpgradeRegexList) > 0 {
-						for _, re := range precompiledPostUpgradeRegexList {
-							fileContent = replaceMatchesInRegex(re, fileContent, map[string]string{
-								"version": newReleaseInfo.Version.Raw,
-								"sha256":  newReleaseInfo.Hashes["sha256"],
-								"md5":     newReleaseInfo.Hashes["md5"],
-							})
-						}
+					// There is a new version, so build the change object
+					change := &regexManagerChange{
+						ChangeMeta: &core.ChangeMeta{
+							Datasource:              packageSettings.Datasource,
+							PackageName:             packageSettings.PackageName,
+							File:                    candidate,
+							CurrentVersion:          currentVersion,
+							NewRelease:              newReleaseInfo,
+							PostUpgradeReplacements: packageSettings.PostUpgradeReplacements,
+							Data:                    map[string]string{},
+						},
+						StartIndex: versionObject[0].StartIndex,
+						EndIndex:   versionObject[0].EndIndex,
+						Difference: len(newReleaseInfo.Version.Raw) - len(versionObject[0].Value),
 					}
+					// Add the change
+					changes = append(changes, change)
 				}
 			}
 		}
+	}
 
-		// Write the file back
-		if err := os.WriteFile(candidate+"2", []byte(fileContent), os.ModePerm); err != nil {
+	// Process the changes
+	return manager.processChanges(changes)
+}
+
+func (manager *RegexManager) applyChanges(changes []core.IChange) error {
+	// Convert the changes to the manager specific change
+	changesTyped := lo.Map(changes, func(x core.IChange, _ int) *regexManagerChange { return x.(*regexManagerChange) })
+	// Group the changes by file
+	changesGroupedByFile := lo.GroupBy(changesTyped, func(i *regexManagerChange) string {
+		return i.File
+	})
+	// Loop thru the changes by file
+	for file, changesForFile := range changesGroupedByFile {
+		// Sort the changes by startindex
+		slices.SortFunc(changesForFile, func(a, b *regexManagerChange) int {
+			return cmp.Compare(a.StartIndex, b.StartIndex)
+		})
+		// Read the file
+		fileContentBytes, err := os.ReadFile(file)
+		if err != nil {
+			return err
+		}
+		fileContent := string(fileContentBytes)
+		// Apply the changes
+		offset := 0
+		for _, change := range changesForFile {
+			// Replace the version
+			fileContent = fileContent[:change.StartIndex+offset] + change.NewRelease.Version.Raw + fileContent[change.EndIndex+offset:]
+			// Adjust the offset in case the length of the versions is different
+			offset += change.Difference
+		}
+		// Write the file with the changes
+		if err := os.WriteFile(file, []byte(fileContent), os.ModePerm); err != nil {
 			return err
 		}
 	}
 
+	// Run Post-Upgrade replacements
+	for file, changesForFile := range changesGroupedByFile {
+		// Check if there are any post-upgrade replacements
+		hasPostUpgradeReplacements := lo.ContainsBy(changesForFile, func(change *regexManagerChange) bool { return len(change.PostUpgradeReplacements) > 0 })
+		if hasPostUpgradeReplacements {
+			// Read the file
+			fileContentBytes, err := os.ReadFile(file)
+			if err != nil {
+				return err
+			}
+			fileContent := string(fileContentBytes)
+			// Apply the replacements
+			for _, change := range changesForFile {
+				for _, reStr := range change.PostUpgradeReplacements {
+					re := regexp.MustCompile(reStr)
+					fileContent, _ = replaceMatchesInRegex(re, fileContent, map[string]string{
+						"version": change.NewRelease.Version.Raw,
+						"sha1":    change.NewRelease.Hashes["sha1"],
+						"sha256":  change.NewRelease.Hashes["sha256"],
+						"sha512":  change.NewRelease.Hashes["sha512"],
+						"md5":     change.NewRelease.Hashes["md5"],
+					})
+				}
+			}
+			// Write the file with the changes
+			if err := os.WriteFile(file, []byte(fileContent), os.ModePerm); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
-func (manager *RegexManager) resetForNewGroup() error {
-	return nil
-}
-
-func (manager *RegexManager) applyChanges(changes []core.IChange) error {
-	return nil
-}
-
-func replaceMatchesInRegex(regex *regexp.Regexp, str string, replacementMap map[string]string) string {
+func replaceMatchesInRegex(regex *regexp.Regexp, str string, replacementMap map[string]string) (string, int) {
 	matchList := findAllNamedMatchesWithIndex(regex, str, true, -1)
 	orderedCaptures := []*capturedGroup{}
 	for _, match := range matchList {
@@ -181,5 +229,17 @@ func replaceMatchesInRegex(regex *regexp.Regexp, str string, replacementMap map[
 		str = str[:(value.StartIndex+diff)] + replacementMap[value.Key] + str[value.EndIndex+diff:]
 		diff += len(replacementMap[value.Key]) - len(value.Value)
 	}
-	return str
+	return str, diff
+}
+
+// The manager-specific change object that contains everything needed to apply the change
+type regexManagerChange struct {
+	*core.ChangeMeta
+	StartIndex int
+	EndIndex   int
+	Difference int
+}
+
+func (change *regexManagerChange) GetMeta() *core.ChangeMeta {
+	return change.ChangeMeta
 }

@@ -16,8 +16,6 @@ import (
 
 type InlineManager struct {
 	managerBase
-	// A map that keeps track of the offsets for each file when multiple changes are applied to one file
-	FileOffsets map[string]int
 }
 
 func NewInlineManager(logger *slog.Logger, globalConfig *core.Config, managerConfig *core.Manager, platform platforms.IPlatform) IManager {
@@ -28,7 +26,6 @@ func NewInlineManager(logger *slog.Logger, globalConfig *core.Config, managerCon
 			Config:       managerConfig,
 			Platform:     platform,
 		},
-		FileOffsets: map[string]int{},
 	}
 	manager.impl = manager
 	return manager
@@ -58,7 +55,7 @@ func (manager *InlineManager) process() error {
 	markerRegex := regexp.MustCompile("(?m)^[[:blank:]]*[/#*`]+ gonovate: (.+)\\s*$")
 
 	// Process all candidates and collect the changes
-	inlineManagerChanges := []core.IChange{}
+	changes := []core.IChange{}
 	for _, candidate := range candidates {
 		fileLogger := manager.logger.With(slog.String("file", candidate))
 		fileLogger.Debug(fmt.Sprintf("Processing file '%s'", candidate))
@@ -138,7 +135,7 @@ func (manager *InlineManager) process() error {
 				return err
 			}
 			if newReleaseInfo != nil {
-				// There is a change, so build the change object
+				// There is a new version, so build the change object
 				change := &inlineManagerChange{
 					ChangeMeta: &core.ChangeMeta{
 						Datasource:     packageSettings.Datasource,
@@ -153,20 +150,13 @@ func (manager *InlineManager) process() error {
 					Difference: len(newReleaseInfo.Version.Raw) - len(versionObject[0].Value),
 				}
 				// Add the change
-				inlineManagerChanges = append(inlineManagerChanges, change)
+				changes = append(changes, change)
 			}
 		}
 	}
 
 	// Process the changes
-	manager.logger.Debug(fmt.Sprintf("Found %d change(s)", len(inlineManagerChanges)))
-	return manager.processChanges(inlineManagerChanges)
-}
-
-func (manager *InlineManager) resetForNewGroup() error {
-	// For a new group, the file offsets should be resetted
-	manager.FileOffsets = map[string]int{}
-	return nil
+	return manager.processChanges(changes)
 }
 
 func (manager *InlineManager) applyChanges(changes []core.IChange) error {
@@ -189,11 +179,12 @@ func (manager *InlineManager) applyChanges(changes []core.IChange) error {
 		}
 		fileContent := string(fileContentBytes)
 		// Apply the changes
+		offset := 0
 		for _, change := range changesForFile {
 			// Replace the version
-			fileContent = fileContent[:change.StartIndex+manager.FileOffsets[file]] + change.NewRelease.Version.Raw + fileContent[change.EndIndex+manager.FileOffsets[file]:]
+			fileContent = fileContent[:change.StartIndex+offset] + change.NewRelease.Version.Raw + fileContent[change.EndIndex+offset:]
 			// Adjust the offset in case the length of the versions is different
-			manager.FileOffsets[file] += change.Difference
+			offset += change.Difference
 		}
 		// Write the file with the changes
 		if err := os.WriteFile(file, []byte(fileContent), os.ModePerm); err != nil {
