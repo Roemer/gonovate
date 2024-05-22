@@ -6,6 +6,7 @@ import (
 	"gonovate/core"
 	"log/slog"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -52,10 +53,28 @@ func (ds *NpmDatasource) getReleases(packageSettings *core.PackageSettings, host
 	for _, entry := range jsonData.Versions {
 		releaseInfo := &core.ReleaseInfo{
 			VersionString: entry.Version,
+			Hashes:        map[string]string{},
 		}
 		// If possible, get a date
 		if date, ok := jsonData.Time[entry.Version]; ok {
 			releaseInfo.ReleaseDate = date
+		}
+		// If possible, get checksums
+		if entry.Dist != nil {
+			if entry.Dist.Shasum != "" {
+				releaseInfo.Hashes["sha1"] = entry.Dist.Shasum
+			}
+			if entry.Dist.Integrity != "" {
+				parts := strings.SplitN(entry.Dist.Integrity, "-", 2)
+				algo := parts[0]
+				checksumBase64 := parts[1]
+				checksumHex, err := core.Base64ToHex(checksumBase64)
+				if err != nil {
+					// TODO: Log warning?
+				} else {
+					releaseInfo.Hashes[algo] = checksumHex
+				}
+			}
 		}
 		releases = append(releases, releaseInfo)
 	}
@@ -70,4 +89,8 @@ type npmResponse struct {
 
 type npmVersion struct {
 	Version string `json:"version"`
+	Dist    *struct {
+		Shasum    string `json:"shasum"`
+		Integrity string `json:"integrity"`
+	} `json:"dist"`
 }
