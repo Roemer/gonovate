@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"gonovate/core"
 	"gonovate/managers"
@@ -9,15 +10,44 @@ import (
 	"os"
 )
 
+type processSettings struct {
+	configFile       string
+	workingDirectory string
+}
+
 func main() {
-	err := process()
+	// CLI flags
+	help := flag.Bool("help", false, "The flag to set in order to display the help")
+	configFile := flag.String("config", "gonovate.json", "The path to the config file to read")
+	workingDirectory := flag.String("workDir", "", "The path to the working directory")
+	flag.Parse()
+
+	// Show help
+	if *help {
+		fmt.Println("Usage: gonovate <flags>")
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
+
+	// Process
+	err := process(processSettings{
+		configFile:       *configFile,
+		workingDirectory: *workingDirectory,
+	})
 	if err != nil {
 		panic(err)
 	}
 }
 
-func process() error {
-	config, err := core.ReadConfig("gonovate.json")
+func process(processSettings processSettings) error {
+	// Change the working directory
+	if processSettings.workingDirectory != "" {
+		if err := os.Chdir(processSettings.workingDirectory); err != nil {
+			return err
+		}
+	}
+	// Read the configuration
+	config, err := core.ReadConfig(processSettings.configFile)
 	if err != nil {
 		return err
 	}
