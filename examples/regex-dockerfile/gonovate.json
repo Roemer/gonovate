@@ -1,0 +1,39 @@
+{
+    "platform": "local",
+    "extends": [
+        "defaults"
+    ],
+    "managers": [
+        {
+            "id": "dockerfile",
+            "type": "regex",
+            "managerSettings": {
+                "filePatterns": [
+                    "**/[Dd]ockerfile"
+                ],
+                "matchStrings": [
+                    "(?m)^FROM alpine:(?P<version>.*) # (?P<datasource>.*?)\/(?P<packageName>.*?)\\s*$",
+                    "(?m)^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<packageName>.*?)\\s*$"
+                ]
+            },
+            "packageSettings": {
+                "maxUpdateType": "major",
+                "ignoreNonMatching": true
+            }
+        }
+    ],
+    "rules": [
+        {
+            "matches": {
+                "packageNames": [
+                    "lodash"
+                ]
+            },
+            "packageSettings": {
+                "postUpgradeReplacements": [
+                    "(?m)^.*\"Node Hash:[[:blank:]]*(?P<sha512>.+)\".*$"
+                ]
+            }
+        }
+    ]
+}
