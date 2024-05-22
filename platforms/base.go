@@ -12,13 +12,13 @@ type IPlatform interface {
 	// Fetches the project from the platform in it's initial state.
 	FetchProject(project *core.Project) error
 	// Prepares the project to accept changes.
-	PrepareForChanges(change *core.Change) error
+	PrepareForChanges(change core.IChange) error
 	// Submit the changes to the project locally.
-	SubmitChanges(change *core.Change) error
+	SubmitChanges(change core.IChange) error
 	// Publishes the changes to the remote location.
-	PublishChanges(change *core.Change) error
+	PublishChanges(change core.IChange) error
 	// Notifies the remote about the changes with eg. MRs/PRs.
-	NotifyChanges(change *core.Change) error
+	NotifyChanges(change core.IChange) error
 	// Resets the project to the initial state for other changes.
 	ResetToBase() error
 }

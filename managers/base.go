@@ -7,66 +7,111 @@ import (
 	"gonovate/platforms"
 	"log/slog"
 	"strings"
+
+	"github.com/roemer/gover"
 )
 
 type IManager interface {
-	Run(platform platforms.IPlatform) error
-	process(platform platforms.IPlatform) error
+	// Entry point to run a manager
+	Run() error
+	// The internal that starts the processing of a manager
+	process() error
+	// Applies a group of changes
+	applyChanges(changes []core.IChange) error
+	// Allows adding logic in a manager to prepare to process a new group of changes
+	resetForNewGroup() error
 }
 
 type managerBase struct {
 	logger       *slog.Logger
 	GlobalConfig *core.Config
 	Config       *core.Manager
+	Platform     platforms.IPlatform
 	impl         IManager
 }
 
-func (manager *managerBase) Run(platform platforms.IPlatform) error {
-	err := manager.impl.process(platform)
+func (manager *managerBase) Run() error {
+	err := manager.impl.process()
 	if err != nil {
 		manager.logger.Error(fmt.Sprintf("Manager failed with error: %s", err.Error()))
 	}
 	return err
 }
 
-func GetManager(logger *slog.Logger, config *core.Config, managerConfig *core.Manager) (IManager, error) {
+func GetManager(logger *slog.Logger, config *core.Config, managerConfig *core.Manager, platform platforms.IPlatform) (IManager, error) {
 	switch managerConfig.Type {
 	case core.MANAGER_TYPE_INLINE:
-		return NewInlineManager(logger, config, managerConfig), nil
+		return NewInlineManager(logger, config, managerConfig, platform), nil
 	case core.MANAGER_TYPE_REGEX:
-		return NewRegexManager(logger, config, managerConfig), nil
+		return NewRegexManager(logger, config, managerConfig, platform), nil
 	}
 	return nil, fmt.Errorf("no manager defined for '%s'", managerConfig.Type)
 }
 
 // Searches for a new package version with the correct datasource.
-func (manager *managerBase) searchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, error) {
+func (manager *managerBase) searchPackageUpdate(currentVersionString string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, *gover.Version, error) {
 	// Validate the mandatory fields
-	if len(currentVersion) == 0 {
-		return nil, fmt.Errorf("no version defined")
+	if len(currentVersionString) == 0 {
+		return nil, nil, fmt.Errorf("no version defined")
 	}
 	if len(packageSettings.PackageName) == 0 {
-		return nil, fmt.Errorf("no packageName defined")
+		return nil, nil, fmt.Errorf("no packageName defined")
 	}
 	if len(packageSettings.Datasource) == 0 {
-		return nil, fmt.Errorf("no datasource defined")
+		return nil, nil, fmt.Errorf("no datasource defined")
 	}
 	// Sanitize some values like trimming (eg. for forgotten \r in Windows files...)
-	currentVersion, _ = manager.sanitizeString(currentVersion)
+	currentVersionString, _ = manager.sanitizeString(currentVersionString)
 	// Log
-	manager.logger.Info(fmt.Sprintf("Searching a '%s' update for '%s' with version '%s' on datasource '%s'", packageSettings.MaxUpdateType, packageSettings.PackageName, currentVersion, packageSettings.Datasource))
+	manager.logger.Info(fmt.Sprintf("Searching a '%s' update for '%s' with version '%s' on datasource '%s'", packageSettings.MaxUpdateType, packageSettings.PackageName, currentVersionString, packageSettings.Datasource))
 
 	// Lookup the correct datasource
 	ds, err := datasources.GetDatasource(manager.logger, packageSettings.Datasource)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Search for a new version
-	newReleaseInfo, err := ds.SearchPackageUpdate(currentVersion, packageSettings, hostRules)
+	newReleaseInfo, currentVersion, err := ds.SearchPackageUpdate(currentVersionString, packageSettings, hostRules)
 
 	// Return the result
-	return newReleaseInfo, err
+	return newReleaseInfo, currentVersion, err
+}
+
+func (manager *managerBase) processChanges(changes []core.IChange) error {
+	// TODO: Grouping and sorting
+
+	// Process all the changes
+	for _, change := range changes {
+		// Prepare
+		if err := manager.Platform.PrepareForChanges(change); err != nil {
+			return err
+		}
+		// Apply the changes
+		if err := manager.impl.applyChanges([]core.IChange{change}); err != nil {
+			return err
+		}
+		// Submit
+		if err := manager.Platform.SubmitChanges(change); err != nil {
+			return err
+		}
+		// Publish
+		if err := manager.Platform.PublishChanges(change); err != nil {
+			return err
+		}
+		// Notify
+		if err := manager.Platform.NotifyChanges(change); err != nil {
+			return err
+		}
+		// Reset
+		if err := manager.Platform.ResetToBase(); err != nil {
+			return err
+		}
+		if err := manager.impl.resetForNewGroup(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Sanitize the value with trimming (eg. for forgotten \r in Windows files...)

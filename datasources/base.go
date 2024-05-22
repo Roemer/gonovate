@@ -12,7 +12,7 @@ import (
 
 type IDatasource interface {
 	getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error)
-	SearchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, error)
+	SearchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, *gover.Version, error)
 }
 
 type datasourceBase struct {
@@ -21,7 +21,7 @@ type datasourceBase struct {
 	impl   IDatasource
 }
 
-func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, error) {
+func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, *gover.Version, error) {
 	// Setup
 	cacheIdentifier := ds.name + "|" + packageSettings.PackageName
 	allowUnstable := false
@@ -33,17 +33,17 @@ func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSett
 		ignoreNoneMatching = *packageSettings.IgnoreNonMatching
 	}
 	if packageSettings.Versioning == "" {
-		return nil, fmt.Errorf("empty 'versioning' regexp")
+		return nil, nil, fmt.Errorf("empty 'versioning' regexp")
 	}
 	versionRegex, err := regexp.Compile(packageSettings.Versioning)
 	if err != nil {
-		return nil, fmt.Errorf("failed parsing the 'versioning' regexp '%s': %w", packageSettings.Versioning, err)
+		return nil, nil, fmt.Errorf("failed parsing the 'versioning' regexp '%s': %w", packageSettings.Versioning, err)
 	}
 	var extractVersionRegex *regexp.Regexp
 	if packageSettings != nil && len(packageSettings.ExtractVersion) > 0 {
 		extractVersionRegex, err = regexp.Compile(packageSettings.ExtractVersion)
 		if err != nil {
-			return nil, fmt.Errorf("failed parsing the 'extractVersion' regexp '%s': %w", packageSettings.ExtractVersion, err)
+			return nil, nil, fmt.Errorf("failed parsing the 'extractVersion' regexp '%s': %w", packageSettings.ExtractVersion, err)
 		}
 	}
 
@@ -54,7 +54,7 @@ func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSett
 		ds.logger.Debug("Lookup releases from remote")
 		releases, err := ds.impl.getReleases(packageSettings, hostRules)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		// Convert the raw strings to versions
 		avaliableReleases = []*core.ReleaseInfo{}
@@ -66,7 +66,7 @@ func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSett
 					if ignoreNoneMatching {
 						continue
 					} else {
-						return nil, fmt.Errorf("could not extract version from '%s'", release.VersionString)
+						return nil, nil, fmt.Errorf("could not extract version from '%s'", release.VersionString)
 					}
 				}
 				// Continue with only the matched part
@@ -78,7 +78,7 @@ func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSett
 					ds.logger.Debug(fmt.Sprintf("Ignoring non matching version: %s", release.VersionString))
 					continue
 				}
-				return nil, fmt.Errorf("failed parsing the version from '%s': %w", release.VersionString, err)
+				return nil, nil, fmt.Errorf("failed parsing the version from '%s': %w", release.VersionString, err)
 			}
 			release.Version = version
 			avaliableReleases = append(avaliableReleases, release)
@@ -91,18 +91,18 @@ func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSett
 
 	if len(avaliableReleases) == 0 {
 		ds.logger.Warn("No releases found to check for versions")
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	// Parse the current version
 	curr, err := gover.ParseVersionFromRegex(currentVersion, versionRegex)
 	if err != nil {
-		return nil, fmt.Errorf("failed parsing the current version '%s': %w", currentVersion, err)
+		return nil, nil, fmt.Errorf("failed parsing the current version '%s': %w", currentVersion, err)
 	}
 	// Get the reference version to search
 	refVersion, err := getReferenceVersionForUpdateType(packageSettings.MaxUpdateType, curr)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Search for an update
@@ -110,24 +110,24 @@ func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSett
 
 	if maxValidRelease == nil {
 		ds.logger.Warn("No valid releases found within the desired limits")
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	// Check if the version is the same
 	if maxValidRelease.Version.Equals(curr) {
 		ds.logger.Debug("Found no new version")
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	// The current version somehow is bigger than the maximum found version
 	if maxValidRelease.Version.LessThan(curr) {
 		ds.logger.Warn(fmt.Sprintf("Max found version is less than the current version: %s < %s", maxValidRelease.VersionString, curr.Raw))
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	// It is not the same, return the new version
 	ds.logger.Info(fmt.Sprintf("Found a new version: %s", maxValidRelease.Version.Raw))
-	return maxValidRelease, nil
+	return maxValidRelease, curr, nil
 }
 
 func GetDatasource(logger *slog.Logger, datasource string) (IDatasource, error) {

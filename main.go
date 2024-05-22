@@ -35,12 +35,12 @@ func process() error {
 
 	// Process the managers
 	for _, managerConfig := range config.Managers {
-		manager, err := managers.GetManager(logger, config, managerConfig)
+		manager, err := managers.GetManager(logger, config, managerConfig, platform)
 		if err != nil {
 			return err
 		}
 		// Run the manager
-		if err := manager.Run(platform); err != nil {
+		if err := manager.Run(); err != nil {
 			return err
 		}
 	}

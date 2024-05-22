@@ -1,6 +1,7 @@
 package managers
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"gonovate/core"
@@ -8,25 +9,32 @@ import (
 	"log/slog"
 	"os"
 	"regexp"
+	"slices"
+
+	"github.com/samber/lo"
 )
 
 type InlineManager struct {
 	managerBase
+	// A map that keeps track of the offsets for each file when multiple changes are applied to one file
+	FileOffsets map[string]int
 }
 
-func NewInlineManager(logger *slog.Logger, globalConfig *core.Config, managerConfig *core.Manager) IManager {
+func NewInlineManager(logger *slog.Logger, globalConfig *core.Config, managerConfig *core.Manager, platform platforms.IPlatform) IManager {
 	manager := &InlineManager{
 		managerBase: managerBase{
 			logger:       logger.With(slog.String("handlerId", managerConfig.Id)),
 			GlobalConfig: globalConfig,
 			Config:       managerConfig,
+			Platform:     platform,
 		},
+		FileOffsets: map[string]int{},
 	}
 	manager.impl = manager
 	return manager
 }
 
-func (manager *InlineManager) process(platform platforms.IPlatform) error {
+func (manager *InlineManager) process() error {
 	manager.logger.Info(fmt.Sprintf("Starting InlineManager with Id %s", manager.Config.Id))
 
 	// Process all rules to apply the ones relevant for the manager and store the ones relevant for packages.
@@ -49,7 +57,8 @@ func (manager *InlineManager) process(platform platforms.IPlatform) error {
 	// Prepare the marker regex which searches the file for the inline markers
 	markerRegex := regexp.MustCompile("(?m)^[[:blank:]]*[/#*`]+ gonovate: (.+)\\s*$")
 
-	// Process all candidates
+	// Process all candidates and collect the changes
+	inlineManagerChanges := []core.IChange{}
 	for _, candidate := range candidates {
 		fileLogger := manager.logger.With(slog.String("file", candidate))
 		fileLogger.Debug(fmt.Sprintf("Processing file '%s'", candidate))
@@ -123,48 +132,74 @@ func (manager *InlineManager) process(platform platforms.IPlatform) error {
 			}
 
 			// Search for a new version for the package
-			currentVersion, _ := manager.sanitizeString(versionObject[0].Value)
-			newReleaseInfo, err := manager.searchPackageUpdate(currentVersion, packageSettings, manager.GlobalConfig.HostRules)
+			currentVersionString, _ := manager.sanitizeString(versionObject[0].Value)
+			newReleaseInfo, currentVersion, err := manager.searchPackageUpdate(currentVersionString, packageSettings, manager.GlobalConfig.HostRules)
 			if err != nil {
 				return err
 			}
 			if newReleaseInfo != nil {
-				change := &core.Change{
-					PackageName: packageSettings.PackageName,
-					OldVersion:  currentVersion,
-					NewVersion:  newReleaseInfo.Version.Raw,
-					Data:        map[string]string{},
+				// There is a change, so build the change object
+				change := &inlineManagerChange{
+					ChangeMeta: &core.ChangeMeta{
+						Datasource:     packageSettings.Datasource,
+						PackageName:    packageSettings.PackageName,
+						File:           candidate,
+						CurrentVersion: currentVersion,
+						NewRelease:     newReleaseInfo,
+						Data:           map[string]string{},
+					},
+					StartIndex: versionObject[0].StartIndex + contentSearchStart,
+					EndIndex:   versionObject[0].EndIndex + contentSearchStart,
+					Difference: len(newReleaseInfo.Version.Raw) - len(versionObject[0].Value),
 				}
-				if err := platform.PrepareForChanges(change); err != nil {
-					return err
-				}
-
-				// Prepare the changes
-				replaceStart := versionObject[0].StartIndex + contentSearchStart
-				replaceEnd := versionObject[0].EndIndex + contentSearchStart
-				newFileContent := fileContent[:replaceStart] + newReleaseInfo.Version.Raw + fileContent[replaceEnd:]
-
-				// Write the file with the changes
-				if err := os.WriteFile(candidate, []byte(newFileContent), os.ModePerm); err != nil {
-					return err
-				}
-
-				if err := platform.SubmitChanges(change); err != nil {
-					return err
-				}
-				if err := platform.PublishChanges(change); err != nil {
-					return err
-				}
-				if err := platform.NotifyChanges(change); err != nil {
-					return err
-				}
-				if err := platform.ResetToBase(); err != nil {
-					return err
-				}
+				// Add the change
+				inlineManagerChanges = append(inlineManagerChanges, change)
 			}
 		}
 	}
 
+	// Process the changes
+	manager.logger.Debug(fmt.Sprintf("Found %d change(s)", len(inlineManagerChanges)))
+	return manager.processChanges(inlineManagerChanges)
+}
+
+func (manager *InlineManager) resetForNewGroup() error {
+	// For a new group, the file offsets should be resetted
+	manager.FileOffsets = map[string]int{}
+	return nil
+}
+
+func (manager *InlineManager) applyChanges(changes []core.IChange) error {
+	// Convert the changes to the manager specific change
+	changesTyped := lo.Map(changes, func(x core.IChange, _ int) *inlineManagerChange { return x.(*inlineManagerChange) })
+	// Group the changes by file
+	changesGroupedByFile := lo.GroupBy(changesTyped, func(i *inlineManagerChange) string {
+		return i.File
+	})
+	// Loop thru the changes by file
+	for file, changesForFile := range changesGroupedByFile {
+		// Sort the changes by startindex
+		slices.SortFunc(changesForFile, func(a, b *inlineManagerChange) int {
+			return cmp.Compare(a.StartIndex, b.StartIndex)
+		})
+		// Read the file
+		fileContentBytes, err := os.ReadFile(file)
+		if err != nil {
+			return err
+		}
+		fileContent := string(fileContentBytes)
+		// Apply the changes
+		for _, change := range changesForFile {
+			// Replace the version
+			fileContent = fileContent[:change.StartIndex+manager.FileOffsets[file]] + change.NewRelease.Version.Raw + fileContent[change.EndIndex+manager.FileOffsets[file]:]
+			// Adjust the offset in case the length of the versions is different
+			manager.FileOffsets[file] += change.Difference
+		}
+		// Write the file with the changes
+		if err := os.WriteFile(file, []byte(fileContent), os.ModePerm); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -173,4 +208,16 @@ type inlineManagerConfig struct {
 	Datasource  string `json:"datasource"`
 	Matchstring string `json:"matchstring"`
 	Versioning  string `json:"versioning"`
+}
+
+// The manager-specific change object that contains everything needed to apply the change
+type inlineManagerChange struct {
+	*core.ChangeMeta
+	StartIndex int
+	EndIndex   int
+	Difference int
+}
+
+func (change *inlineManagerChange) GetMeta() *core.ChangeMeta {
+	return change.ChangeMeta
 }

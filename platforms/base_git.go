@@ -14,10 +14,10 @@ type gitPlatform struct {
 	BaseBranch string
 }
 
-func (p *gitPlatform) CreateBranch(change *core.Change) error {
+func (p *gitPlatform) CreateBranch(change *core.ChangeMeta) error {
 	branchName := fmt.Sprintf("gonovate/%s-%s",
 		p.normalizeString(change.PackageName, 40),
-		p.normalizeString(change.NewVersion, 0))
+		p.normalizeString(change.NewRelease.Version.Raw, 0))
 
 	change.Data["branchName"] = branchName
 
@@ -32,9 +32,9 @@ func (p *gitPlatform) AddAll() error {
 	return err
 }
 
-func (p *gitPlatform) Commit(change *core.Change) error {
+func (p *gitPlatform) Commit(change *core.ChangeMeta) error {
 	// Build the commit message
-	msg := fmt.Sprintf("Update %s from %s to %s", change.PackageName, change.OldVersion, change.NewVersion)
+	msg := fmt.Sprintf("Update %s from %s to %s", change.PackageName, change.CurrentVersion.Raw, change.NewRelease.Version.Raw)
 	// Store it for later use
 	change.Data["msg"] = msg
 

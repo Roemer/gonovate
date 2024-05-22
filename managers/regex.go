@@ -15,19 +15,20 @@ type RegexManager struct {
 	managerBase
 }
 
-func NewRegexManager(logger *slog.Logger, globalConfig *core.Config, managerConfig *core.Manager) IManager {
+func NewRegexManager(logger *slog.Logger, globalConfig *core.Config, managerConfig *core.Manager, platform platforms.IPlatform) IManager {
 	manager := &RegexManager{
 		managerBase: managerBase{
 			logger:       logger.With(slog.String("handlerId", managerConfig.Id)),
 			GlobalConfig: globalConfig,
 			Config:       managerConfig,
+			Platform:     platform,
 		},
 	}
 	manager.impl = manager
 	return manager
 }
 
-func (manager *RegexManager) process(platform platforms.IPlatform) error {
+func (manager *RegexManager) process() error {
 	manager.logger.Info(fmt.Sprintf("Starting RegexManager with Id %s", manager.Config.Id))
 
 	// Process all rules to apply the ones relevant for the manager and store the ones relevant for packages.
@@ -123,8 +124,8 @@ func (manager *RegexManager) process(platform platforms.IPlatform) error {
 				}
 
 				// Search for a new version for the package
-				currentVersion, _ := manager.sanitizeString(versionObject[0].Value)
-				newReleaseInfo, err := manager.searchPackageUpdate(currentVersion, packageSettings, manager.GlobalConfig.HostRules)
+				currentVersionString, _ := manager.sanitizeString(versionObject[0].Value)
+				newReleaseInfo, _, err := manager.searchPackageUpdate(currentVersionString, packageSettings, manager.GlobalConfig.HostRules)
 				if err != nil {
 					return err
 				}
@@ -152,6 +153,14 @@ func (manager *RegexManager) process(platform platforms.IPlatform) error {
 		}
 	}
 
+	return nil
+}
+
+func (manager *RegexManager) resetForNewGroup() error {
+	return nil
+}
+
+func (manager *RegexManager) applyChanges(changes []core.IChange) error {
 	return nil
 }
 

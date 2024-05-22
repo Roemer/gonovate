@@ -39,22 +39,22 @@ func (p *GithubPlatform) FetchProject(project *core.Project) error {
 	return nil
 }
 
-func (p *GithubPlatform) PrepareForChanges(change *core.Change) error {
-	return p.CreateBranch(change)
+func (p *GithubPlatform) PrepareForChanges(change core.IChange) error {
+	return p.CreateBranch(change.GetMeta())
 }
 
-func (p *GithubPlatform) SubmitChanges(change *core.Change) error {
+func (p *GithubPlatform) SubmitChanges(change core.IChange) error {
 	if err := p.AddAll(); err != nil {
 		return err
 	}
-	return p.Commit(change)
+	return p.Commit(change.GetMeta())
 }
 
-func (p *GithubPlatform) PublishChanges(change *core.Change) error {
+func (p *GithubPlatform) PublishChanges(change core.IChange) error {
 	return p.PushBranch()
 }
 
-func (p *GithubPlatform) NotifyChanges(change *core.Change) error {
+func (p *GithubPlatform) NotifyChanges(change core.IChange) error {
 	// Prepare the data for the API
 	token := ""
 	owner := ""
@@ -80,7 +80,7 @@ func (p *GithubPlatform) NotifyChanges(change *core.Change) error {
 	// Create the client
 	client := github.NewClient(nil).WithAuthToken(token)
 	existingRequest, _, err := client.PullRequests.List(context.Background(), owner, repository, &github.PullRequestListOptions{
-		Head:  change.Data["branchName"],
+		Head:  change.GetMeta().Data["branchName"],
 		Base:  p.BaseBranch,
 		State: "open",
 	})
@@ -88,14 +88,14 @@ func (p *GithubPlatform) NotifyChanges(change *core.Change) error {
 		return err
 	}
 	// The Head search parameter does not work without "user:", so just make sure that the returned list really contains the branch
-	prExists := lo.ContainsBy(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == change.Data["branchName"] })
+	prExists := lo.ContainsBy(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == change.GetMeta().Data["branchName"] })
 	if prExists {
 		p.logger.Info(fmt.Sprintf("PR already exists: %s", *existingRequest[0].HTMLURL))
 	} else {
 		// Create the PR
 		pr, _, err := client.PullRequests.Create(context.Background(), owner, repository, &github.NewPullRequest{
-			Title: github.String(change.Data["msg"]),
-			Head:  github.String(change.Data["branchName"]),
+			Title: github.String(change.GetMeta().Data["msg"]),
+			Head:  github.String(change.GetMeta().Data["branchName"]),
 			Base:  github.String(p.BaseBranch),
 		})
 		if err != nil {

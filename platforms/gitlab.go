@@ -32,22 +32,22 @@ func (p *GitlabPlatform) FetchProject(project *core.Project) error {
 	return nil
 }
 
-func (p *GitlabPlatform) PrepareForChanges(change *core.Change) error {
-	return p.CreateBranch(change)
+func (p *GitlabPlatform) PrepareForChanges(change core.IChange) error {
+	return p.CreateBranch(change.GetMeta())
 }
 
-func (p *GitlabPlatform) SubmitChanges(change *core.Change) error {
+func (p *GitlabPlatform) SubmitChanges(change core.IChange) error {
 	if err := p.AddAll(); err != nil {
 		return err
 	}
-	return p.Commit(change)
+	return p.Commit(change.GetMeta())
 }
 
-func (p *GitlabPlatform) PublishChanges(change *core.Change) error {
+func (p *GitlabPlatform) PublishChanges(change core.IChange) error {
 	return p.PushBranch()
 }
 
-func (p *GitlabPlatform) NotifyChanges(change *core.Change) error {
+func (p *GitlabPlatform) NotifyChanges(change core.IChange) error {
 	// TODO: Create MR
 	return nil
 }
