@@ -22,6 +22,10 @@ func NewGitlabPlatform(logger *slog.Logger, config *core.Config) IPlatform {
 	return platform
 }
 
+func (p *GitlabPlatform) Type() string {
+	return core.PLATFORM_TYPE_GITLAB
+}
+
 func (p *GitlabPlatform) SearchProjects() ([]*core.Project, error) {
 	// TODO
 	return nil, nil

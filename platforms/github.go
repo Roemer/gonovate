@@ -29,6 +29,10 @@ func NewGithubPlatform(logger *slog.Logger, config *core.Config) IPlatform {
 	return platform
 }
 
+func (p *GithubPlatform) Type() string {
+	return core.PLATFORM_TYPE_GITHUB
+}
+
 func (p *GithubPlatform) SearchProjects() ([]*core.Project, error) {
 	// TODO
 	return nil, nil

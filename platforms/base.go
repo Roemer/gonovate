@@ -7,6 +7,8 @@ import (
 )
 
 type IPlatform interface {
+	// Returns the type of the platform
+	Type() string
 	// Searches on the platform for projects to run gonovate on.
 	SearchProjects() ([]*core.Project, error)
 	// Fetches the project from the platform in it's initial state.
@@ -34,6 +36,8 @@ func GetPlatform(logger *slog.Logger, config *core.Config) (IPlatform, error) {
 		return NewGithubPlatform(logger, config), nil
 	case core.PLATFORM_TYPE_GITLAB:
 		return NewGitlabPlatform(logger, config), nil
+	case core.PLATFORM_TYPE_LOCAL:
+		return NewLocalPlatform(logger, config), nil
 	}
 	return nil, fmt.Errorf("no platform defined for '%s'", config.Platform)
 }
