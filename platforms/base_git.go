@@ -1,10 +1,8 @@
 package platforms
 
 import (
-	"bytes"
 	"fmt"
 	"gonovate/core"
-	"os/exec"
 	"regexp"
 	"strings"
 )
@@ -23,12 +21,12 @@ func (p *gitPlatform) CreateBranch(change *core.ChangeMeta) error {
 
 	p.logger.Debug(fmt.Sprintf("Creating branch '%s'", branchName))
 
-	_, _, err := p.runGitCommand("checkout", "-B", branchName)
+	_, _, err := core.Git{}.Run("checkout", "-B", branchName)
 	return err
 }
 
 func (p *gitPlatform) AddAll() error {
-	_, _, err := p.runGitCommand("add", "--all")
+	_, _, err := core.Git{}.Run("add", "--all")
 	return err
 }
 
@@ -49,31 +47,18 @@ func (p *gitPlatform) Commit(change *core.ChangeMeta) error {
 	}
 
 	// Execute the command
-	_, _, err := p.runGitCommand(args...)
+	_, _, err := core.Git{}.Run(args...)
 	return err
 }
 
 func (p *gitPlatform) PushBranch() error {
-	_, _, err := p.runGitCommand("push", "-u", "origin", "HEAD", "--force")
+	_, _, err := core.Git{}.Run("push", "-u", "origin", "HEAD", "--force")
 	return err
 }
 
 func (p *gitPlatform) CheckoutBaseBranch() error {
-	_, _, err := p.runGitCommand("checkout", p.BaseBranch)
+	_, _, err := core.Git{}.Run("checkout", p.BaseBranch)
 	return err
-}
-
-func (p *gitPlatform) runGitCommand(arguments ...string) (string, string, error) {
-	cmd := exec.Command("git", arguments...)
-	var stdoutBuf, stderrBuf bytes.Buffer
-	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
-	err := cmd.Run()
-	outStr, errStr := p.processOutputString(stdoutBuf.String()), p.processOutputString(stderrBuf.String())
-	if err != nil {
-		err = fmt.Errorf("git command failed: %w", err)
-	}
-	return outStr, errStr, err
 }
 
 func (p *gitPlatform) normalizeString(value string, maxLength int) string {
@@ -107,8 +92,4 @@ func (p *gitPlatform) normalizeString(value string, maxLength int) string {
 	// Make sure it does not end with a any of the defined chars (again)
 	normalizedString = invalidEndingMatcher.ReplaceAllString(normalizedString, "")
 	return normalizedString
-}
-
-func (p *gitPlatform) processOutputString(value string) string {
-	return strings.TrimRight(value, "\r\n")
 }
