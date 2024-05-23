@@ -92,9 +92,9 @@ func (p *GithubPlatform) NotifyChanges(change core.IChange) error {
 		return err
 	}
 	// The Head search parameter does not work without "user:", so just make sure that the returned list really contains the branch
-	prExists := lo.ContainsBy(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == change.GetMeta().Data["branchName"] })
+	existingPr, prExists := lo.Find(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == change.GetMeta().Data["branchName"] })
 	if prExists {
-		p.logger.Info(fmt.Sprintf("PR already exists: %s", *existingRequest[0].HTMLURL))
+		p.logger.Info(fmt.Sprintf("PR already exists: %s", *existingPr.HTMLURL))
 	} else {
 		// Create the PR
 		pr, _, err := client.PullRequests.Create(context.Background(), owner, repository, &github.NewPullRequest{
