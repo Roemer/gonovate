@@ -3,6 +3,8 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"gonovate/presets"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -10,111 +12,196 @@ import (
 	"strings"
 )
 
-func ReadConfig(configPath string) (*Config, error) {
+const (
+	infoTypeFile string = "file"
+)
+
+type ConfigLoader struct{}
+
+type configInfo struct {
+	Type     string
+	Location string
+}
+
+func newConfigInfo(info string) (*configInfo, error) {
+	if info == "" {
+		return nil, fmt.Errorf("empty config info")
+	}
+	parts := strings.SplitN(info, ":", 2)
+	var configType, configLoc string
+	if len(parts) == 1 {
+		configType = infoTypeFile
+		configLoc = parts[0]
+	} else {
+		configType = parts[0]
+		configLoc = parts[1]
+	}
+	// Append the json extension if needed
+	if path.Ext(configLoc) == "" {
+		configLoc += ".json"
+	}
+	// Create the info object
+	return &configInfo{
+		Type:     configType,
+		Location: configLoc,
+	}, nil
+}
+
+func (c ConfigLoader) LoadConfig(configPath string) (*Config, error) {
 	if configPath == "" {
 		configPath = "gonovate.json"
 	}
+	configInfo, err := newConfigInfo(configPath)
+	if err != nil {
+		return nil, err
+	}
+	return c.loadConfig(nil, configInfo)
+}
+
+func (c ConfigLoader) loadConfig(parentInfo, newInfo *configInfo) (*Config, error) {
+	var newConfig *Config
+	var err error
+	// Try load the config according to the type
+	if newInfo.Type == infoTypeFile {
+		newConfig, err = c.loadConfigFromFile(parentInfo, newInfo)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, fmt.Errorf("unknown preset type '%s'", newInfo.Type)
+	}
+
+	// Create a new object for the merged config with the presets
+	mergedConfig := &Config{}
+	// Process the "Extends" presets first
+	for _, presetLookupInfo := range newConfig.Extends {
+		presetInfo, err := newConfigInfo(presetLookupInfo)
+		if err != nil {
+			return nil, err
+		}
+		// Read the extended preset
+		extendsConfig, err := c.loadConfig(newInfo, presetInfo)
+		if err != nil {
+			return nil, err
+		}
+		// Merge the extended preset into the merged config
+		mergedConfig.MergeWith(extendsConfig)
+	}
+	// Merge the original config into the merged config
+	mergedConfig.MergeWith(newConfig)
+
+	// Return the merged config
+	return mergedConfig, nil
+}
+
+func (c ConfigLoader) loadConfigFromFile(parentInfo, newInfo *configInfo) (*Config, error) {
+	// If the path is absolute, use it directly
+	if filepath.IsAbs(newInfo.Location) {
+		return c.readConfigFromFile(newInfo.Location)
+	}
+
+	// A: Try load it from the current folder
+	if exists, err := FileExists(newInfo.Location); err != nil {
+		return nil, err
+	} else if exists {
+		return c.readConfigFromFile(newInfo.Location)
+	}
+
+	// B: Search in the folder of the parent config
+	if parentInfo != nil && parentInfo.Type == infoTypeFile && parentInfo.Location != "" {
+		tempPresetPath := filepath.Clean(filepath.Join(filepath.Dir(parentInfo.Location), newInfo.Location))
+		if exists, err := FileExists(tempPresetPath); err != nil {
+			return nil, err
+		} else if exists {
+			return c.readConfigFromFile(tempPresetPath)
+		}
+	}
+
+	// C: Search in the current executable directory
+	if executablePath, err := os.Executable(); err != nil {
+		return nil, err
+	} else {
+		tempPresetPath := filepath.Clean(filepath.Join(filepath.Dir(executablePath), newInfo.Location))
+		if exists, err := FileExists(tempPresetPath); err != nil {
+			return nil, err
+		} else if exists {
+			return c.readConfigFromFile(tempPresetPath)
+		}
+		// Also search in the presets subfolder
+		tempPresetPath = filepath.Clean(filepath.Join(filepath.Dir(executablePath), "presets", newInfo.Location))
+		if exists, err := FileExists(tempPresetPath); err != nil {
+			return nil, err
+		} else if exists {
+			return c.readConfigFromFile(tempPresetPath)
+		}
+	}
+
+	// D: Search based on the current file that is executed (probably dev with go run . only)
+	if _, filename, _, ok := runtime.Caller(0); ok {
+		rootPath := filepath.Dir(filepath.Dir(filename))
+		tempPresetPath := filepath.Clean(filepath.Join(rootPath, newInfo.Location))
+		if exists, err := FileExists(tempPresetPath); err != nil {
+			return nil, err
+		} else if exists {
+			return c.readConfigFromFile(tempPresetPath)
+		}
+		// Also search in the presets subfolder
+		tempPresetPath = filepath.Clean(filepath.Join(rootPath, "presets", newInfo.Location))
+		if exists, err := FileExists(tempPresetPath); err != nil {
+			return nil, err
+		} else if exists {
+			return c.readConfigFromFile(tempPresetPath)
+		}
+	}
+
+	// E: Search from the embedded presets
+	hasEmbedded := false
+	if err := fs.WalkDir(presets.Presets, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			if path == newInfo.Location {
+				hasEmbedded = true
+				return fs.SkipAll
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	if hasEmbedded {
+		return c.readConfigFromEmbeddedFile(newInfo.Location)
+	}
+
+	// Nothing found at all
+	return nil, fmt.Errorf("file not found for '%s'", newInfo.Location)
+}
+
+func (c ConfigLoader) readConfigFromFile(configPath string) (*Config, error) {
 	configFile, err := os.Open(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed opening config file '%s': %w", configPath, err)
+		return nil, fmt.Errorf("failed opening file '%s': %w", configPath, err)
 	}
 	defer configFile.Close()
 
 	config := &Config{}
 	if err = json.NewDecoder(configFile).Decode(config); err != nil {
-		return nil, fmt.Errorf("failed parsing config file '%s': %w", configPath, err)
+		return nil, fmt.Errorf("failed parsing file '%s': %w", configPath, err)
 	}
-
-	// Create a new object for the final merged config
-	finalConfig := &Config{}
-	// Process the "Extends" presets first
-	for _, presetLookupInfo := range config.Extends {
-		// Read the extended preset
-		extendsConfig, err := readExtendsConfig(configPath, presetLookupInfo)
-		if err != nil {
-			return nil, err
-		}
-		// Merge the extended preset into the final config
-		finalConfig.MergeWith(extendsConfig)
-	}
-	// Merge the original config into the final config
-	finalConfig.MergeWith(config)
-	// Return the final config
-	return finalConfig, nil
+	return config, nil
 }
 
-func readExtendsConfig(currentPath, presetLookupInfo string) (*Config, error) {
-	// Presets without a type default to file
-	if !strings.Contains(presetLookupInfo, ":") {
-		presetLookupInfo = "file:" + presetLookupInfo
+func (c ConfigLoader) readConfigFromEmbeddedFile(configPath string) (*Config, error) {
+	configFile, err := presets.Presets.Open(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed opening embedded file '%s': %w", configPath, err)
 	}
-	parts := strings.Split(presetLookupInfo, ":")
-	presetType := parts[0]
-	presetPath := parts[1]
-	// Process file preset
-	if presetType == "file" {
-		if path.Ext(presetPath) == "" {
-			presetPath += ".json"
-		}
-		// Try resolving the preset path
-		var err error
-		presetPath, err = getPresetPath(currentPath, presetPath)
-		if err != nil {
-			return nil, err
-		}
-	}
-	// Read the config from the path
-	return ReadConfig(presetPath)
-}
+	defer configFile.Close()
 
-func getPresetPath(currentPath string, presetPath string) (string, error) {
-	// If the path is absolute, use it if it exists
-	if filepath.IsAbs(presetPath) {
-		if exists, err := FileExists(presetPath); err != nil {
-			return "", err
-		} else if exists {
-			return presetPath, nil
-		}
-	} else {
-		// Search it based on the current config directory
-		tempPresetPath := filepath.Clean(filepath.Join(filepath.Dir(currentPath), presetPath))
-		if exists, err := FileExists(tempPresetPath); err != nil {
-			return "", err
-		} else if exists {
-			return tempPresetPath, nil
-		}
-		// Search it based on the current executable directory
-		executablePath, err := os.Executable()
-		if err != nil {
-			return "", err
-		}
-		tempPresetPath = filepath.Clean(filepath.Join(filepath.Dir(executablePath), presetPath))
-		if exists, err := FileExists(tempPresetPath); err != nil {
-			return "", err
-		} else if exists {
-			return tempPresetPath, nil
-		}
-		// Search based on the current executable directory but in the presets subfolder
-		tempPresetPath = filepath.Clean(filepath.Join(filepath.Dir(executablePath), "presets", presetPath))
-		if exists, err := FileExists(tempPresetPath); err != nil {
-			return "", err
-		} else if exists {
-			return tempPresetPath, nil
-		}
-		// Search based on the current file that is executed (probably dev with go run . only)
-		if _, filename, _, ok := runtime.Caller(0); ok {
-			rootPath := filepath.Dir(filepath.Dir(filename))
-			tempPresetPath = filepath.Clean(filepath.Join(rootPath, "presets", presetPath))
-			if exists, err := FileExists(tempPresetPath); err != nil {
-				return "", err
-			} else if exists {
-				return tempPresetPath, nil
-			}
-		}
+	config := &Config{}
+	if err = json.NewDecoder(configFile).Decode(config); err != nil {
+		return nil, fmt.Errorf("failed parsing embedded file '%s': %w", configPath, err)
 	}
-	return "", fmt.Errorf("preset file not found for '%s'", presetPath)
-}
-
-func Ptr[T any](value T) *T {
-	return &value
+	return config, nil
 }

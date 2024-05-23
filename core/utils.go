@@ -24,3 +24,7 @@ func Base64ToHex(base64String string) (string, error) {
 	}
 	return EncodeToHex(bytes), nil
 }
+
+func Ptr[T any](value T) *T {
+	return &value
+}

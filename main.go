@@ -128,7 +128,7 @@ func runCmd(args []string) error {
 		}
 	}
 	// Read the configuration
-	config, err := core.ReadConfig(configFile)
+	config, err := core.ConfigLoader{}.LoadConfig(configFile)
 	if err != nil {
 		return err
 	}
