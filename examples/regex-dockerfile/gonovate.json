@@ -31,7 +31,7 @@
             },
             "packageSettings": {
                 "postUpgradeReplacements": [
-                    "(?m)^.*\"Node Hash:[[:blank:]]*(?P<sha512>.+)\".*$"
+                    "(?m)^.*\"Lodash Hash:[[:blank:]]*(?P<sha512>.+)\".*$"
                 ]
             }
         }
