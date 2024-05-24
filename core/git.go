@@ -7,9 +7,11 @@ import (
 	"strings"
 )
 
-type Git struct{}
+type git struct{}
 
-func (g Git) Run(arguments ...string) (string, string, error) {
+var Git git = git{}
+
+func (g git) Run(arguments ...string) (string, string, error) {
 	cmd := exec.Command("git", arguments...)
 	var stdoutBuf, stderrBuf bytes.Buffer
 	cmd.Stdout = &stdoutBuf
@@ -22,6 +24,6 @@ func (g Git) Run(arguments ...string) (string, string, error) {
 	return outStr, errStr, err
 }
 
-func (g Git) processOutputString(value string) string {
+func (g git) processOutputString(value string) string {
 	return strings.TrimRight(value, "\r\n")
 }

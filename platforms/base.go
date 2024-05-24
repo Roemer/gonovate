@@ -32,12 +32,14 @@ type platformBase struct {
 
 func GetPlatform(logger *slog.Logger, config *core.Config) (IPlatform, error) {
 	switch config.Platform {
+	case core.PLATFORM_TYPE_GIT:
+		return NewGitPlatform(logger, config), nil
 	case core.PLATFORM_TYPE_GITHUB:
 		return NewGithubPlatform(logger, config), nil
 	case core.PLATFORM_TYPE_GITLAB:
 		return NewGitlabPlatform(logger, config), nil
-	case core.PLATFORM_TYPE_LOCAL:
-		return NewLocalPlatform(logger, config), nil
+	case core.PLATFORM_TYPE_NOOP:
+		return NewNoopPlatform(logger, config), nil
 	}
 	return nil, fmt.Errorf("no platform defined for '%s'", config.Platform)
 }

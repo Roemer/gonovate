@@ -78,8 +78,8 @@ func (manager *managerBase) searchPackageUpdate(currentVersionString string, pac
 
 func (manager *managerBase) processChanges(changes []core.IChange) error {
 	manager.logger.Debug(fmt.Sprintf("Processing %d change(s)", len(changes)))
-	// Special case for the local platform: apply all changes at once
-	if manager.Platform.Type() == core.PLATFORM_TYPE_LOCAL {
+	// Special case for the noop platform: apply all changes at once
+	if manager.Platform.Type() == core.PLATFORM_TYPE_NOOP {
 		if err := manager.impl.applyChanges(changes); err != nil {
 			return err
 		}

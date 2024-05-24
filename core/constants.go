@@ -1,9 +1,10 @@
 package core
 
 const (
+	PLATFORM_TYPE_GIT    string = "git"
 	PLATFORM_TYPE_GITHUB string = "github"
 	PLATFORM_TYPE_GITLAB string = "gitlab"
-	PLATFORM_TYPE_LOCAL  string = "local"
+	PLATFORM_TYPE_NOOP   string = "noop"
 )
 
 const (

@@ -6,18 +6,12 @@ import (
 )
 
 type GitlabPlatform struct {
-	gitPlatform
+	GitPlatform
 }
 
-func NewGitlabPlatform(logger *slog.Logger, config *core.Config) IPlatform {
+func NewGitlabPlatform(logger *slog.Logger, config *core.Config) *GitlabPlatform {
 	platform := &GitlabPlatform{
-		gitPlatform: gitPlatform{
-			platformBase: platformBase{
-				logger: logger,
-				Config: config,
-			},
-			BaseBranch: "main",
-		},
+		GitPlatform: *NewGitPlatform(logger, config),
 	}
 	return platform
 }
@@ -36,26 +30,7 @@ func (p *GitlabPlatform) FetchProject(project *core.Project) error {
 	return nil
 }
 
-func (p *GitlabPlatform) PrepareForChanges(change core.IChange) error {
-	return p.CreateBranch(change.GetMeta())
-}
-
-func (p *GitlabPlatform) SubmitChanges(change core.IChange) error {
-	if err := p.AddAll(); err != nil {
-		return err
-	}
-	return p.Commit(change.GetMeta())
-}
-
-func (p *GitlabPlatform) PublishChanges(change core.IChange) error {
-	return p.PushBranch()
-}
-
 func (p *GitlabPlatform) NotifyChanges(change core.IChange) error {
 	// TODO: Create MR
 	return nil
-}
-
-func (p *GitlabPlatform) ResetToBase() error {
-	return p.CheckoutBaseBranch()
 }

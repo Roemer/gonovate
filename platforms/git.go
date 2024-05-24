@@ -3,38 +3,64 @@ package platforms
 import (
 	"fmt"
 	"gonovate/core"
+	"log/slog"
 	"regexp"
 	"strings"
 )
 
-type gitPlatform struct {
+type GitPlatform struct {
 	platformBase
 	BaseBranch string
 }
 
-func (p *gitPlatform) CreateBranch(change *core.ChangeMeta) error {
-	branchName := fmt.Sprintf("gonovate/%s-%s",
-		p.normalizeString(change.PackageName, 40),
-		p.normalizeString(change.NewRelease.Version.Raw, 0))
+func NewGitPlatform(logger *slog.Logger, config *core.Config) *GitPlatform {
+	platform := &GitPlatform{
+		platformBase: platformBase{
+			logger: logger,
+			Config: config,
+		},
+		BaseBranch: "main",
+	}
+	return platform
+}
 
-	change.Data["branchName"] = branchName
+func (p *GitPlatform) Type() string {
+	return core.PLATFORM_TYPE_GIT
+}
+
+func (p *GitPlatform) SearchProjects() ([]*core.Project, error) {
+	// Not available
+	return nil, nil
+}
+
+func (p *GitPlatform) FetchProject(project *core.Project) error {
+	// Not available
+	return nil
+}
+
+func (p *GitPlatform) PrepareForChanges(change core.IChange) error {
+	meta := change.GetMeta()
+	branchName := fmt.Sprintf("gonovate/%s-%s",
+		p.normalizeString(meta.PackageName, 40),
+		p.normalizeString(meta.NewRelease.Version.Raw, 0))
+
+	meta.Data["branchName"] = branchName
 
 	p.logger.Debug(fmt.Sprintf("Creating branch '%s'", branchName))
 
-	_, _, err := core.Git{}.Run("checkout", "-B", branchName)
+	_, _, err := core.Git.Run("checkout", "-B", branchName)
 	return err
 }
 
-func (p *gitPlatform) AddAll() error {
-	_, _, err := core.Git{}.Run("add", "--all")
-	return err
-}
-
-func (p *gitPlatform) Commit(change *core.ChangeMeta) error {
+func (p *GitPlatform) SubmitChanges(change core.IChange) error {
+	meta := change.GetMeta()
+	if _, _, err := core.Git.Run("add", "--all"); err != nil {
+		return err
+	}
 	// Build the commit message
-	msg := fmt.Sprintf("Update %s from %s to %s", change.PackageName, change.CurrentVersion.Raw, change.NewRelease.Version.Raw)
+	msg := fmt.Sprintf("Update %s from %s to %s", meta.PackageName, meta.CurrentVersion.Raw, meta.NewRelease.Version.Raw)
 	// Store it for later use
-	change.Data["msg"] = msg
+	meta.Data["msg"] = msg
 
 	// Build the arguments
 	args := []string{
@@ -47,21 +73,26 @@ func (p *gitPlatform) Commit(change *core.ChangeMeta) error {
 	}
 
 	// Execute the command
-	_, _, err := core.Git{}.Run(args...)
+	_, _, err := core.Git.Run(args...)
 	return err
 }
 
-func (p *gitPlatform) PushBranch() error {
-	_, _, err := core.Git{}.Run("push", "-u", "origin", "HEAD", "--force")
+func (p *GitPlatform) PublishChanges(change core.IChange) error {
+	_, _, err := core.Git.Run("push", "-u", "origin", "HEAD", "--force")
 	return err
 }
 
-func (p *gitPlatform) CheckoutBaseBranch() error {
-	_, _, err := core.Git{}.Run("checkout", p.BaseBranch)
+func (p *GitPlatform) NotifyChanges(change core.IChange) error {
+	// Not available
+	return nil
+}
+
+func (p *GitPlatform) ResetToBase() error {
+	_, _, err := core.Git.Run("checkout", p.BaseBranch)
 	return err
 }
 
-func (p *gitPlatform) normalizeString(value string, maxLength int) string {
+func (p *GitPlatform) normalizeString(value string, maxLength int) string {
 	// Assign the initial value
 	normalizedString := value
 	// Make it lowercase

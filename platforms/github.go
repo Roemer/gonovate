@@ -13,18 +13,12 @@ import (
 )
 
 type GithubPlatform struct {
-	gitPlatform
+	GitPlatform
 }
 
-func NewGithubPlatform(logger *slog.Logger, config *core.Config) IPlatform {
+func NewGithubPlatform(logger *slog.Logger, config *core.Config) *GithubPlatform {
 	platform := &GithubPlatform{
-		gitPlatform: gitPlatform{
-			platformBase: platformBase{
-				logger: logger,
-				Config: config,
-			},
-			BaseBranch: "main",
-		},
+		GitPlatform: *NewGitPlatform(logger, config),
 	}
 	return platform
 }
@@ -41,21 +35,6 @@ func (p *GithubPlatform) SearchProjects() ([]*core.Project, error) {
 func (p *GithubPlatform) FetchProject(project *core.Project) error {
 	// TODO
 	return nil
-}
-
-func (p *GithubPlatform) PrepareForChanges(change core.IChange) error {
-	return p.CreateBranch(change.GetMeta())
-}
-
-func (p *GithubPlatform) SubmitChanges(change core.IChange) error {
-	if err := p.AddAll(); err != nil {
-		return err
-	}
-	return p.Commit(change.GetMeta())
-}
-
-func (p *GithubPlatform) PublishChanges(change core.IChange) error {
-	return p.PushBranch()
 }
 
 func (p *GithubPlatform) NotifyChanges(change core.IChange) error {
@@ -108,8 +87,4 @@ func (p *GithubPlatform) NotifyChanges(change core.IChange) error {
 		p.logger.Info(fmt.Sprintf("Created PR: %s", *pr.HTMLURL))
 	}
 	return nil
-}
-
-func (p *GithubPlatform) ResetToBase() error {
-	return p.CheckoutBaseBranch()
 }
