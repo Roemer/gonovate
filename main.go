@@ -128,7 +128,7 @@ func runCmd(args []string) error {
 		}
 	}
 	// Read the configuration
-	config, err := core.ConfigLoader{}.LoadConfig(configFile)
+	config, err := core.ConfigLoader.LoadConfig(configFile)
 	if err != nil {
 		return err
 	}
@@ -165,15 +165,17 @@ func runCmd(args []string) error {
 
 	// Process the projects
 	for _, project := range projects {
+		// Prepare the config for the project
+		projectConfig := &core.Config{}
+		projectConfig.MergeWith(config)
 		// Fetch the project if needed
 		oldWorkdir := ""
 		if !isDirect {
 			logger.Info(fmt.Sprintf("Fetching project '%s'", project.Path))
-			if err := platform.FetchProject(project); err != nil {
+			if err = platform.FetchProject(project); err != nil {
 				return err
 			}
-			// TODO: Merge with project config?
-			// Change working directory
+			// Change working directory to the fetched project
 			oldWorkdir, err = os.Getwd()
 			if err != nil {
 				return err
@@ -181,19 +183,29 @@ func runCmd(args []string) error {
 			if err := os.Chdir(".gonovate-clone"); err != nil {
 				return err
 			}
+			// If the project has its own config file, merge it
+			if hasProjectConfig, err := core.ConfigLoader.HasProjectConfig(); err != nil {
+				return err
+			} else if hasProjectConfig {
+				projectConfigFromFile, err := core.ConfigLoader.LoadConfig("")
+				if err != nil {
+					return err
+				}
+				projectConfig.MergeWith(projectConfigFromFile)
+			}
 		} else {
 			logger.Debug("Using direct project")
 		}
 
-		if len(config.Managers) == 0 {
+		if len(projectConfig.Managers) == 0 {
 			logger.Warn("No managers found to process")
 			continue
 		}
 
 		// Loop thru the managers
-		for _, managerConfig := range config.Managers {
+		for _, managerConfig := range projectConfig.Managers {
 			// Get the manager
-			manager, err := managers.GetManager(logger, config, managerConfig)
+			manager, err := managers.GetManager(logger, projectConfig, managerConfig)
 			if err != nil {
 				return err
 			}
@@ -265,7 +277,9 @@ func runCmd(args []string) error {
 				return err
 			}
 		}
-		os.RemoveAll(".gonovate-clone")
+		if err := os.RemoveAll(".gonovate-clone"); err != nil {
+			return err
+		}
 	}
 	return nil
 }
