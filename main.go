@@ -166,13 +166,21 @@ func runCmd(args []string) error {
 	// Process the projects
 	for _, project := range projects {
 		// Fetch the project if needed
+		oldWorkdir := ""
 		if !isDirect {
 			logger.Info(fmt.Sprintf("Fetching project '%s'", project.Path))
 			if err := platform.FetchProject(project); err != nil {
 				return err
 			}
 			// TODO: Merge with project config?
-			// TODO: Change working directory?
+			// Change working directory
+			oldWorkdir, err = os.Getwd()
+			if err != nil {
+				return err
+			}
+			if err := os.Chdir(".gonovate-clone"); err != nil {
+				return err
+			}
 		} else {
 			logger.Debug("Using direct project")
 		}
@@ -250,6 +258,14 @@ func runCmd(args []string) error {
 				}
 			}
 		}
+
+		// Cleanup
+		if oldWorkdir != "" {
+			if err := os.Chdir(oldWorkdir); err != nil {
+				return err
+			}
+		}
+		os.RemoveAll(".gonovate-clone")
 	}
 	return nil
 }
