@@ -197,9 +197,9 @@ func runCmd(args []string) error {
 			logger.Debug("Using direct project")
 		}
 
+		// Warn when no managers are defined but continue (to perform the cleanup)
 		if len(projectConfig.Managers) == 0 {
 			logger.Warn("No managers found to process")
-			continue
 		}
 
 		// Loop thru the managers
