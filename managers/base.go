@@ -40,6 +40,7 @@ func GetManager(logger *slog.Logger, config *core.Config, managerConfig *core.Ma
 }
 
 func (manager *managerBase) GetChanges() ([]core.IChange, error) {
+	manager.logger.Info(fmt.Sprintf("Get changes for manager %s", manager.Config.Id))
 	changes, err := manager.impl.getChanges()
 	if err != nil {
 		manager.logger.Error(fmt.Sprintf("Manager failed with error: %s", err.Error()))
@@ -48,6 +49,7 @@ func (manager *managerBase) GetChanges() ([]core.IChange, error) {
 }
 
 func (manager *managerBase) ApplyChanges(changes []core.IChange) error {
+	manager.logger.Info(fmt.Sprintf("Applying %d change(s)", len(changes)))
 	err := manager.impl.applyChanges(changes)
 	if err != nil {
 		manager.logger.Error(fmt.Sprintf("Manager failed with error: %s", err.Error()))

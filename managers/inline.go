@@ -30,8 +30,6 @@ func NewInlineManager(logger *slog.Logger, globalConfig *core.Config, managerCon
 }
 
 func (manager *InlineManager) getChanges() ([]core.IChange, error) {
-	manager.logger.Info(fmt.Sprintf("Starting InlineManager with Id %s", manager.Config.Id))
-
 	// Process all rules to apply the ones relevant for the manager and store the ones relevant for packages.
 	managerSettings, possiblePackageRules := manager.GlobalConfig.FilterForManager(manager.Config)
 

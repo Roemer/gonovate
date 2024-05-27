@@ -47,7 +47,6 @@ func (p *GitlabPlatform) FetchProject(project *core.Project) error {
 		return err
 	}
 	cloneUrlWithCredentials.User = url.UserPassword("oauth2", p.Config.PlatformSettings.TokendExpanded())
-	fmt.Println(cloneUrlWithCredentials)
 	_, _, err = core.Git.Run("clone", cloneUrlWithCredentials.String(), ".gonovate-clone")
 	return err
 }

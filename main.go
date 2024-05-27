@@ -158,16 +158,28 @@ func runCmd(args []string) error {
 			projects = append(projects, &core.Project{Path: p})
 		}
 	}
+	if len(projects) == 0 {
+		logger.Warn("No projects found to process")
+		return nil
+	}
 
 	// Process the projects
 	for _, project := range projects {
 		// Fetch the project if needed
 		if !isDirect {
+			logger.Info(fmt.Sprintf("Fetching project '%s'", project.Path))
 			if err := platform.FetchProject(project); err != nil {
 				return err
 			}
 			// TODO: Merge with project config?
 			// TODO: Change working directory?
+		} else {
+			logger.Debug("Using direct project")
+		}
+
+		if len(config.Managers) == 0 {
+			logger.Warn("No managers found to process")
+			continue
 		}
 
 		// Loop thru the managers
