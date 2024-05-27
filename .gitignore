@@ -1,1 +1,3 @@
 .build-output/
+.gonovate-clone/
+.test-configs/

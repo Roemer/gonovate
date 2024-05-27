@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"gonovate/core"
 	"log/slog"
-	"os"
-	"strings"
 
 	"github.com/google/go-github/v62/github"
 	"github.com/samber/lo"
@@ -37,33 +35,17 @@ func (p *GithubPlatform) FetchProject(project *core.Project) error {
 	return nil
 }
 
-func (p *GithubPlatform) NotifyChanges(change core.IChange) error {
+func (p *GithubPlatform) NotifyChanges(project *core.Project, changeSet *core.ChangeSet) error {
 	// Prepare the data for the API
-	token := ""
-	owner := ""
-	repository := ""
-	// Try get the values from the config file(s)
-	if p.Config.PlatformSettings != nil {
-		token = p.Config.PlatformSettings.TokendExpanded()
-		owner = p.Config.PlatformSettings.Owner
-		repository = p.Config.PlatformSettings.Repository
-	}
-	// Overwrite with environment variables
-	if value, ok := os.LookupEnv("GITHUB_TOKEN"); ok {
-		token = value
-	}
-	if value, ok := os.LookupEnv("GITHUB_REPOSITORY_OWNER"); ok {
-		owner = value
-	}
-	if value, ok := os.LookupEnv("GITHUB_REPOSITORY"); ok {
-		parts := strings.SplitN(value, "/", 2)
-		repository = parts[1]
-	}
+	owner, repository := project.SplitPath()
 
 	// Create the client
-	client := github.NewClient(nil).WithAuthToken(token)
+	client, err := p.createClient()
+	if err != nil {
+		return err
+	}
 	existingRequest, _, err := client.PullRequests.List(context.Background(), owner, repository, &github.PullRequestListOptions{
-		Head:  change.GetMeta().Data["branchName"],
+		Head:  changeSet.Id,
 		Base:  p.BaseBranch,
 		State: "open",
 	})
@@ -71,14 +53,14 @@ func (p *GithubPlatform) NotifyChanges(change core.IChange) error {
 		return err
 	}
 	// The Head search parameter does not work without "user:", so just make sure that the returned list really contains the branch
-	existingPr, prExists := lo.Find(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == change.GetMeta().Data["branchName"] })
+	existingPr, prExists := lo.Find(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == changeSet.Id })
 	if prExists {
 		p.logger.Info(fmt.Sprintf("PR already exists: %s", *existingPr.HTMLURL))
 	} else {
 		// Create the PR
 		pr, _, err := client.PullRequests.Create(context.Background(), owner, repository, &github.NewPullRequest{
-			Title: github.String(change.GetMeta().Data["msg"]),
-			Head:  github.String(change.GetMeta().Data["branchName"]),
+			Title: github.String(changeSet.Title),
+			Head:  github.String(changeSet.Id),
 			Base:  github.String(p.BaseBranch),
 		})
 		if err != nil {
@@ -87,4 +69,11 @@ func (p *GithubPlatform) NotifyChanges(change core.IChange) error {
 		p.logger.Info(fmt.Sprintf("Created PR: %s", *pr.HTMLURL))
 	}
 	return nil
+}
+
+func (p *GithubPlatform) createClient() (*github.Client, error) {
+	if p.Config.PlatformSettings == nil || p.Config.PlatformSettings.Token == "" {
+		return nil, fmt.Errorf("no platform token defined")
+	}
+	return github.NewClient(nil).WithAuthToken(p.Config.PlatformSettings.Token), nil
 }

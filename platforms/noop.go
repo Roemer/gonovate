@@ -31,19 +31,19 @@ func (p *NoopPlatform) FetchProject(project *core.Project) error {
 	return nil
 }
 
-func (p *NoopPlatform) PrepareForChanges(change core.IChange) error {
+func (p *NoopPlatform) PrepareForChanges(changeSet *core.ChangeSet) error {
 	return nil
 }
 
-func (p *NoopPlatform) SubmitChanges(change core.IChange) error {
+func (p *NoopPlatform) SubmitChanges(changeSet *core.ChangeSet) error {
 	return nil
 }
 
-func (p *NoopPlatform) PublishChanges(change core.IChange) error {
+func (p *NoopPlatform) PublishChanges(changeSet *core.ChangeSet) error {
 	return nil
 }
 
-func (p *NoopPlatform) NotifyChanges(change core.IChange) error {
+func (p *NoopPlatform) NotifyChanges(project *core.Project, changeSet *core.ChangeSet) error {
 	return nil
 }
 

@@ -65,14 +65,6 @@ func (platformSettingsA *PlatformSettings) MergeWith(platformSettingsB *Platform
 	if platformSettingsB.Token != "" {
 		platformSettingsA.Token = platformSettingsB.Token
 	}
-	// Owner
-	if platformSettingsB.Owner != "" {
-		platformSettingsA.Owner = platformSettingsB.Owner
-	}
-	// Repository
-	if platformSettingsB.Repository != "" {
-		platformSettingsA.Repository = platformSettingsB.Repository
-	}
 	// GitAuthor
 	if platformSettingsB.GitAuthor != "" {
 		platformSettingsA.GitAuthor = platformSettingsB.GitAuthor
@@ -81,6 +73,12 @@ func (platformSettingsA *PlatformSettings) MergeWith(platformSettingsB *Platform
 	if platformSettingsB.Endpoint != "" {
 		platformSettingsA.Endpoint = platformSettingsB.Endpoint
 	}
+	// Direct
+	if platformSettingsB.Direct != nil {
+		platformSettingsA.Direct = platformSettingsB.Direct
+	}
+	// Projects
+	platformSettingsA.Projects = lo.Union(platformSettingsA.Projects, platformSettingsB.Projects)
 	return platformSettingsA
 }
 

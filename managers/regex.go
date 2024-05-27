@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"fmt"
 	"gonovate/core"
-	"gonovate/platforms"
 	"log/slog"
 	"os"
 	"regexp"
@@ -17,20 +16,19 @@ type RegexManager struct {
 	managerBase
 }
 
-func NewRegexManager(logger *slog.Logger, globalConfig *core.Config, managerConfig *core.Manager, platform platforms.IPlatform) IManager {
+func NewRegexManager(logger *slog.Logger, globalConfig *core.Config, managerConfig *core.Manager) IManager {
 	manager := &RegexManager{
 		managerBase: managerBase{
 			logger:       logger.With(slog.String("handlerId", managerConfig.Id)),
 			GlobalConfig: globalConfig,
 			Config:       managerConfig,
-			Platform:     platform,
 		},
 	}
 	manager.impl = manager
 	return manager
 }
 
-func (manager *RegexManager) process() error {
+func (manager *RegexManager) getChanges() ([]core.IChange, error) {
 	manager.logger.Info(fmt.Sprintf("Starting RegexManager with Id %s", manager.Config.Id))
 
 	// Process all rules to apply the ones relevant for the manager and store the ones relevant for packages.
@@ -39,7 +37,7 @@ func (manager *RegexManager) process() error {
 	// Skip if it is disabled
 	if managerSettings.Disabled != nil && *managerSettings.Disabled {
 		manager.logger.Info(fmt.Sprintf("Skipping Manager '%s' (%s) as it is disabled", manager.Config.Id, manager.Config.Type))
-		return nil
+		return nil, nil
 	}
 
 	// Search file candidates
@@ -47,7 +45,7 @@ func (manager *RegexManager) process() error {
 	candidates, err := core.SearchFiles(".", managerSettings.FilePatterns, manager.GlobalConfig.IgnorePatterns)
 	manager.logger.Debug(fmt.Sprintf("Found %d matching file(s)", len(candidates)))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Precompile the regexes
@@ -55,7 +53,7 @@ func (manager *RegexManager) process() error {
 	for _, regStr := range managerSettings.MatchStrings {
 		regex, err := regexp.Compile(regStr)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		precompiledRegexList = append(precompiledRegexList, regex)
 	}
@@ -70,7 +68,7 @@ func (manager *RegexManager) process() error {
 		// Read the entire file
 		fileContentBytes, err := os.ReadFile(candidate)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		fileContent := string(fileContentBytes)
 
@@ -86,7 +84,7 @@ func (manager *RegexManager) process() error {
 				versionObject, versionOk := match["version"]
 				if !versionOk {
 					// The version field is mandatory
-					return fmt.Errorf("the field 'version' did not match")
+					return nil, fmt.Errorf("the field 'version' did not match")
 				}
 				//  Optional fields
 				datasourceObject, datasourceOk := match["datasource"]
@@ -110,14 +108,14 @@ func (manager *RegexManager) process() error {
 				// Build the merge package settings
 				packageSettings, err := buildMergedPackageSettings(manager.Config.PackageSettings, priorityPackageSettings, possiblePackageRules, candidate)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
 				// Search for a new version for the package
 				currentVersionString, _ := manager.sanitizeString(versionObject[0].Value)
 				newReleaseInfo, currentVersion, err := manager.searchPackageUpdate(currentVersionString, packageSettings, manager.GlobalConfig.HostRules)
 				if err != nil {
-					return err
+					return nil, err
 				}
 				if newReleaseInfo != nil {
 					// There is a new version, so build the change object
@@ -129,7 +127,6 @@ func (manager *RegexManager) process() error {
 							CurrentVersion:          currentVersion,
 							NewRelease:              newReleaseInfo,
 							PostUpgradeReplacements: packageSettings.PostUpgradeReplacements,
-							Data:                    map[string]string{},
 						},
 						StartIndex: versionObject[0].StartIndex,
 						EndIndex:   versionObject[0].EndIndex,
@@ -142,8 +139,8 @@ func (manager *RegexManager) process() error {
 		}
 	}
 
-	// Process the changes
-	return manager.processChanges(changes)
+	// Return the changes
+	return changes, nil
 }
 
 func (manager *RegexManager) applyChanges(changes []core.IChange) error {

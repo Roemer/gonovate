@@ -143,18 +143,101 @@ func runCmd(args []string) error {
 		return err
 	}
 
-	// Process the managers
-	for _, managerConfig := range config.Managers {
-		manager, err := managers.GetManager(logger, config, managerConfig, platform)
-		if err != nil {
-			return err
-		}
-		// Run the manager
-		if err := manager.Run(); err != nil {
-			return err
+	// Get the projects
+	projects := []*core.Project{}
+	isDirect := false
+	if config.PlatformSettings.Direct != nil {
+		isDirect = *config.PlatformSettings.Direct
+	}
+	if isDirect {
+		// Only use the first passed project
+		projects = append(projects, &core.Project{Path: config.PlatformSettings.Projects[0]})
+	} else {
+		// Add all projects
+		for _, p := range config.PlatformSettings.Projects {
+			projects = append(projects, &core.Project{Path: p})
 		}
 	}
 
+	// Process the projects
+	for _, project := range projects {
+		// Fetch the project if needed
+		if !isDirect {
+			if err := platform.FetchProject(project); err != nil {
+				return err
+			}
+		}
+
+		// Loop thru the managers
+		for _, managerConfig := range config.Managers {
+			// Get the manager
+			manager, err := managers.GetManager(logger, config, managerConfig)
+			if err != nil {
+				return err
+			}
+
+			// Get the changes from the manager
+			changes, err := manager.GetChanges()
+			if err != nil {
+				return err
+			}
+
+			// Group and sort the changes into changesets
+			// TODO: For now, each change has its own changeset
+			changeSets := []*core.ChangeSet{}
+			for _, change := range changes {
+				meta := change.GetMeta()
+				// Build the title for the changeset
+				title := fmt.Sprintf("Update %s from %s to %s", meta.PackageName, meta.CurrentVersion.Raw, meta.NewRelease.Version.Raw)
+				// Build the identifier for the changeset
+				id := fmt.Sprintf("gonovate/%s-%s",
+					core.NormalizeString(meta.PackageName, 40),
+					core.NormalizeString(meta.NewRelease.Version.Raw, 0))
+				// Create the changeset
+				changeSets = append(changeSets, &core.ChangeSet{
+					Title:   title,
+					Id:      id,
+					Changes: []core.IChange{change},
+				})
+			}
+
+			// Loop thru the changesets
+			for _, changeSet := range changeSets {
+				// Special case for the noop platform: apply all changesets directly
+				if platform.Type() == core.PLATFORM_TYPE_NOOP {
+					if err := manager.ApplyChanges(changes); err != nil {
+						return err
+					}
+					continue
+				}
+
+				// Prepare the platform for a new changeset
+				if err := platform.PrepareForChanges(changeSet); err != nil {
+					return err
+				}
+				// Apply the changes
+				if err := manager.ApplyChanges(changeSet.Changes); err != nil {
+					return err
+				}
+				// Submit
+				if err := platform.SubmitChanges(changeSet); err != nil {
+					return err
+				}
+				// Publish
+				if err := platform.PublishChanges(changeSet); err != nil {
+					return err
+				}
+				// Notify
+				if err := platform.NotifyChanges(project, changeSet); err != nil {
+					return err
+				}
+				// Reset
+				if err := platform.ResetToBase(); err != nil {
+					return err
+				}
+			}
+		}
+	}
 	return nil
 }
 

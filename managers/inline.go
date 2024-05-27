@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"gonovate/core"
-	"gonovate/platforms"
 	"log/slog"
 	"os"
 	"regexp"
@@ -18,20 +17,19 @@ type InlineManager struct {
 	managerBase
 }
 
-func NewInlineManager(logger *slog.Logger, globalConfig *core.Config, managerConfig *core.Manager, platform platforms.IPlatform) IManager {
+func NewInlineManager(logger *slog.Logger, globalConfig *core.Config, managerConfig *core.Manager) IManager {
 	manager := &InlineManager{
 		managerBase: managerBase{
 			logger:       logger.With(slog.String("handlerId", managerConfig.Id)),
 			GlobalConfig: globalConfig,
 			Config:       managerConfig,
-			Platform:     platform,
 		},
 	}
 	manager.impl = manager
 	return manager
 }
 
-func (manager *InlineManager) process() error {
+func (manager *InlineManager) getChanges() ([]core.IChange, error) {
 	manager.logger.Info(fmt.Sprintf("Starting InlineManager with Id %s", manager.Config.Id))
 
 	// Process all rules to apply the ones relevant for the manager and store the ones relevant for packages.
@@ -40,7 +38,7 @@ func (manager *InlineManager) process() error {
 	// Skip if it is disabled
 	if managerSettings.Disabled != nil && *managerSettings.Disabled {
 		manager.logger.Info(fmt.Sprintf("Skipping Manager '%s' (%s) as it is disabled", manager.Config.Id, manager.Config.Type))
-		return nil
+		return nil, nil
 	}
 
 	// Search file candidates
@@ -48,7 +46,7 @@ func (manager *InlineManager) process() error {
 	candidates, err := core.SearchFiles(".", managerSettings.FilePatterns, manager.GlobalConfig.IgnorePatterns)
 	manager.logger.Debug(fmt.Sprintf("Found %d matching file(s)", len(candidates)))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Prepare the marker regex which searches the file for the inline markers
@@ -63,7 +61,7 @@ func (manager *InlineManager) process() error {
 		// Read the entire file
 		fileContentBytes, err := os.ReadFile(candidate)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		fileContent := string(fileContentBytes)
 
@@ -78,7 +76,7 @@ func (manager *InlineManager) process() error {
 			// Get the config for the marker
 			config := &inlineManagerConfig{}
 			if err = json.Unmarshal([]byte(configStr), config); err != nil {
-				return fmt.Errorf("failed parsing marker config at position %d: %w", start, err)
+				return nil, fmt.Errorf("failed parsing marker config at position %d: %w", start, err)
 			}
 
 			// Build the regex that was defined in the marker
@@ -87,7 +85,7 @@ func (manager *InlineManager) process() error {
 			contentSearchStart := end + 1
 			matchList := findAllNamedMatchesWithIndex(newReg, fileContent[contentSearchStart:], false, 1)
 			if matchList == nil || len(matchList) < 1 {
-				return fmt.Errorf("regex defined in marker at position %d did not match anything", start)
+				return nil, fmt.Errorf("regex defined in marker at position %d did not match anything", start)
 			}
 			// We are only interested in the first match
 			match := matchList[0]
@@ -95,7 +93,7 @@ func (manager *InlineManager) process() error {
 			versionObject, versionOk := match["version"]
 			if !versionOk {
 				// The version field is mandatory
-				return fmt.Errorf("the field 'version' did not match")
+				return nil, fmt.Errorf("the field 'version' did not match")
 			}
 			//  Optional fields
 			datasourceObject, datasourceOk := match["datasource"]
@@ -125,14 +123,14 @@ func (manager *InlineManager) process() error {
 			// Build the merge package settings
 			packageSettings, err := buildMergedPackageSettings(manager.Config.PackageSettings, priorityPackageSettings, possiblePackageRules, candidate)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			// Search for a new version for the package
 			currentVersionString, _ := manager.sanitizeString(versionObject[0].Value)
 			newReleaseInfo, currentVersion, err := manager.searchPackageUpdate(currentVersionString, packageSettings, manager.GlobalConfig.HostRules)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			if newReleaseInfo != nil {
 				// There is a new version, so build the change object
@@ -143,7 +141,6 @@ func (manager *InlineManager) process() error {
 						File:           candidate,
 						CurrentVersion: currentVersion,
 						NewRelease:     newReleaseInfo,
-						Data:           map[string]string{},
 					},
 					StartIndex: versionObject[0].StartIndex + contentSearchStart,
 					EndIndex:   versionObject[0].EndIndex + contentSearchStart,
@@ -155,8 +152,8 @@ func (manager *InlineManager) process() error {
 		}
 	}
 
-	// Process the changes
-	return manager.processChanges(changes)
+	// Return the changes
+	return changes, nil
 }
 
 func (manager *InlineManager) applyChanges(changes []core.IChange) error {

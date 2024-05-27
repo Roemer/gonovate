@@ -21,11 +21,11 @@ func (c *Config) String() string {
 }
 
 type PlatformSettings struct {
-	Token      string `json:"token"`
-	Owner      string `json:"owner"`
-	Repository string `json:"repository"`
-	GitAuthor  string `json:"gitAuthor"`
-	Endpoint   string `json:"endpoint"`
+	Token     string   `json:"token"`
+	GitAuthor string   `json:"gitAuthor"`
+	Endpoint  string   `json:"endpoint"`
+	Direct    *bool    `json:"direct"`
+	Projects  []string `json:"projects"`
 }
 
 func (ps *PlatformSettings) TokendExpanded() string {

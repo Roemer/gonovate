@@ -2,9 +2,11 @@
     "platform": "github",
     "platformSettings": {
         "token": "$GONOVATE_GITHUB_LOCAL_TOKEN",
-        "owner": "roemer",
-        "repository": "gonovate",
-        "gitAuthor": "gonovate-bot <bot@gonovate.org>"
+        "gitAuthor": "gonovate-bot <bot@gonovate.org>",
+        "direct": true,
+        "projects": [
+            "roemer/gonovate"
+        ]
     },
     "extends": [
         "defaults"
