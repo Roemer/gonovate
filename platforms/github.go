@@ -75,5 +75,5 @@ func (p *GithubPlatform) createClient() (*github.Client, error) {
 	if p.Config.PlatformSettings == nil || p.Config.PlatformSettings.Token == "" {
 		return nil, fmt.Errorf("no platform token defined")
 	}
-	return github.NewClient(nil).WithAuthToken(p.Config.PlatformSettings.Token), nil
+	return github.NewClient(nil).WithAuthToken(p.Config.PlatformSettings.TokendExpanded()), nil
 }
