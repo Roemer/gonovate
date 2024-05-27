@@ -166,6 +166,8 @@ func runCmd(args []string) error {
 			if err := platform.FetchProject(project); err != nil {
 				return err
 			}
+			// TODO: Merge with project config?
+			// TODO: Change working directory?
 		}
 
 		// Loop thru the managers
@@ -201,16 +203,15 @@ func runCmd(args []string) error {
 				})
 			}
 
-			// Loop thru the changesets
-			for _, changeSet := range changeSets {
-				// Special case for the noop platform: apply all changesets directly
-				if platform.Type() == core.PLATFORM_TYPE_NOOP {
-					if err := manager.ApplyChanges(changes); err != nil {
-						return err
-					}
-					continue
+			// Special case for the noop platform: apply all changes at once
+			if platform.Type() == core.PLATFORM_TYPE_NOOP {
+				if err := manager.ApplyChanges(changes); err != nil {
+					return err
 				}
-
+				continue
+			}
+			// Otherwise, loop thru the changesets
+			for _, changeSet := range changeSets {
 				// Prepare the platform for a new changeset
 				if err := platform.PrepareForChanges(changeSet); err != nil {
 					return err
