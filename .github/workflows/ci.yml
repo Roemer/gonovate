@@ -40,7 +40,7 @@ jobs:
         run: go run ./build/build.go --target "Test"
 
       - name: Upload Test Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success() || failure()
         with:
           name: test-report
@@ -57,25 +57,25 @@ jobs:
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: binaries
+          name: windows
           path: .build-output/*windows*.zip
 
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: binaries
+          name: linux
           path: .build-output/*linux*.zip
 
       - name: Upload Darwin Intel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: binaries
+          name: darwin-intel
           path: .build-output/*darwin*amd*.zip
 
-      - name: Upload Darwin RM Artifact
+      - name: Upload Darwin ARM Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: binaries
+          name: darwin-arm
           path: .build-output/*darwin*arm*.zip
 
   # Release Job
