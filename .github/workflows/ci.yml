@@ -57,25 +57,25 @@ jobs:
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows
+          name: binary-windows
           path: .build-output/*windows*.zip
 
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: linux
+          name: binary-linux
           path: .build-output/*linux*.zip
 
       - name: Upload Darwin Intel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: darwin-intel
+          name: binary-darwin-intel
           path: .build-output/*darwin*amd*.zip
 
       - name: Upload Darwin ARM Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: darwin-arm
+          name: binary-darwin-arm
           path: .build-output/*darwin*arm*.zip
 
   # Release Job
@@ -94,8 +94,9 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: binaries
           path: .build-output/
+          pattern: binary-*
+          merge-multiple: true
 
       - name: Install Go
         run: |
