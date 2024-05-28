@@ -138,6 +138,8 @@ func GetDatasource(logger *slog.Logger, datasource string) (IDatasource, error) 
 		return NewDockerDatasource(logger), nil
 	case core.DATASOURCE_TYPE_GOVERSION:
 		return NewGoVersionDatasource(logger), nil
+	case core.DATASOURCE_TYPE_MAVEN:
+		return NewMavenDatasource(logger), nil
 	case core.DATASOURCE_TYPE_NODEJS:
 		return NewNodeJsDatasource(logger), nil
 	case core.DATASOURCE_TYPE_NPM:
