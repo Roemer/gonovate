@@ -32,13 +32,49 @@ jobs:
           rm "go${GO_VERSION}.linux-amd64.tar.gz"
 
       - name: Build
-        run:  go run ./build/build.go --target "Compile:All"
+        run: go run ./build/build.go --target "Compile:All"
 
-      - name: Upload Artifacts
+      - name: Test
+        run: go run ./build/build.go --target "Test"
+
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v3
+        if: success() || failure()
+        with:
+          name: test-report
+          path: .test-reports/junit-test-report.xml
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: test-results
+          path: .test-reports/junit-test-report.xml
+          reporter: java-junit
+
+      - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
           name: binaries
-          path: .build-output/
+          path: .build-output/*windows*.zip
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: .build-output/*linux*.zip
+
+      - name: Upload Darwin Intel Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: .build-output/*darwin*amd*.zip
+
+      - name: Upload Darwin RM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: .build-output/*darwin*arm*.zip
 
   # Release Job
   release:

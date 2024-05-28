@@ -1,3 +1,9 @@
+# Build
 .build-output/
+.test-reports/
+
+# Run
 .gonovate-clone/
+
+# Test Data
 .test-configs/
