@@ -26,6 +26,8 @@ type PlatformSettings struct {
 	Endpoint  string   `json:"endpoint"`
 	Direct    *bool    `json:"direct"`
 	Projects  []string `json:"projects"`
+	// The name of the base branch, defaults to "main".
+	BaseBranch string `json:"baseBranch"`
 }
 
 func (ps *PlatformSettings) TokendExpanded() string {

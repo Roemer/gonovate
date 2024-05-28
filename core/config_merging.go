@@ -79,6 +79,10 @@ func (platformSettingsA *PlatformSettings) MergeWith(platformSettingsB *Platform
 	}
 	// Projects
 	platformSettingsA.Projects = lo.Union(platformSettingsA.Projects, platformSettingsB.Projects)
+	// BaseBranch
+	if platformSettingsB.BaseBranch != "" {
+		platformSettingsA.BaseBranch = platformSettingsB.BaseBranch
+	}
 	return platformSettingsA
 }
 

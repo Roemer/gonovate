@@ -17,7 +17,7 @@ func NewGitPlatform(logger *slog.Logger, config *core.Config) *GitPlatform {
 			logger: logger,
 			Config: config,
 		},
-		BaseBranch: "main",
+		BaseBranch: config.PlatformSettings.BaseBranch,
 	}
 	return platform
 }
