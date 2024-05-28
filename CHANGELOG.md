@@ -12,5 +12,6 @@
 * **datasource:** Added Artifactory datasource
 * **datasource:** Added Docker datasource
 * **datasource:** Added Go-Version datasource
+* **datasource:** Added Maven datasource
 * **datasource:** Added NodeJS datasource
 * **datasource:** Added NPM datasource

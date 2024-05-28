@@ -2,9 +2,11 @@ package datasources
 
 import (
 	"encoding/xml"
+	"fmt"
 	"gonovate/core"
 	"log/slog"
 	"net/url"
+	"strings"
 )
 
 type MavenDatasource struct {
@@ -24,10 +26,16 @@ func NewMavenDatasource(logger *slog.Logger) IDatasource {
 
 func (ds *MavenDatasource) getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
 	repositoryUrl := "https://repo.maven.apache.org/maven2"
+	if len(packageSettings.RegistryUrls) > 0 {
+		repositoryUrl = packageSettings.RegistryUrls[0]
+		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", repositoryUrl))
+	}
 
 	// Get XML-Metadata
-	// TODO: Build from packageSettings.PackageName
-	packageMetadataUrl, err := url.JoinPath(repositoryUrl, "org/apache/maven/maven/maven-metadata.xml")
+	packageParts := strings.Split(packageSettings.PackageName, ":")
+	group := packageParts[0]
+	pkg := packageParts[1]
+	packageMetadataUrl, err := url.JoinPath(repositoryUrl, strings.ReplaceAll(group, ".", "/"), pkg, "maven-metadata.xml")
 	if err != nil {
 		return nil, err
 	}

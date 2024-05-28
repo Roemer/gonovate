@@ -18,6 +18,16 @@
         {
             "matches": {
                 "datasources": [
+                    "maven"
+                ]
+            },
+            "packageSettings": {
+                "versioning": "^(?P<d1>\\d+)\\.(?P<d2>\\d+)(?:\\.(?P<d3>\\d+))?(?:-(?P<s4>[^-]+))?(?:-(?P<d5>\\d+))?$"
+            }
+        },
+        {
+            "matches": {
+                "datasources": [
                     "nodejs"
                 ]
             },
