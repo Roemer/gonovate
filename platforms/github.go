@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gonovate/core"
 	"log/slog"
+	"net/url"
 
 	"github.com/google/go-github/v62/github"
 	"github.com/samber/lo"
@@ -31,8 +32,29 @@ func (p *GithubPlatform) SearchProjects() ([]*core.Project, error) {
 }
 
 func (p *GithubPlatform) FetchProject(project *core.Project) error {
-	// TODO
-	return nil
+	// Prepare the data for the API
+	owner, repository := project.SplitPath()
+	// Create the client
+	client, err := p.createClient()
+	if err != nil {
+		return err
+	}
+	// Get the repository
+	platformRepository, _, err := client.Repositories.Get(context.Background(), owner, repository)
+	if err != nil {
+		return err
+	}
+	if platformRepository == nil {
+		return fmt.Errorf("could not find project: %s", project.Path)
+	}
+	cloneUrl := *platformRepository.CloneURL
+	cloneUrlWithCredentials, err := url.Parse(cloneUrl)
+	if err != nil {
+		return err
+	}
+	cloneUrlWithCredentials.User = url.UserPassword("oauth2", p.Config.PlatformSettings.TokendExpanded())
+	_, _, err = core.Git.Run("clone", cloneUrlWithCredentials.String(), ".gonovate-clone")
+	return err
 }
 
 func (p *GithubPlatform) NotifyChanges(project *core.Project, changeSet *core.ChangeSet) error {

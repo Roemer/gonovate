@@ -1,4 +1,8 @@
 {
+    "platformSettings": {
+        "baseBranch": "main",
+        "gitAuthor": "gonovate-bot <bot@gonovate.org>"
+    },
     "ignorePatterns": [
         "**/node_modules",
         "**/bower_components",
