@@ -136,6 +136,10 @@ func GetDatasource(logger *slog.Logger, datasource string) (IDatasource, error) 
 		return NewArtifactoryDatasource(logger), nil
 	case core.DATASOURCE_TYPE_DOCKER:
 		return NewDockerDatasource(logger), nil
+	case core.DATASOURCE_TYPE_GITHUB_RELEASES:
+		return NewGitHubReleasesDatasource(logger), nil
+	case core.DATASOURCE_TYPE_GITHUB_TAGS:
+		return NewGitHubTagsDatasource(logger), nil
 	case core.DATASOURCE_TYPE_GOVERSION:
 		return NewGoVersionDatasource(logger), nil
 	case core.DATASOURCE_TYPE_MAVEN:
