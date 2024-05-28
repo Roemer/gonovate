@@ -35,7 +35,7 @@ func GetPlatform(logger *slog.Logger, config *core.Config) (IPlatform, error) {
 	case core.PLATFORM_TYPE_GIT:
 		return NewGitPlatform(logger, config), nil
 	case core.PLATFORM_TYPE_GITHUB:
-		return NewGithubPlatform(logger, config), nil
+		return NewGitHubPlatform(logger, config), nil
 	case core.PLATFORM_TYPE_GITLAB:
 		return NewGitlabPlatform(logger, config), nil
 	case core.PLATFORM_TYPE_NOOP:

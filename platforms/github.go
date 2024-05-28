@@ -11,27 +11,27 @@ import (
 	"github.com/samber/lo"
 )
 
-type GithubPlatform struct {
+type GitHubPlatform struct {
 	GitPlatform
 }
 
-func NewGithubPlatform(logger *slog.Logger, config *core.Config) *GithubPlatform {
-	platform := &GithubPlatform{
+func NewGitHubPlatform(logger *slog.Logger, config *core.Config) *GitHubPlatform {
+	platform := &GitHubPlatform{
 		GitPlatform: *NewGitPlatform(logger, config),
 	}
 	return platform
 }
 
-func (p *GithubPlatform) Type() string {
+func (p *GitHubPlatform) Type() string {
 	return core.PLATFORM_TYPE_GITHUB
 }
 
-func (p *GithubPlatform) SearchProjects() ([]*core.Project, error) {
+func (p *GitHubPlatform) SearchProjects() ([]*core.Project, error) {
 	// TODO
 	return nil, nil
 }
 
-func (p *GithubPlatform) FetchProject(project *core.Project) error {
+func (p *GitHubPlatform) FetchProject(project *core.Project) error {
 	// Prepare the data for the API
 	owner, repository := project.SplitPath()
 	// Create the client
@@ -57,7 +57,7 @@ func (p *GithubPlatform) FetchProject(project *core.Project) error {
 	return err
 }
 
-func (p *GithubPlatform) NotifyChanges(project *core.Project, changeSet *core.ChangeSet) error {
+func (p *GitHubPlatform) NotifyChanges(project *core.Project, changeSet *core.ChangeSet) error {
 	// Prepare the data for the API
 	owner, repository := project.SplitPath()
 
@@ -93,7 +93,7 @@ func (p *GithubPlatform) NotifyChanges(project *core.Project, changeSet *core.Ch
 	return nil
 }
 
-func (p *GithubPlatform) createClient() (*github.Client, error) {
+func (p *GitHubPlatform) createClient() (*github.Client, error) {
 	if p.Config.PlatformSettings == nil || p.Config.PlatformSettings.Token == "" {
 		return nil, fmt.Errorf("no platform token defined")
 	}
