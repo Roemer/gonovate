@@ -106,4 +106,4 @@ jobs:
           rm "go${GO_VERSION}.linux-amd64.tar.gz"
 
       - name: Create the release
-        run:  go run ./build/build.go --target "Release:Create"
+        run:  go run ./build/build.go --target "Release"
