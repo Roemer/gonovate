@@ -49,7 +49,8 @@ func (manager *RegexManager) getChanges() ([]core.IChange, error) {
 	// Precompile the regexes
 	precompiledRegexList := []*regexp.Regexp{}
 	for _, regStr := range managerSettings.MatchStrings {
-		regex, err := regexp.Compile(regStr)
+		resolvedMatchString := manager.GlobalConfig.ResolveMatchString(regStr)
+		regex, err := regexp.Compile(resolvedMatchString)
 		if err != nil {
 			return nil, err
 		}

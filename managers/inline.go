@@ -78,7 +78,8 @@ func (manager *InlineManager) getChanges() ([]core.IChange, error) {
 			}
 
 			// Build the regex that was defined in the marker
-			newReg := regexp.MustCompile(config.Matchstring)
+			resolvedMatchString := manager.GlobalConfig.ResolveMatchString(config.MatchString)
+			newReg := regexp.MustCompile(resolvedMatchString)
 			// Search the remaining file content with this new regex and process the first match only
 			contentSearchStart := end + 1
 			matchList := findAllNamedMatchesWithIndex(newReg, fileContent[contentSearchStart:], false, 1)
@@ -192,7 +193,7 @@ func (manager *InlineManager) applyChanges(changes []core.IChange) error {
 type inlineManagerConfig struct {
 	PackageName string `json:"packageName"`
 	Datasource  string `json:"datasource"`
-	Matchstring string `json:"matchstring"`
+	MatchString string `json:"matchString"`
 	Versioning  string `json:"versioning"`
 }
 

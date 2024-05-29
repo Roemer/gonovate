@@ -1,6 +1,7 @@
 package core
 
 import (
+	"maps"
 	"slices"
 
 	"github.com/samber/lo"
@@ -20,6 +21,11 @@ func (configA *Config) MergeWith(configB *Config) {
 	configA.Extends = lo.Union(configA.Extends, configB.Extends)
 	// IgnorePatterns
 	configA.IgnorePatterns = lo.Union(configA.IgnorePatterns, configB.IgnorePatterns)
+	// MatchStringPresets
+	if configA.MatchStringPresets == nil {
+		configA.MatchStringPresets = map[string]*MatchStringPreset{}
+	}
+	maps.Copy(configA.MatchStringPresets, configB.MatchStringPresets)
 	// Managers
 	for _, manager := range configB.Managers {
 		managerAIndex := slices.IndexFunc(configA.Managers, func(m *Manager) bool { return m.Id == manager.Id })

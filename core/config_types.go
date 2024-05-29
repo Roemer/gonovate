@@ -6,13 +6,14 @@ import (
 )
 
 type Config struct {
-	Platform         string            `json:"platform"`
-	PlatformSettings *PlatformSettings `json:"platformSettings"`
-	Extends          []string          `json:"extends"`
-	IgnorePatterns   []string          `json:"ignorePatterns"`
-	Managers         []*Manager        `json:"managers"`
-	Rules            []*Rule           `json:"rules"`
-	HostRules        []*HostRule       `json:"hostRules"`
+	Platform           string                        `json:"platform"`
+	PlatformSettings   *PlatformSettings             `json:"platformSettings"`
+	Extends            []string                      `json:"extends"`
+	IgnorePatterns     []string                      `json:"ignorePatterns"`
+	MatchStringPresets map[string]*MatchStringPreset `json:"matchStringPresets"`
+	Managers           []*Manager                    `json:"managers"`
+	Rules              []*Rule                       `json:"rules"`
+	HostRules          []*HostRule                   `json:"hostRules"`
 }
 
 func (c *Config) String() string {
@@ -32,6 +33,11 @@ type PlatformSettings struct {
 
 func (ps *PlatformSettings) TokendExpanded() string {
 	return os.ExpandEnv(ps.Token)
+}
+
+type MatchStringPreset struct {
+	MatchString       string   `json:"matchString"`
+	ParameterDefaults []string `json:"parameterDefaults"`
 }
 
 type Manager struct {

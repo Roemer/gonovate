@@ -8,6 +8,17 @@
         "**/bower_components",
         "**/.git"
     ],
+    "matchStringPresets": {
+        "docker-image-in-quotes": {
+            "matchString": "(?m)^\\s*\"(?P<packageName>.*):(?P<version>.*)\".*$"
+        },
+        "json-version": {
+            "matchString": "(?m)^\\s*\"%s\":\\s*\"(?P<version>.*)\".*$",
+            "parameterDefaults": [
+                "version"
+            ]
+        }
+    },
     "rules": [
         {
             "packageSettings": {
