@@ -48,6 +48,7 @@ func init() {
 	gotaskr.Task("Compile:Linux", func() error {
 		os.Setenv("GOOS", "linux")
 		os.Setenv("GOARCH", "amd64")
+		os.Setenv("CGO_ENABLED", "0")
 
 		path, err := compile("")
 		if err != nil {
