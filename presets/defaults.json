@@ -12,7 +12,7 @@
         "docker-image-in-quotes": {
             "matchString": "(?m)^\\s*\"(?P<packageName>.*):(?P<version>.*)\".*$"
         },
-        "docker-image-in-from": {
+        "docker-image-from": {
             "matchString": "(?m)^FROM (?P<packageName>.*):(?P<version>.*)\\s*$"
         },
         "json-version": {
