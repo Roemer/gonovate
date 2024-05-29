@@ -68,7 +68,7 @@ func (p *GitHubPlatform) NotifyChanges(project *core.Project, changeSet *core.Ch
 	}
 	existingRequest, _, err := client.PullRequests.List(context.Background(), owner, repository, &github.PullRequestListOptions{
 		Head:  changeSet.Id,
-		Base:  p.BaseBranch,
+		Base:  p.baseBranch,
 		State: "open",
 	})
 	if err != nil {
@@ -83,7 +83,7 @@ func (p *GitHubPlatform) NotifyChanges(project *core.Project, changeSet *core.Ch
 		pr, _, err := client.PullRequests.Create(context.Background(), owner, repository, &github.NewPullRequest{
 			Title: github.String(changeSet.Title),
 			Head:  github.String(changeSet.Id),
-			Base:  github.String(p.BaseBranch),
+			Base:  github.String(p.baseBranch),
 		})
 		if err != nil {
 			return err

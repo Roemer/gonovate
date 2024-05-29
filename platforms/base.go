@@ -9,6 +9,8 @@ import (
 type IPlatform interface {
 	// Returns the type of the platform
 	Type() string
+	// Ge the base branch
+	BaseBranch() string
 	// Searches on the platform for projects to run gonovate on.
 	SearchProjects() ([]*core.Project, error)
 	// Fetches the project from the platform in it's initial state.
@@ -26,8 +28,13 @@ type IPlatform interface {
 }
 
 type platformBase struct {
-	logger *slog.Logger
-	Config *core.Config
+	logger     *slog.Logger
+	Config     *core.Config
+	baseBranch string
+}
+
+func (p *platformBase) BaseBranch() string {
+	return p.baseBranch
 }
 
 func GetPlatform(logger *slog.Logger, config *core.Config) (IPlatform, error) {

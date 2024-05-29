@@ -8,16 +8,15 @@ import (
 
 type GitPlatform struct {
 	platformBase
-	BaseBranch string
 }
 
 func NewGitPlatform(logger *slog.Logger, config *core.Config) *GitPlatform {
 	platform := &GitPlatform{
 		platformBase: platformBase{
-			logger: logger,
-			Config: config,
+			logger:     logger,
+			Config:     config,
+			baseBranch: config.PlatformSettings.BaseBranch,
 		},
-		BaseBranch: config.PlatformSettings.BaseBranch,
 	}
 	return platform
 }
@@ -74,6 +73,6 @@ func (p *GitPlatform) NotifyChanges(project *core.Project, changeSet *core.Chang
 }
 
 func (p *GitPlatform) ResetToBase() error {
-	_, _, err := core.Git.Run("checkout", p.BaseBranch)
+	_, _, err := core.Git.Run("checkout", p.baseBranch)
 	return err
 }

@@ -224,7 +224,8 @@ func runCmd(args []string) error {
 				// Build the title for the changeset
 				title := fmt.Sprintf("Update %s from %s to %s", meta.PackageName, meta.CurrentVersion.Raw, meta.NewRelease.Version.Raw)
 				// Build the identifier for the changeset
-				id := fmt.Sprintf("gonovate/%s-%s",
+				id := fmt.Sprintf("gonovate/%s-%s-%s",
+					core.NormalizeString(platform.BaseBranch(), 20),
 					core.NormalizeString(meta.PackageName, 40),
 					core.NormalizeString(meta.NewRelease.Version.Raw, 0))
 				// Create the changeset
