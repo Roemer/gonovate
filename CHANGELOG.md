@@ -11,8 +11,8 @@
 * **platform:** Added GitLab platform
 * **datasource:** Added Artifactory datasource
 * **datasource:** Added Docker datasource
-* **datasource:** Added Github-Releases datasource
-* **datasource:** Added Github-Tags datasource
+* **datasource:** Added GitHub-Releases datasource
+* **datasource:** Added GitHub-Tags datasource
 * **datasource:** Added Go-Version datasource
 * **datasource:** Added Maven datasource
 * **datasource:** Added NodeJS datasource
