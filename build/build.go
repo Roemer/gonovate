@@ -103,7 +103,8 @@ func init() {
 	})
 
 	gotaskr.Task("Release", func() error {
-		log.Informationf("Creating new release for version %s", version)
+		fullVersionName := fmt.Sprintf("v%s", version)
+		log.Informationf("Creating new release for version %s", fullVersionName)
 		gitHubRepoParts := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 		gitHubOwner := gitHubRepoParts[0]
 		gitHubRepo := gitHubRepoParts[1]
@@ -115,9 +116,9 @@ func init() {
 
 		// Create the new release
 		newRelease := &github.RepositoryRelease{
-			Name:    github.String(version),
+			Name:    github.String(fullVersionName),
 			Draft:   github.Bool(true),
-			TagName: github.String(version),
+			TagName: github.String(fullVersionName),
 		}
 		release, _, err := client.Repositories.CreateRelease(ctx, gitHubOwner, gitHubRepo, newRelease)
 		if err != nil {

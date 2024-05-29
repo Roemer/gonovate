@@ -1,6 +1,6 @@
 # Change Log
 
-## 0.1.0 (2024-05-28)
+## v0.1.0 (2024-05-29)
 
 ### Features
 
@@ -11,6 +11,8 @@
 * **platform:** Added GitLab platform
 * **datasource:** Added Artifactory datasource
 * **datasource:** Added Docker datasource
+* **datasource:** Added Github-Releases datasource
+* **datasource:** Added Github-Tags datasource
 * **datasource:** Added Go-Version datasource
 * **datasource:** Added Maven datasource
 * **datasource:** Added NodeJS datasource
