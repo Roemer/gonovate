@@ -23,10 +23,10 @@ type IManager interface {
 }
 
 type managerBase struct {
-	logger       *slog.Logger
-	GlobalConfig *core.Config
-	Config       *core.Manager
-	impl         IManager
+	logger        *slog.Logger
+	Config        *core.Config
+	ManagerConfig *core.Manager
+	impl          IManager
 }
 
 func GetManager(logger *slog.Logger, config *core.Config, managerConfig *core.Manager) (IManager, error) {
@@ -40,7 +40,7 @@ func GetManager(logger *slog.Logger, config *core.Config, managerConfig *core.Ma
 }
 
 func (manager *managerBase) GetChanges() ([]core.IChange, error) {
-	manager.logger.Info(fmt.Sprintf("Get changes for manager %s", manager.Config.Id))
+	manager.logger.Info(fmt.Sprintf("Get changes for manager %s", manager.ManagerConfig.Id))
 	changes, err := manager.impl.getChanges()
 	if err != nil {
 		manager.logger.Error(fmt.Sprintf("Manager failed with error: %s", err.Error()))
@@ -58,7 +58,7 @@ func (manager *managerBase) ApplyChanges(changes []core.IChange) error {
 }
 
 // Searches for a new package version with the correct datasource.
-func (manager *managerBase) searchPackageUpdate(currentVersionString string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, *gover.Version, error) {
+func (manager *managerBase) searchPackageUpdate(currentVersionString string, packageSettings *core.PackageSettings) (*core.ReleaseInfo, *gover.Version, error) {
 	// Validate the mandatory fields
 	if len(currentVersionString) == 0 {
 		return nil, nil, fmt.Errorf("no version defined")
@@ -75,13 +75,13 @@ func (manager *managerBase) searchPackageUpdate(currentVersionString string, pac
 	manager.logger.Info(fmt.Sprintf("Searching a '%s' update for '%s' with version '%s' on datasource '%s'", packageSettings.MaxUpdateType, packageSettings.PackageName, currentVersionString, packageSettings.Datasource))
 
 	// Lookup the correct datasource
-	ds, err := datasources.GetDatasource(manager.logger, packageSettings.Datasource)
+	ds, err := datasources.GetDatasource(manager.logger, manager.Config, packageSettings.Datasource)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Search for a new version
-	newReleaseInfo, currentVersion, err := ds.SearchPackageUpdate(currentVersionString, packageSettings, hostRules)
+	newReleaseInfo, currentVersion, err := ds.SearchPackageUpdate(currentVersionString, packageSettings)
 
 	// Return the result
 	return newReleaseInfo, currentVersion, err

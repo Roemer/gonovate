@@ -13,18 +13,19 @@ type MavenDatasource struct {
 	datasourceBase
 }
 
-func NewMavenDatasource(logger *slog.Logger) IDatasource {
+func NewMavenDatasource(logger *slog.Logger, config *core.Config) IDatasource {
 	newDatasource := &MavenDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
 			name:   core.DATASOURCE_TYPE_MAVEN,
+			Config: config,
 		},
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *MavenDatasource) getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
+func (ds *MavenDatasource) getReleases(packageSettings *core.PackageSettings) ([]*core.ReleaseInfo, error) {
 	repositoryUrl := "https://repo.maven.apache.org/maven2"
 	if len(packageSettings.RegistryUrls) > 0 {
 		repositoryUrl = packageSettings.RegistryUrls[0]

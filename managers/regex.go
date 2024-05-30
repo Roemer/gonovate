@@ -19,9 +19,9 @@ type RegexManager struct {
 func NewRegexManager(logger *slog.Logger, globalConfig *core.Config, managerConfig *core.Manager) IManager {
 	manager := &RegexManager{
 		managerBase: managerBase{
-			logger:       logger.With(slog.String("handlerId", managerConfig.Id)),
-			GlobalConfig: globalConfig,
-			Config:       managerConfig,
+			logger:        logger.With(slog.String("handlerId", managerConfig.Id)),
+			Config:        globalConfig,
+			ManagerConfig: managerConfig,
 		},
 	}
 	manager.impl = manager
@@ -30,17 +30,17 @@ func NewRegexManager(logger *slog.Logger, globalConfig *core.Config, managerConf
 
 func (manager *RegexManager) getChanges() ([]core.IChange, error) {
 	// Process all rules to apply the ones relevant for the manager and store the ones relevant for packages.
-	managerSettings, possiblePackageRules := manager.GlobalConfig.FilterForManager(manager.Config)
+	managerSettings, possiblePackageRules := manager.Config.FilterForManager(manager.ManagerConfig)
 
 	// Skip if it is disabled
 	if managerSettings.Disabled != nil && *managerSettings.Disabled {
-		manager.logger.Info(fmt.Sprintf("Skipping Manager '%s' (%s) as it is disabled", manager.Config.Id, manager.Config.Type))
+		manager.logger.Info(fmt.Sprintf("Skipping Manager '%s' (%s) as it is disabled", manager.ManagerConfig.Id, manager.ManagerConfig.Type))
 		return nil, nil
 	}
 
 	// Search file candidates
 	manager.logger.Debug(fmt.Sprintf("Searching files with %d pattern(s)", len(managerSettings.FilePatterns)))
-	candidates, err := core.SearchFiles(".", managerSettings.FilePatterns, manager.GlobalConfig.IgnorePatterns)
+	candidates, err := core.SearchFiles(".", managerSettings.FilePatterns, manager.Config.IgnorePatterns)
 	manager.logger.Debug(fmt.Sprintf("Found %d matching file(s)", len(candidates)))
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (manager *RegexManager) getChanges() ([]core.IChange, error) {
 	// Precompile the regexes
 	precompiledRegexList := []*regexp.Regexp{}
 	for _, regStr := range managerSettings.MatchStrings {
-		resolvedMatchString := manager.GlobalConfig.ResolveMatchString(regStr)
+		resolvedMatchString := manager.Config.ResolveMatchString(regStr)
 		regex, err := regexp.Compile(resolvedMatchString)
 		if err != nil {
 			return nil, err
@@ -105,14 +105,14 @@ func (manager *RegexManager) getChanges() ([]core.IChange, error) {
 					priorityPackageSettings.Versioning = versioningObject[0].Value
 				}
 				// Build the merge package settings
-				packageSettings, err := buildMergedPackageSettings(manager.Config.PackageSettings, priorityPackageSettings, possiblePackageRules, candidate)
+				packageSettings, err := buildMergedPackageSettings(manager.ManagerConfig.PackageSettings, priorityPackageSettings, possiblePackageRules, candidate)
 				if err != nil {
 					return nil, err
 				}
 
 				// Search for a new version for the package
 				currentVersionString, _ := manager.sanitizeString(versionObject[0].Value)
-				newReleaseInfo, currentVersion, err := manager.searchPackageUpdate(currentVersionString, packageSettings, manager.GlobalConfig.HostRules)
+				newReleaseInfo, currentVersion, err := manager.searchPackageUpdate(currentVersionString, packageSettings)
 				if err != nil {
 					return nil, err
 				}

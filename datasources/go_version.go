@@ -12,18 +12,19 @@ type GoVersionDatasource struct {
 	datasourceBase
 }
 
-func NewGoVersionDatasource(logger *slog.Logger) IDatasource {
+func NewGoVersionDatasource(logger *slog.Logger, config *core.Config) IDatasource {
 	newDatasource := &GoVersionDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
 			name:   core.DATASOURCE_TYPE_GOVERSION,
+			Config: config,
 		},
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *GoVersionDatasource) getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
+func (ds *GoVersionDatasource) getReleases(packageSettings *core.PackageSettings) ([]*core.ReleaseInfo, error) {
 	baseUrl := "https://go.dev"
 	if len(packageSettings.RegistryUrls) > 0 {
 		baseUrl = packageSettings.RegistryUrls[0]

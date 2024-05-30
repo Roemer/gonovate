@@ -14,18 +14,19 @@ type NpmDatasource struct {
 	datasourceBase
 }
 
-func NewNpmDatasource(logger *slog.Logger) IDatasource {
+func NewNpmDatasource(logger *slog.Logger, config *core.Config) IDatasource {
 	newDatasource := &NpmDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
 			name:   core.DATASOURCE_TYPE_NPM,
+			Config: config,
 		},
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *NpmDatasource) getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
+func (ds *NpmDatasource) getReleases(packageSettings *core.PackageSettings) ([]*core.ReleaseInfo, error) {
 	baseUrl := "https://registry.npmjs.org"
 	if len(packageSettings.RegistryUrls) > 0 {
 		baseUrl = packageSettings.RegistryUrls[0]

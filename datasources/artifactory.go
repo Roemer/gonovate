@@ -16,18 +16,19 @@ type ArtifactoryDatasource struct {
 	datasourceBase
 }
 
-func NewArtifactoryDatasource(logger *slog.Logger) IDatasource {
+func NewArtifactoryDatasource(logger *slog.Logger, config *core.Config) IDatasource {
 	newDatasource := &ArtifactoryDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
 			name:   core.DATASOURCE_TYPE_ARTIFACTORY,
+			Config: config,
 		},
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *ArtifactoryDatasource) getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
+func (ds *ArtifactoryDatasource) getReleases(packageSettings *core.PackageSettings) ([]*core.ReleaseInfo, error) {
 	// Get the base url for artifactory
 	if packageSettings == nil || len(packageSettings.RegistryUrls) == 0 {
 		return nil, fmt.Errorf("no registry url for artifactory for packageName '%s'", packageSettings.PackageName)
@@ -35,7 +36,7 @@ func (ds *ArtifactoryDatasource) getReleases(packageSettings *core.PackageSettin
 	registryUrl := packageSettings.RegistryUrls[0]
 
 	// Get a host rule if any was defined
-	relevantHostRule := core.FilterHostConfigsForHost(registryUrl, hostRules)
+	relevantHostRule := ds.Config.FilterHostConfigsForHost(registryUrl)
 	token := ""
 	if relevantHostRule != nil {
 		token = relevantHostRule.TokendExpanded()

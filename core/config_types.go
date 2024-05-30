@@ -11,6 +11,7 @@ type Config struct {
 	Extends            []string                      `json:"extends"`
 	IgnorePatterns     []string                      `json:"ignorePatterns"`
 	MatchStringPresets map[string]*MatchStringPreset `json:"matchStringPresets"`
+	VersioningPresets  map[string]string             `json:"versioningPresets"`
 	Managers           []*Manager                    `json:"managers"`
 	Rules              []*Rule                       `json:"rules"`
 	HostRules          []*HostRule                   `json:"hostRules"`

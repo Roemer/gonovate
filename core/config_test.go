@@ -77,3 +77,23 @@ func TestMatchStringPresets(t *testing.T) {
 	resolved = config.ResolveMatchString("preset:test-2p(,d)")
 	assert.Equal("2p-a-d", resolved)
 }
+
+func TestVersioningPresets(t *testing.T) {
+	assert := assert.New(t)
+
+	config := &Config{
+		VersioningPresets: map[string]string{
+			"a": "foo",
+		},
+	}
+	assert.NotNil(config)
+
+	resolved := config.ResolveVersioning("preset:a")
+	assert.Equal("foo", resolved)
+
+	resolved = config.ResolveVersioning("preset:b")
+	assert.Equal("preset:b", resolved)
+
+	resolved = config.ResolveVersioning("c")
+	assert.Equal("c", resolved)
+}

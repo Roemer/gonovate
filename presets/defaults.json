@@ -23,11 +23,14 @@
             ]
         }
     },
+    "versioningPresets": {
+        "major-minor-patch": "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$"
+    },
     "rules": [
         {
             "packageSettings": {
                 "maxUpdateType": "minor",
-                "versioning": "(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?"
+                "versioning": "preset:major-minor-patch"
             }
         },
         {
@@ -37,7 +40,7 @@
                 ]
             },
             "packageSettings": {
-                "versioning": "^(?P<d1>\\d+)\\.(?P<d2>\\d+)(?:\\.(?P<d3>\\d+))?(?:-(?P<s4>[^-]+))?(?:-(?P<d5>\\d+))?$"
+                "versioning": "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:-([^-]+))?(?:-(\\d+))?$"
             }
         },
         {
@@ -47,8 +50,7 @@
                 ]
             },
             "packageSettings": {
-                "extractVersion": "v(.*)",
-                "versioning": "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$"
+                "extractVersion": "v(.*)"
             }
         },
         {

@@ -15,11 +15,12 @@ type DockerDatasource struct {
 	datasourceBase
 }
 
-func NewDockerDatasource(logger *slog.Logger) IDatasource {
+func NewDockerDatasource(logger *slog.Logger, config *core.Config) IDatasource {
 	newDatasource := &DockerDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
 			name:   core.DATASOURCE_TYPE_DOCKER,
+			Config: config,
 		},
 	}
 	newDatasource.impl = newDatasource
@@ -29,7 +30,7 @@ func NewDockerDatasource(logger *slog.Logger) IDatasource {
 var dockerIoRegex = regexp.MustCompile(`^(https?://)?([a-zA-Z-_0-9\.]*docker\.io)($|/)`)
 var httpSchemeRegex = regexp.MustCompile(`^https?://(.*)`)
 
-func (ds *DockerDatasource) getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
+func (ds *DockerDatasource) getReleases(packageSettings *core.PackageSettings) ([]*core.ReleaseInfo, error) {
 	// Prepare the registry host
 	customRegistryUrl := ""
 	if packageSettings != nil && len(packageSettings.RegistryUrls) > 0 {
@@ -49,7 +50,7 @@ func (ds *DockerDatasource) getReleases(packageSettings *core.PackageSettings, h
 	baseUrl = baseUrl.JoinPath("v2")
 
 	// Get a host rule if any was defined
-	relevantHostRule := core.FilterHostConfigsForHost(baseUrl.Host, hostRules)
+	relevantHostRule := ds.Config.FilterHostConfigsForHost(baseUrl.Host)
 
 	// Different handling for different sites
 	var tags []string

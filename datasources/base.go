@@ -11,17 +11,18 @@ import (
 )
 
 type IDatasource interface {
-	getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error)
-	SearchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, *gover.Version, error)
+	getReleases(packageSettings *core.PackageSettings) ([]*core.ReleaseInfo, error)
+	SearchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings) (*core.ReleaseInfo, *gover.Version, error)
 }
 
 type datasourceBase struct {
 	logger *slog.Logger
 	name   string
 	impl   IDatasource
+	Config *core.Config
 }
 
-func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings, hostRules []*core.HostRule) (*core.ReleaseInfo, *gover.Version, error) {
+func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings) (*core.ReleaseInfo, *gover.Version, error) {
 	// Setup
 	cacheIdentifier := ds.name + "|" + packageSettings.PackageName
 	allowUnstable := false
@@ -35,7 +36,8 @@ func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSett
 	if packageSettings.Versioning == "" {
 		return nil, nil, fmt.Errorf("empty 'versioning' regexp")
 	}
-	versionRegex, err := regexp.Compile(packageSettings.Versioning)
+	resolvedVersioning := ds.Config.ResolveVersioning(packageSettings.Versioning)
+	versionRegex, err := regexp.Compile(resolvedVersioning)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed parsing the 'versioning' regexp '%s': %w", packageSettings.Versioning, err)
 	}
@@ -52,7 +54,7 @@ func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSett
 	if avaliableReleases == nil {
 		// No data in cache, fetch new data
 		ds.logger.Debug("Lookup releases from remote")
-		releases, err := ds.impl.getReleases(packageSettings, hostRules)
+		releases, err := ds.impl.getReleases(packageSettings)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -130,24 +132,24 @@ func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSett
 	return maxValidRelease, curr, nil
 }
 
-func GetDatasource(logger *slog.Logger, datasource string) (IDatasource, error) {
+func GetDatasource(logger *slog.Logger, config *core.Config, datasource string) (IDatasource, error) {
 	switch datasource {
 	case core.DATASOURCE_TYPE_ARTIFACTORY:
-		return NewArtifactoryDatasource(logger), nil
+		return NewArtifactoryDatasource(logger, config), nil
 	case core.DATASOURCE_TYPE_DOCKER:
-		return NewDockerDatasource(logger), nil
+		return NewDockerDatasource(logger, config), nil
 	case core.DATASOURCE_TYPE_GITHUB_RELEASES:
-		return NewGitHubReleasesDatasource(logger), nil
+		return NewGitHubReleasesDatasource(logger, config), nil
 	case core.DATASOURCE_TYPE_GITHUB_TAGS:
-		return NewGitHubTagsDatasource(logger), nil
+		return NewGitHubTagsDatasource(logger, config), nil
 	case core.DATASOURCE_TYPE_GOVERSION:
-		return NewGoVersionDatasource(logger), nil
+		return NewGoVersionDatasource(logger, config), nil
 	case core.DATASOURCE_TYPE_MAVEN:
-		return NewMavenDatasource(logger), nil
+		return NewMavenDatasource(logger, config), nil
 	case core.DATASOURCE_TYPE_NODEJS:
-		return NewNodeJsDatasource(logger), nil
+		return NewNodeJsDatasource(logger, config), nil
 	case core.DATASOURCE_TYPE_NPM:
-		return NewNpmDatasource(logger), nil
+		return NewNpmDatasource(logger, config), nil
 	}
 	return nil, fmt.Errorf("no datasource defined for '%s'", datasource)
 }

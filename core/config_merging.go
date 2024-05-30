@@ -26,6 +26,11 @@ func (configA *Config) MergeWith(configB *Config) {
 		configA.MatchStringPresets = map[string]*MatchStringPreset{}
 	}
 	maps.Copy(configA.MatchStringPresets, configB.MatchStringPresets)
+	// VersioningPresets
+	if configA.VersioningPresets == nil {
+		configA.VersioningPresets = map[string]string{}
+	}
+	maps.Copy(configA.VersioningPresets, configB.VersioningPresets)
 	// Managers
 	for _, manager := range configB.Managers {
 		managerAIndex := slices.IndexFunc(configA.Managers, func(m *Manager) bool { return m.Id == manager.Id })

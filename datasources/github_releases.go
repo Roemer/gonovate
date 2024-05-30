@@ -13,18 +13,19 @@ type GitHubReleasesDatasource struct {
 	datasourceBase
 }
 
-func NewGitHubReleasesDatasource(logger *slog.Logger) IDatasource {
+func NewGitHubReleasesDatasource(logger *slog.Logger, config *core.Config) IDatasource {
 	newDatasource := &GitHubReleasesDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
 			name:   core.DATASOURCE_TYPE_GITHUB_RELEASES,
+			Config: config,
 		},
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *GitHubReleasesDatasource) getReleases(packageSettings *core.PackageSettings, hostRules []*core.HostRule) ([]*core.ReleaseInfo, error) {
+func (ds *GitHubReleasesDatasource) getReleases(packageSettings *core.PackageSettings) ([]*core.ReleaseInfo, error) {
 	client := github.NewClient(nil)
 	// TODO: WithAuthToken(token)
 

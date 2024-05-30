@@ -8,6 +8,7 @@ import (
 )
 
 var configMatchStringPresetRegex = regexp.MustCompile(`preset:\s*(.*?)(?:\((.*)\))?\s*$`)
+var configVersioningPrexetRegex = regexp.MustCompile(`preset:\s*(.*?)\s*$`)
 
 // Filters all rules, creating a combined settings object for the manager and a list of possible rules for packages.
 func (config *Config) FilterForManager(managerConfig *Manager) (*ManagerSettings, []*Rule) {
@@ -32,7 +33,7 @@ func (config *Config) FilterForManager(managerConfig *Manager) (*ManagerSettings
 	return managerSettings, possiblePackageRules
 }
 
-// Resolves a given match string with a template (if any)
+// Resolves a given match string with a preset (if any).
 func (config *Config) ResolveMatchString(matchString string) string {
 	m := configMatchStringPresetRegex.FindStringSubmatch(matchString)
 	if m != nil {
@@ -71,8 +72,21 @@ func (config *Config) ResolveMatchString(matchString string) string {
 	return matchString
 }
 
-func FilterHostConfigsForHost(host string, hostRules []*HostRule) *HostRule {
-	for _, hostRule := range hostRules {
+// Resolves a given versioning with a preset (if any).
+func (config *Config) ResolveVersioning(versioning string) string {
+	m := configVersioningPrexetRegex.FindStringSubmatch(versioning)
+	if m != nil {
+		preset, ok := config.VersioningPresets[m[1]]
+		if ok {
+			return preset
+		}
+	}
+	return versioning
+}
+
+// Filters the host rules by the given host and returns the first match.
+func (config *Config) FilterHostConfigsForHost(host string) *HostRule {
+	for _, hostRule := range config.HostRules {
 		if strings.Contains(host, hostRule.MatchHost) {
 			return hostRule
 		}
