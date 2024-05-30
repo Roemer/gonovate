@@ -18,9 +18,9 @@ func (p *Project) SplitPath() (string, string) {
 
 // Contains a list of changes which resulted from grouping changes
 type ChangeSet struct {
-	Title   string
-	Id      string
-	Changes []IChange
+	Title      string
+	BranchName string
+	Changes    []IChange
 }
 
 // The interface for a manager specific change object

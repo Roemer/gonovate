@@ -67,23 +67,23 @@ func (p *GitHubPlatform) NotifyChanges(project *core.Project, changeSet *core.Ch
 		return err
 	}
 	existingRequest, _, err := client.PullRequests.List(context.Background(), owner, repository, &github.PullRequestListOptions{
-		Head:  changeSet.Id,
-		Base:  p.baseBranch,
+		Head:  changeSet.BranchName,
+		Base:  p.Config.PlatformSettings.BaseBranch,
 		State: "open",
 	})
 	if err != nil {
 		return err
 	}
 	// The Head search parameter does not work without "user:", so just make sure that the returned list really contains the branch
-	existingPr, prExists := lo.Find(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == changeSet.Id })
+	existingPr, prExists := lo.Find(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == changeSet.BranchName })
 	if prExists {
 		p.logger.Info(fmt.Sprintf("PR already exists: %s", *existingPr.HTMLURL))
 	} else {
 		// Create the PR
 		pr, _, err := client.PullRequests.Create(context.Background(), owner, repository, &github.NewPullRequest{
 			Title: github.String(changeSet.Title),
-			Head:  github.String(changeSet.Id),
-			Base:  github.String(p.baseBranch),
+			Head:  github.String(changeSet.BranchName),
+			Base:  github.String(p.Config.PlatformSettings.BaseBranch),
 		})
 		if err != nil {
 			return err

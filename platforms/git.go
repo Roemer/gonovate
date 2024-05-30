@@ -13,9 +13,8 @@ type GitPlatform struct {
 func NewGitPlatform(logger *slog.Logger, config *core.Config) *GitPlatform {
 	platform := &GitPlatform{
 		platformBase: platformBase{
-			logger:     logger,
-			Config:     config,
-			baseBranch: config.PlatformSettings.BaseBranch,
+			logger: logger,
+			Config: config,
 		},
 	}
 	return platform
@@ -36,9 +35,8 @@ func (p *GitPlatform) FetchProject(project *core.Project) error {
 }
 
 func (p *GitPlatform) PrepareForChanges(changeSet *core.ChangeSet) error {
-	branchName := changeSet.Id
-	p.logger.Debug(fmt.Sprintf("Creating branch '%s'", branchName))
-	_, _, err := core.Git.Run("checkout", "-B", branchName)
+	p.logger.Debug(fmt.Sprintf("Creating branch '%s'", changeSet.BranchName))
+	_, _, err := core.Git.Run("checkout", "-B", changeSet.BranchName)
 	return err
 }
 
@@ -73,6 +71,6 @@ func (p *GitPlatform) NotifyChanges(project *core.Project, changeSet *core.Chang
 }
 
 func (p *GitPlatform) ResetToBase() error {
-	_, _, err := core.Git.Run("checkout", p.baseBranch)
+	_, _, err := core.Git.Run("checkout", p.Config.PlatformSettings.BaseBranch)
 	return err
 }

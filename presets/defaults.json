@@ -1,6 +1,7 @@
 {
     "platformSettings": {
         "baseBranch": "main",
+        "branchPrefix": "gonovate/",
         "gitAuthor": "gonovate-bot <bot@gonovate.org>"
     },
     "ignorePatterns": [

@@ -12,9 +12,8 @@ type NoopPlatform struct {
 func NewNoopPlatform(logger *slog.Logger, config *core.Config) IPlatform {
 	platform := &NoopPlatform{
 		platformBase: platformBase{
-			logger:     logger,
-			Config:     config,
-			baseBranch: config.PlatformSettings.BaseBranch,
+			logger: logger,
+			Config: config,
 		},
 	}
 	return platform

@@ -29,6 +29,8 @@ type PlatformSettings struct {
 	Projects  []string `json:"projects"`
 	// The name of the base branch, defaults to "main".
 	BaseBranch string `json:"baseBranch"`
+	// The prefix for branches created by gonovate. Defaults to "gonovate/".
+	BranchPrefix string `json:"branchPrefix"`
 }
 
 func (ps *PlatformSettings) TokendExpanded() string {

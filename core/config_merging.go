@@ -89,6 +89,10 @@ func (platformSettingsA *PlatformSettings) MergeWith(platformSettingsB *Platform
 	if platformSettingsB.BaseBranch != "" {
 		platformSettingsA.BaseBranch = platformSettingsB.BaseBranch
 	}
+	// BranchPrefix
+	if platformSettingsB.BranchPrefix != "" {
+		platformSettingsA.BranchPrefix = platformSettingsB.BranchPrefix
+	}
 	return platformSettingsA
 }
 

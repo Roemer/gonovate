@@ -59,8 +59,8 @@ func (p *GitlabPlatform) NotifyChanges(project *core.Project, changeSet *core.Ch
 	}
 
 	mergeRequests, _, err := client.MergeRequests.ListProjectMergeRequests(project.Path, &gitlab.ListProjectMergeRequestsOptions{
-		SourceBranch: gitlab.Ptr(changeSet.Id),
-		TargetBranch: gitlab.Ptr(p.baseBranch),
+		SourceBranch: gitlab.Ptr(changeSet.BranchName),
+		TargetBranch: gitlab.Ptr(p.Config.PlatformSettings.BaseBranch),
 		State:        gitlab.Ptr("opened"),
 	})
 	if err != nil {
@@ -71,8 +71,8 @@ func (p *GitlabPlatform) NotifyChanges(project *core.Project, changeSet *core.Ch
 	} else {
 		mr, _, err := client.MergeRequests.CreateMergeRequest(project.Path, &gitlab.CreateMergeRequestOptions{
 			Title:        gitlab.Ptr(changeSet.Title),
-			SourceBranch: gitlab.Ptr(changeSet.Id),
-			TargetBranch: gitlab.Ptr(p.baseBranch),
+			SourceBranch: gitlab.Ptr(changeSet.BranchName),
+			TargetBranch: gitlab.Ptr(p.Config.PlatformSettings.BaseBranch),
 		})
 		if err != nil {
 			return err
