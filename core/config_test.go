@@ -56,26 +56,38 @@ func TestMatchStringPresets(t *testing.T) {
 	}
 	assert.NotNil(config)
 
-	resolved := config.ResolveMatchString("preset:test-0p")
+	resolved, err := config.ResolveMatchString("preset:test-0p")
+	assert.NoError(err)
 	assert.Equal("0p", resolved)
 
-	resolved = config.ResolveMatchString("preset:test-1p")
+	resolved, err = config.ResolveMatchString("preset:test-1p")
+	assert.NoError(err)
 	assert.Equal("1p-a", resolved)
-	resolved = config.ResolveMatchString("preset:test-1p()")
+	resolved, err = config.ResolveMatchString("preset:test-1p()")
+	assert.NoError(err)
 	assert.Equal("1p-a", resolved)
-	resolved = config.ResolveMatchString("preset:test-1p(b)")
+	resolved, err = config.ResolveMatchString("preset:test-1p(b)")
+	assert.NoError(err)
 	assert.Equal("1p-b", resolved)
 
-	resolved = config.ResolveMatchString("preset:test-2p")
+	resolved, err = config.ResolveMatchString("preset:test-2p")
+	assert.NoError(err)
 	assert.Equal("2p-a-b", resolved)
-	resolved = config.ResolveMatchString("preset:test-2p()")
+	resolved, err = config.ResolveMatchString("preset:test-2p()")
+	assert.NoError(err)
 	assert.Equal("2p-a-b", resolved)
-	resolved = config.ResolveMatchString("preset:test-2p(c)")
+	resolved, err = config.ResolveMatchString("preset:test-2p(c)")
+	assert.NoError(err)
 	assert.Equal("2p-c-b", resolved)
-	resolved = config.ResolveMatchString("preset:test-2p(c,d)")
+	resolved, err = config.ResolveMatchString("preset:test-2p(c,d)")
+	assert.NoError(err)
 	assert.Equal("2p-c-d", resolved)
-	resolved = config.ResolveMatchString("preset:test-2p(,d)")
+	resolved, err = config.ResolveMatchString("preset:test-2p(,d)")
+	assert.NoError(err)
 	assert.Equal("2p-a-d", resolved)
+
+	resolved, err = config.ResolveMatchString("preset:non-existing")
+	assert.Error(err)
 }
 
 func TestVersioningPresets(t *testing.T) {
@@ -88,12 +100,14 @@ func TestVersioningPresets(t *testing.T) {
 	}
 	assert.NotNil(config)
 
-	resolved := config.ResolveVersioning("preset:a")
+	resolved, err := config.ResolveVersioning("preset:a")
+	assert.NoError(err)
 	assert.Equal("foo", resolved)
 
-	resolved = config.ResolveVersioning("preset:b")
-	assert.Equal("preset:b", resolved)
+	resolved, err = config.ResolveVersioning("preset:b")
+	assert.Error(err)
 
-	resolved = config.ResolveVersioning("c")
+	resolved, err = config.ResolveVersioning("c")
+	assert.NoError(err)
 	assert.Equal("c", resolved)
 }

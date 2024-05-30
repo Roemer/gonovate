@@ -36,7 +36,10 @@ func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSett
 	if packageSettings.Versioning == "" {
 		return nil, nil, fmt.Errorf("empty 'versioning' regexp")
 	}
-	resolvedVersioning := ds.Config.ResolveVersioning(packageSettings.Versioning)
+	resolvedVersioning, err := ds.Config.ResolveVersioning(packageSettings.Versioning)
+	if err != nil {
+		return nil, nil, err
+	}
 	versionRegex, err := regexp.Compile(resolvedVersioning)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed parsing the 'versioning' regexp '%s': %w", packageSettings.Versioning, err)

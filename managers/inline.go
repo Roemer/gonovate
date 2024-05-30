@@ -78,7 +78,10 @@ func (manager *InlineManager) getChanges() ([]core.IChange, error) {
 			}
 
 			// Build the regex that was defined in the marker
-			resolvedMatchString := manager.Config.ResolveMatchString(config.MatchString)
+			resolvedMatchString, err := manager.Config.ResolveMatchString(config.MatchString)
+			if err != nil {
+				return nil, err
+			}
 			newReg := regexp.MustCompile(resolvedMatchString)
 			// Search the remaining file content with this new regex and process the first match only
 			contentSearchStart := end + 1

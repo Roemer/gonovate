@@ -34,54 +34,60 @@ func (config *Config) FilterForManager(managerConfig *Manager) (*ManagerSettings
 }
 
 // Resolves a given match string with a preset (if any).
-func (config *Config) ResolveMatchString(matchString string) string {
+func (config *Config) ResolveMatchString(matchString string) (string, error) {
 	m := configMatchStringPresetRegex.FindStringSubmatch(matchString)
 	if m != nil {
-		preset, ok := config.MatchStringPresets[m[1]]
-		if ok {
-			// Get the parameters passed from the matchString
-			parametersFromString := []string{}
-			if m[2] != "" {
-				parametersFromString = strings.Split(m[2], ",")
-			}
-			// Get the max number of parameters from the string and the defaults
-			maxParams := len(parametersFromString)
-			if len(preset.ParameterDefaults) > maxParams {
-				maxParams = len(preset.ParameterDefaults)
-			}
-			// Just return the string if there are no parameters at all
-			if maxParams == 0 {
-				return preset.MatchString
-			}
-			// Build the list of parameters
-			params := make([]interface{}, maxParams)
-			// Set the defaults
-			for i, v := range preset.ParameterDefaults {
+		// Get the name and check if it exists
+		presetName := m[1]
+		preset, ok := config.MatchStringPresets[presetName]
+		if !ok {
+			return "", fmt.Errorf("matchString preset '%s' not found", presetName)
+		}
+
+		// Get the parameters passed from the matchString
+		parametersFromString := []string{}
+		if m[2] != "" {
+			parametersFromString = strings.Split(m[2], ",")
+		}
+		// Get the max number of parameters from the string and the defaults
+		maxParams := len(parametersFromString)
+		if len(preset.ParameterDefaults) > maxParams {
+			maxParams = len(preset.ParameterDefaults)
+		}
+		// Just return the string if there are no parameters at all
+		if maxParams == 0 {
+			return preset.MatchString, nil
+		}
+		// Build the list of parameters
+		params := make([]interface{}, maxParams)
+		// Set the defaults
+		for i, v := range preset.ParameterDefaults {
+			params[i] = v
+		}
+		// Overwrite with parameters from the matchString
+		for i, v := range parametersFromString {
+			if v != "" {
 				params[i] = v
 			}
-			// Overwrite with parameters from the matchString
-			for i, v := range parametersFromString {
-				if v != "" {
-					params[i] = v
-				}
-			}
-			// Return the formatted string
-			return fmt.Sprintf(preset.MatchString, params...)
 		}
+		// Return the formatted string
+		return fmt.Sprintf(preset.MatchString, params...), nil
 	}
-	return matchString
+	return matchString, nil
 }
 
 // Resolves a given versioning with a preset (if any).
-func (config *Config) ResolveVersioning(versioning string) string {
+func (config *Config) ResolveVersioning(versioning string) (string, error) {
 	m := configVersioningPrexetRegex.FindStringSubmatch(versioning)
 	if m != nil {
-		preset, ok := config.VersioningPresets[m[1]]
-		if ok {
-			return preset
+		presetName := m[1]
+		preset, ok := config.VersioningPresets[presetName]
+		if !ok {
+			return "", fmt.Errorf("versioning preset '%s' not found", presetName)
 		}
+		return preset, nil
 	}
-	return versioning
+	return versioning, nil
 }
 
 // Filters the host rules by the given host and returns the first match.
