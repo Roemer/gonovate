@@ -1,5 +1,14 @@
 # Change Log
 
+## v0.2.0 (2024-06-03)
+
+### Features
+
+* Added branchPrefix configuration
+* Added VersioningPresets, add config to datasources
+* Throw error when a preset is not found
+* When using direct, passing a project is optional
+
 ## v0.1.0 (2024-05-29)
 
 ### Features
