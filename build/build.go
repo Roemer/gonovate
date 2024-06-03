@@ -19,7 +19,7 @@ import (
 // Internal variables
 var outputDirectory = ".build-output"
 var reportsDirectory = ".test-reports"
-var version = "0.1.0"
+var version = "0.2.0"
 
 func main() {
 	os.Exit(gotaskr.Execute())
