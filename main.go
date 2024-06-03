@@ -146,12 +146,19 @@ func runCmd(args []string) error {
 	// Get the projects
 	projects := []*core.Project{}
 	isDirect := false
+	hasProject := true
 	if config.PlatformSettings.Direct != nil {
 		isDirect = *config.PlatformSettings.Direct
 	}
 	if isDirect {
-		// Only use the first passed project
-		projects = append(projects, &core.Project{Path: config.PlatformSettings.Projects[0]})
+		// If no project is passed, use a fake project
+		if len(config.PlatformSettings.Projects) == 0 {
+			hasProject = false
+			projects = append(projects, &core.Project{Path: "local/local"})
+		} else {
+			// Use the first passed project
+			projects = append(projects, &core.Project{Path: config.PlatformSettings.Projects[0]})
+		}
 	} else {
 		// Add all projects
 		for _, p := range config.PlatformSettings.Projects {
@@ -263,8 +270,11 @@ func runCmd(args []string) error {
 					return err
 				}
 				// Notify
-				if err := platform.NotifyChanges(project, changeSet); err != nil {
-					return err
+				if hasProject {
+					// Only notify if a project was defined, otherwise we do not know where to notify
+					if err := platform.NotifyChanges(project, changeSet); err != nil {
+						return err
+					}
 				}
 				// Reset
 				if err := platform.ResetToBase(); err != nil {
