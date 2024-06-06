@@ -1,5 +1,12 @@
 # Change Log
 
+## v0.2.1 (2024-06-06)
+
+### Features
+
+* Add maxUpdateType and extractVersion to inline definition
+* Print version on cli help
+
 ## v0.2.0 (2024-06-03)
 
 ### Features

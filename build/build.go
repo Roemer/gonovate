@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"go/build"
+	"gonovate/core"
 	"io"
 	"os"
 	"path/filepath"
@@ -19,7 +20,6 @@ import (
 // Internal variables
 var outputDirectory = ".build-output"
 var reportsDirectory = ".test-reports"
-var version = "0.2.0"
 
 func main() {
 	os.Exit(gotaskr.Execute())
@@ -103,7 +103,7 @@ func init() {
 	})
 
 	gotaskr.Task("Release", func() error {
-		fullVersionName := fmt.Sprintf("v%s", version)
+		fullVersionName := fmt.Sprintf("v%s", core.Version)
 		log.Informationf("Creating new release for version %s", fullVersionName)
 		gitHubRepoParts := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 		gitHubOwner := gitHubRepoParts[0]

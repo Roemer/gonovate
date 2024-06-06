@@ -50,6 +50,9 @@ func main() {
 
 // Prints the base usage
 func printUsage() {
+	fmt.Fprintf(os.Stderr, "gonovate v%s", core.Version)
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Usage:")
 	fmt.Fprintln(os.Stderr, "  gonovate [flags] <command> [command flags]")
 	fmt.Fprintln(os.Stderr, "")
