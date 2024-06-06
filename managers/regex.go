@@ -83,6 +83,8 @@ func (manager *RegexManager) getChanges(mergedManagerSettings *core.ManagerSetti
 				datasourceObject, datasourceOk := match["datasource"]
 				packageObject, packageOk := match["packageName"]
 				versioningObject, versioningOk := match["versioning"]
+				maxUpdateTypeObject, maxUpdateTypeOk := match["maxUpdateType"]
+				extractVersionObject, extractVersionOk := match["extractVersion"]
 
 				// Log
 				fileLogger.Debug(fmt.Sprintf("Found a match for regex '%s'", regex.String()))
@@ -97,6 +99,12 @@ func (manager *RegexManager) getChanges(mergedManagerSettings *core.ManagerSetti
 				}
 				if versioningOk {
 					priorityPackageSettings.Versioning = versioningObject[0].Value
+				}
+				if maxUpdateTypeOk {
+					priorityPackageSettings.MaxUpdateType = maxUpdateTypeObject[0].Value
+				}
+				if extractVersionOk {
+					priorityPackageSettings.ExtractVersion = extractVersionObject[0].Value
 				}
 				// Build the merge package settings
 				packageSettings, err := buildMergedPackageSettings(manager.ManagerConfig.PackageSettings, priorityPackageSettings, possiblePackageRules, candidate)
