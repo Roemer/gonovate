@@ -156,7 +156,7 @@ func compile(ext string) (string, error) {
 }
 
 func zipRelease(file string) error {
-	zipFilePath := filepath.Join(outputDirectory, fmt.Sprintf("gonovate-%s-%s-%s.zip", os.Getenv("GOOS"), version, os.Getenv("GOARCH")))
+	zipFilePath := filepath.Join(outputDirectory, fmt.Sprintf("gonovate-%s-%s-%s.zip", os.Getenv("GOOS"), core.Version, os.Getenv("GOARCH")))
 
 	a, err := os.Create(zipFilePath)
 	if err != nil {
