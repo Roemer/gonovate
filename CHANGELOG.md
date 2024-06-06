@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.2.2 (2024-06-06)
+
+### Fix
+
+* Fix maxUpdateType and extractVersion from inline definition
+
 ## v0.2.1 (2024-06-06)
 
 ### Features
