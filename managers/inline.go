@@ -115,6 +115,13 @@ func (manager *InlineManager) getChanges() ([]core.IChange, error) {
 			if config.Versioning != "" {
 				priorityPackageSettings.Versioning = config.Versioning
 			}
+			if config.MaxUpdateType != "" {
+				priorityPackageSettings.MaxUpdateType = config.MaxUpdateType
+			}
+			if config.ExtractVersion != "" {
+				priorityPackageSettings.ExtractVersion = config.ExtractVersion
+			}
+			// Now overwrite from direct matches
 			if packageOk {
 				priorityPackageSettings.PackageName = packageObject[0].Value
 			}

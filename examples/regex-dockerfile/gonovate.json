@@ -1,5 +1,8 @@
 {
     "platform": "noop",
+    "platformSettings": {
+        "direct": true
+    },
     "extends": [
         "defaults"
     ],
