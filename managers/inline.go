@@ -101,6 +101,8 @@ func (manager *InlineManager) getChanges() ([]core.IChange, error) {
 			datasourceObject, datasourceOk := match["datasource"]
 			packageObject, packageOk := match["packageName"]
 			versioningObject, versioningOk := match["versioning"]
+			maxUpdateTypeObject, maxUpdateTypeOk := match["maxUpdateType"]
+			extractVersionObject, extractVersionOk := match["extractVersion"]
 
 			// Build a package settings from the marker and the following direct match. This rule always has the highest priority
 			priorityPackageSettings := &core.PackageSettings{}
@@ -121,6 +123,12 @@ func (manager *InlineManager) getChanges() ([]core.IChange, error) {
 			}
 			if versioningOk {
 				priorityPackageSettings.Versioning = versioningObject[0].Value
+			}
+			if maxUpdateTypeOk {
+				priorityPackageSettings.MaxUpdateType = maxUpdateTypeObject[0].Value
+			}
+			if extractVersionOk {
+				priorityPackageSettings.ExtractVersion = extractVersionObject[0].Value
 			}
 			// Build the merge package settings
 			packageSettings, err := buildMergedPackageSettings(manager.ManagerConfig.PackageSettings, priorityPackageSettings, possiblePackageRules, candidate)
@@ -194,10 +202,12 @@ func (manager *InlineManager) applyChanges(changes []core.IChange) error {
 }
 
 type inlineManagerConfig struct {
-	PackageName string `json:"packageName"`
-	Datasource  string `json:"datasource"`
-	MatchString string `json:"matchString"`
-	Versioning  string `json:"versioning"`
+	PackageName    string `json:"packageName"`
+	Datasource     string `json:"datasource"`
+	MatchString    string `json:"matchString"`
+	Versioning     string `json:"versioning"`
+	MaxUpdateType  string `json:"maxUpdateType"`
+	ExtractVersion string `json:"extractVersion"`
 }
 
 // The manager-specific change object that contains everything needed to apply the change
