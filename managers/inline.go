@@ -29,19 +29,10 @@ func NewInlineManager(logger *slog.Logger, config *core.Config, managerConfig *c
 	return manager
 }
 
-func (manager *InlineManager) getChanges() ([]core.IChange, error) {
-	// Process all rules to apply the ones relevant for the manager and store the ones relevant for packages.
-	managerSettings, possiblePackageRules := manager.Config.FilterForManager(manager.ManagerConfig)
-
-	// Skip if it is disabled
-	if managerSettings.Disabled != nil && *managerSettings.Disabled {
-		manager.logger.Info(fmt.Sprintf("Skipping Manager '%s' (%s) as it is disabled", manager.ManagerConfig.Id, manager.ManagerConfig.Type))
-		return nil, nil
-	}
-
+func (manager *InlineManager) getChanges(mergedManagerSettings *core.ManagerSettings, possiblePackageRules []*core.Rule) ([]core.IChange, error) {
 	// Search file candidates
-	manager.logger.Debug(fmt.Sprintf("Searching files with %d pattern(s)", len(managerSettings.FilePatterns)))
-	candidates, err := core.SearchFiles(".", managerSettings.FilePatterns, manager.Config.IgnorePatterns)
+	manager.logger.Debug(fmt.Sprintf("Searching files with %d pattern(s)", len(mergedManagerSettings.FilePatterns)))
+	candidates, err := core.SearchFiles(".", mergedManagerSettings.FilePatterns, manager.Config.IgnorePatterns)
 	manager.logger.Debug(fmt.Sprintf("Found %d matching file(s)", len(candidates)))
 	if err != nil {
 		return nil, err
