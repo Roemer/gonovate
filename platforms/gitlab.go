@@ -20,7 +20,7 @@ func NewGitlabPlatform(logger *slog.Logger, config *core.Config) *GitlabPlatform
 	return platform
 }
 
-func (p *GitlabPlatform) Type() string {
+func (p *GitlabPlatform) Type() core.PlatformType {
 	return core.PLATFORM_TYPE_GITLAB
 }
 

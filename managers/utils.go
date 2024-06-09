@@ -9,7 +9,7 @@ import (
 )
 
 // Build a PackageSettings object out of the various settings that can be relevant.
-func buildMergedPackageSettings(initialPackageSettings, priorityPackageSettings *core.PackageSettings, possiblePackageRules []*core.Rule, currentFile string) (*core.PackageSettings, error) {
+func buildMergedPackageSettings(initialPackageSettings, priorityPackageSettings *core.PackageSettings, possiblePackageRules []*core.Rule, currentFile string, managerId string) (*core.PackageSettings, error) {
 	// Build the packageSettings which holds all relevant rules
 	packageSettings := &core.PackageSettings{}
 	// Merge the initial package settings (usually from the manager)
@@ -21,9 +21,9 @@ func buildMergedPackageSettings(initialPackageSettings, priorityPackageSettings 
 		isAnyMatch := rule.Matches.IsMatchAll()
 		// Check if there is at least one condition that matches
 		if !isAnyMatch && rule.Matches != nil {
-			// Manager
+			// Manager-IDs
 			if !isAnyMatch && len(rule.Matches.Managers) > 0 {
-				if slices.Contains(rule.Matches.Managers, core.MANAGER_TYPE_REGEX) {
+				if slices.Contains(rule.Matches.Managers, managerId) {
 					isAnyMatch = true
 				}
 			}
@@ -60,6 +60,14 @@ func buildMergedPackageSettings(initialPackageSettings, priorityPackageSettings 
 	}
 
 	return packageSettings, nil
+}
+
+func findNamedMatchesWithIndex(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) map[string][]*capturedGroup {
+	match := findAllNamedMatchesWithIndex(regex, str, includeNotMatchedOptional, 1)
+	if match != nil {
+		return match[0]
+	}
+	return nil
 }
 
 // Find all named matches in the given string, returning an list of objects with start/end-index and the value for each named match

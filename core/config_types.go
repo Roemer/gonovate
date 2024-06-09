@@ -6,7 +6,7 @@ import (
 )
 
 type Config struct {
-	Platform           string                        `json:"platform"`
+	Platform           PlatformType                  `json:"platform"`
 	PlatformSettings   *PlatformSettings             `json:"platformSettings"`
 	Extends            []string                      `json:"extends"`
 	IgnorePatterns     []string                      `json:"ignorePatterns"`
@@ -44,8 +44,8 @@ type MatchStringPreset struct {
 }
 
 type Manager struct {
-	Id   string `json:"id"`
-	Type string `json:"type"`
+	Id   string      `json:"id"`
+	Type ManagerType `json:"type"`
 	// The settings are converted to rules to keep the right order, so they should not be used directly
 	ManagerSettings *ManagerSettings `json:"managerSettings"`
 	PackageSettings *PackageSettings `json:"packageSettings"`
@@ -63,10 +63,11 @@ type Rule struct {
 }
 
 type RuleMatch struct {
-	Managers     []string `json:"managers"`
-	Files        []string `json:"files"`
-	PackageNames []string `json:"packageNames"`
-	Datasources  []string `json:"datasources"`
+	Managers []string `json:"managers"`
+	//TODO: ManagerTypes []ManagerType    `json:"managerTypes"`
+	Files        []string         `json:"files"`
+	PackageNames []string         `json:"packageNames"`
+	Datasources  []DatasourceType `json:"datasources"`
 }
 
 // A MatchAll rule is a rule that has no matches defined at all, so it will match all.
@@ -87,7 +88,7 @@ type ManagerSettings struct {
 
 type PackageSettings struct {
 	// Defines how much the dependency is allowed to update. Can be "major", "minor", or "patch".
-	MaxUpdateType string `json:"maxUpdateType"`
+	MaxUpdateType UpdateType `json:"maxUpdateType"`
 	// This flag defines if unstable releases are allowed. Unstable usually means a version that also has parts with text.
 	AllowUnstable *bool `json:"allowUnstable"`
 	// A list of registry urls to use. Allows overwriting the default. Depends on the datasource.
@@ -101,7 +102,7 @@ type PackageSettings struct {
 	// Allows hard-coding a packageName in rules. Is used if it is not captured via matchString.
 	PackageName string `json:"packageName"`
 	// Allows hard-coding a datasource in rules. Is used if it is not captured via matchString.
-	Datasource string `json:"datasource"`
+	Datasource DatasourceType `json:"datasource"`
 	// Allows defining regexes that replace further information from packages (like hash) after updating
 	PostUpgradeReplacements []string `json:"postUpgradeReplacements"`
 }

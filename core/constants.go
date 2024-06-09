@@ -1,30 +1,40 @@
 package core
 
-const (
-	PLATFORM_TYPE_GIT    string = "git"
-	PLATFORM_TYPE_GITHUB string = "github"
-	PLATFORM_TYPE_GITLAB string = "gitlab"
-	PLATFORM_TYPE_NOOP   string = "noop"
-)
+type PlatformType string
 
 const (
-	MANAGER_TYPE_INLINE string = "inline"
-	MANAGER_TYPE_REGEX  string = "regex"
+	PLATFORM_TYPE_GIT    PlatformType = "git"
+	PLATFORM_TYPE_GITHUB PlatformType = "github"
+	PLATFORM_TYPE_GITLAB PlatformType = "gitlab"
+	PLATFORM_TYPE_NOOP   PlatformType = "noop"
 )
 
-const (
-	DATASOURCE_TYPE_ARTIFACTORY     string = "artifactory"
-	DATASOURCE_TYPE_DOCKER          string = "docker"
-	DATASOURCE_TYPE_GITHUB_RELEASES string = "github-releases"
-	DATASOURCE_TYPE_GITHUB_TAGS     string = "github-tags"
-	DATASOURCE_TYPE_GOVERSION       string = "go-version"
-	DATASOURCE_TYPE_MAVEN           string = "maven"
-	DATASOURCE_TYPE_NODEJS          string = "nodejs"
-	DATASOURCE_TYPE_NPM             string = "npm"
-)
+type ManagerType string
 
 const (
-	UPDATE_TYPE_MAJOR string = "major"
-	UPDATE_TYPE_MINOR string = "minor"
-	UPDATE_TYPE_PATCH string = "patch"
+	MANAGER_TYPE_INLINE ManagerType = "inline"
+	MANAGER_TYPE_REGEX  ManagerType = "regex"
+	MANAGER_TYPE_GOMOD  ManagerType = "go-mod"
+)
+
+type DatasourceType string
+
+const (
+	DATASOURCE_TYPE_ARTIFACTORY     DatasourceType = "artifactory"
+	DATASOURCE_TYPE_DOCKER          DatasourceType = "docker"
+	DATASOURCE_TYPE_GITHUB_RELEASES DatasourceType = "github-releases"
+	DATASOURCE_TYPE_GITHUB_TAGS     DatasourceType = "github-tags"
+	DATASOURCE_TYPE_GOMOD           DatasourceType = "go-mod"
+	DATASOURCE_TYPE_GOVERSION       DatasourceType = "go-version"
+	DATASOURCE_TYPE_MAVEN           DatasourceType = "maven"
+	DATASOURCE_TYPE_NODEJS          DatasourceType = "nodejs"
+	DATASOURCE_TYPE_NPM             DatasourceType = "npm"
+)
+
+type UpdateType string
+
+const (
+	UPDATE_TYPE_MAJOR UpdateType = "major"
+	UPDATE_TYPE_MINOR UpdateType = "minor"
+	UPDATE_TYPE_PATCH UpdateType = "patch"
 )

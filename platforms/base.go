@@ -8,7 +8,7 @@ import (
 
 type IPlatform interface {
 	// Returns the type of the platform
-	Type() string
+	Type() core.PlatformType
 	// Searches on the platform for projects to run gonovate on.
 	SearchProjects() ([]*core.Project, error)
 	// Fetches the project from the platform in it's initial state.

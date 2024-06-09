@@ -22,7 +22,7 @@ func NewGitHubPlatform(logger *slog.Logger, config *core.Config) *GitHubPlatform
 	return platform
 }
 
-func (p *GitHubPlatform) Type() string {
+func (p *GitHubPlatform) Type() core.PlatformType {
 	return core.PLATFORM_TYPE_GITHUB
 }
 

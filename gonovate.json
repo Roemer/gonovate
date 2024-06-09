@@ -24,6 +24,15 @@
             "packageSettings": {
                 "ignoreNonMatching": true
             }
+        },
+        {
+            "id": "go-mod",
+            "type": "go-mod",
+            "managerSettings":{
+                "filePatterns": [
+                    "go.mod"
+                ]
+            }
         }
     ],
     "rules": [

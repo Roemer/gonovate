@@ -19,7 +19,7 @@ func NewNoopPlatform(logger *slog.Logger, config *core.Config) IPlatform {
 	return platform
 }
 
-func (p *NoopPlatform) Type() string {
+func (p *NoopPlatform) Type() core.PlatformType {
 	return core.PLATFORM_TYPE_NOOP
 }
 

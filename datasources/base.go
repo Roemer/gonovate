@@ -17,14 +17,14 @@ type IDatasource interface {
 
 type datasourceBase struct {
 	logger *slog.Logger
-	name   string
+	name   core.DatasourceType
 	impl   IDatasource
 	Config *core.Config
 }
 
 func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings) (*core.ReleaseInfo, *gover.Version, error) {
 	// Setup
-	cacheIdentifier := ds.name + "|" + packageSettings.PackageName
+	cacheIdentifier := fmt.Sprintf("%s|%s", ds.name, packageSettings.PackageName)
 	allowUnstable := false
 	if packageSettings.AllowUnstable != nil {
 		allowUnstable = *packageSettings.AllowUnstable
@@ -135,7 +135,7 @@ func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSett
 	return maxValidRelease, curr, nil
 }
 
-func GetDatasource(logger *slog.Logger, config *core.Config, datasource string) (IDatasource, error) {
+func GetDatasource(logger *slog.Logger, config *core.Config, datasource core.DatasourceType) (IDatasource, error) {
 	switch datasource {
 	case core.DATASOURCE_TYPE_ARTIFACTORY:
 		return NewArtifactoryDatasource(logger, config), nil
@@ -157,7 +157,7 @@ func GetDatasource(logger *slog.Logger, config *core.Config, datasource string) 
 	return nil, fmt.Errorf("no datasource defined for '%s'", datasource)
 }
 
-func getReferenceVersionForUpdateType(updateType string, currentVersion *gover.Version) (*gover.Version, error) {
+func getReferenceVersionForUpdateType(updateType core.UpdateType, currentVersion *gover.Version) (*gover.Version, error) {
 	if updateType == core.UPDATE_TYPE_MAJOR {
 		return gover.EmptyVersion, nil
 	}

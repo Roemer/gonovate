@@ -30,7 +30,7 @@ type IChange interface {
 
 // Contains metadata for a change
 type ChangeMeta struct {
-	Datasource              string
+	Datasource              DatasourceType
 	PackageName             string
 	File                    string
 	CurrentVersion          *gover.Version

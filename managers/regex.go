@@ -95,19 +95,19 @@ func (manager *RegexManager) getChanges(mergedManagerSettings *core.ManagerSetti
 					priorityPackageSettings.PackageName = packageObject[0].Value
 				}
 				if datasourceOk {
-					priorityPackageSettings.Datasource = datasourceObject[0].Value
+					priorityPackageSettings.Datasource = core.DatasourceType(datasourceObject[0].Value)
 				}
 				if versioningOk {
 					priorityPackageSettings.Versioning = versioningObject[0].Value
 				}
 				if maxUpdateTypeOk {
-					priorityPackageSettings.MaxUpdateType = maxUpdateTypeObject[0].Value
+					priorityPackageSettings.MaxUpdateType = core.UpdateType(maxUpdateTypeObject[0].Value)
 				}
 				if extractVersionOk {
 					priorityPackageSettings.ExtractVersion = extractVersionObject[0].Value
 				}
 				// Build the merge package settings
-				packageSettings, err := buildMergedPackageSettings(manager.ManagerConfig.PackageSettings, priorityPackageSettings, possiblePackageRules, candidate)
+				packageSettings, err := buildMergedPackageSettings(manager.ManagerConfig.PackageSettings, priorityPackageSettings, possiblePackageRules, candidate, manager.ManagerConfig.Id)
 				if err != nil {
 					return nil, err
 				}

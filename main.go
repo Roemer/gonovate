@@ -220,6 +220,17 @@ func runCmd(args []string) error {
 				return err
 			}
 
+			/*// Filter the settings for this manager, also collect all package settings that might apply for this manager
+			mergedManagerSettings, possiblePackageRules := config.FilterForManager(managerConfig)
+
+			// Search for the files relevant for the manager
+			logger.Debug(fmt.Sprintf("Searching files with %d pattern(s)", len(mergedManagerSettings.FilePatterns)))
+			candidates, err := core.SearchFiles(".", mergedManagerSettings.FilePatterns, config.IgnorePatterns)
+			logger.Debug(fmt.Sprintf("Found %d matching file(s)", len(candidates)))
+			if err != nil {
+				return err
+			}*/
+
 			// Get the changes from the manager
 			changes, err := manager.GetChanges()
 			if err != nil {

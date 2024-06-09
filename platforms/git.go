@@ -20,7 +20,7 @@ func NewGitPlatform(logger *slog.Logger, config *core.Config) *GitPlatform {
 	return platform
 }
 
-func (p *GitPlatform) Type() string {
+func (p *GitPlatform) Type() core.PlatformType {
 	return core.PLATFORM_TYPE_GIT
 }
 
