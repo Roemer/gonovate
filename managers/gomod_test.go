@@ -23,9 +23,9 @@ func TestExtractGoVersion(t *testing.T) {
 	assert.NotNil(dependencies)
 	assert.Greater(len(dependencies), 0)
 
-	assertDependencyInSlice(assert, dependencies, "go", "1.14", "golang")
-	assertDependencyInSlice(assert, dependencies, "example.com/thismodule", "v1.2.3", "direct")
-	assertDependencyInSlice(assert, dependencies, "example.com/thatmodule", "v3.2.1", "direct")
+	assertDependencyInSlice(assert, dependencies, "go", "1.21", "golang")
+	assertDependencyInSlice(assert, dependencies, "github.com/roemer/gover", "v0.5.2", "direct")
+	assertDependencyInSlice(assert, dependencies, "github.com/samber/lo", "v1.39.0", "direct")
 	//assertDependencyInSlice(assert, dependencies, "example.com/indirectmodule1", "v1.0.0", "indirect")
 	//assertDependencyInSlice(assert, dependencies, "example.com/indirectmodule2", "v2.0.0", "indirect")
 }

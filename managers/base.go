@@ -68,11 +68,25 @@ type IManager interface {
 	applyChanges(changes []core.IChange) error
 }
 
+type managerBase2 struct {
+	logger        *slog.Logger
+	ManagerConfig *core.Manager
+	impl          IManager2
+}
+
 type managerBase struct {
 	logger        *slog.Logger
 	Config        *core.Config
 	ManagerConfig *core.Manager
 	impl          IManager
+}
+
+func GetManager2(logger *slog.Logger, managerConfig *core.Manager) (IManager2, error) {
+	switch managerConfig.Type {
+	case core.MANAGER_TYPE_GOMOD:
+		return NewGoModManager(logger, managerConfig), nil
+	}
+	return nil, fmt.Errorf("no manager defined for '%s'", managerConfig.Type)
 }
 
 func GetManager(logger *slog.Logger, config *core.Config, managerConfig *core.Manager) (IManager, error) {

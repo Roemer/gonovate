@@ -2,28 +2,49 @@ package managers
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"gonovate/core"
+	"log/slog"
+	"os"
 	"os/exec"
 	"regexp"
-	"strings"
 )
 
 type GoModManager struct {
+	managerBase2
+}
+
+func NewGoModManager(logger *slog.Logger, managerConfig *core.Manager) IManager2 {
+	manager := &GoModManager{
+		managerBase2: managerBase2{
+			logger:        logger.With(slog.String("handlerId", managerConfig.Id)),
+			ManagerConfig: managerConfig,
+		},
+	}
+	manager.impl = manager
+	return manager
 }
 
 func (manager *GoModManager) ExtractDependency(dependencyName string) (*Dependency, error) {
 	panic("not implemented") // TODO: Implement
 }
 
-func (manager *GoModManager) ExtractDependencies(content string) ([]*Dependency, error) {
+func (manager *GoModManager) ExtractDependencies(filePath string) ([]*Dependency, error) {
 	// Setup
 	goVersionRegex := regexp.MustCompile(`^\s*go\s+([^s]+)\s*$`)
 	moduleRegex := regexp.MustCompile(`^(?:require)?\s+(?P<module>[^\s]+\/[^\s]+)\s+(?P<version>[^\s]+)(?:\s*\/\/\s*(?P<comment>[^\s]+)\s*)?$`)
 
+	// Read the file
+	fileContentBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	// A slice to collect all found dependencies
 	foundDependencies := []*Dependency{}
 	// Scan the content line by line
-	scanner := bufio.NewScanner(strings.NewReader(content))
+	scanner := bufio.NewScanner(bytes.NewReader(fileContentBytes))
 	for scanner.Scan() {
 		line := scanner.Text()
 		// Match the golang version
