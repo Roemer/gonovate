@@ -6,54 +6,18 @@ import (
 	"gonovate/datasources"
 	"log/slog"
 	"strings"
-	"time"
 
 	"github.com/roemer/gover"
 )
 
-// This type represents a concrete dependency which was found by a manager.
-type Dependency struct {
-	// The name of the dependency.
-	Name string
-	// The current version of the dependency.
-	Version string
-	// The datasource of the dependency.
-	Datasource core.DatasourceType
-	// The type of the dependency. Used to allow different handlings per type in the manager.
-	Type string
-}
-
-func (d *Dependency) String() string {
-	return fmt.Sprintf("name: %s, version: %s, datasource: %s, type: %s", d.Name, d.Version, d.Datasource, d.Name)
-}
-
-type DependencyLookupInfo struct {
-	// ReplaceString
-	// Start/End-Index
-}
-
-// This type contains the updated information for a dependency.
-type DependencyUpdate struct {
-	// The dependency that will be updated.
-	Dependency *Dependency
-	// The new version of the dependency.
-	NewVersion string
-	// The type of the update.
-	UpdateType core.UpdateType
-	// The date whem this version was published.
-	ReleaseDate time.Time
-	// A map of hashes related to this dependency.
-	Hashes map[string]string
-}
-
 // This is the interface that needs to be implemented by all managers.
 type IManager2 interface {
 	// Extracts a single dependency from the manager.
-	ExtractDependency(dependencyName string) (*Dependency, error)
+	ExtractDependency(dependencyName string) (*core.Dependency, error)
 	// Extracts all dependencies from the manager.
-	ExtractDependencies(content string) ([]*Dependency, error)
+	ExtractDependencies(content string) ([]*core.Dependency, error)
 	// Applies a dependency update with the manager.
-	ApplyDependencyUpdate(dependencyUpdate *DependencyUpdate) error
+	ApplyDependencyUpdate(dependencyUpdate *core.DependencyUpdate) error
 }
 
 type IManager interface {

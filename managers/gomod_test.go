@@ -1,6 +1,7 @@
 package managers
 
 import (
+	"gonovate/core"
 	"os"
 	"path/filepath"
 	"testing"
@@ -30,7 +31,7 @@ func TestExtractGoVersion(t *testing.T) {
 	//assertDependencyInSlice(assert, dependencies, "example.com/indirectmodule2", "v2.0.0", "indirect")
 }
 
-func assertDependencyInSlice(assert *assert.Assertions, dependencies []*Dependency, expectedName string, expectedVersion string, expectedType string) {
+func assertDependencyInSlice(assert *assert.Assertions, dependencies []*core.Dependency, expectedName string, expectedVersion string, expectedType string) {
 	for _, dep := range dependencies {
 		if dep.Name == expectedName && dep.Version == expectedVersion && dep.Type == expectedType {
 			return

@@ -26,11 +26,11 @@ func NewGoModManager(logger *slog.Logger, managerConfig *core.Manager) IManager2
 	return manager
 }
 
-func (manager *GoModManager) ExtractDependency(dependencyName string) (*Dependency, error) {
+func (manager *GoModManager) ExtractDependency(dependencyName string) (*core.Dependency, error) {
 	panic("not implemented") // TODO: Implement
 }
 
-func (manager *GoModManager) ExtractDependencies(filePath string) ([]*Dependency, error) {
+func (manager *GoModManager) ExtractDependencies(filePath string) ([]*core.Dependency, error) {
 	// Setup
 	goVersionRegex := regexp.MustCompile(`^\s*go\s+([^s]+)\s*$`)
 	moduleRegex := regexp.MustCompile(`^(?:require)?\s+(?P<module>[^\s]+\/[^\s]+)\s+(?P<version>[^\s]+)(?:\s*\/\/\s*(?P<comment>[^\s]+)\s*)?$`)
@@ -42,14 +42,14 @@ func (manager *GoModManager) ExtractDependencies(filePath string) ([]*Dependency
 	}
 
 	// A slice to collect all found dependencies
-	foundDependencies := []*Dependency{}
+	foundDependencies := []*core.Dependency{}
 	// Scan the content line by line
 	scanner := bufio.NewScanner(bytes.NewReader(fileContentBytes))
 	for scanner.Scan() {
 		line := scanner.Text()
 		// Match the golang version
 		if match := goVersionRegex.FindStringSubmatch(line); match != nil {
-			newDepencency := &Dependency{
+			newDepencency := &core.Dependency{
 				Name:       "go",
 				Type:       "golang",
 				Version:    match[1],
@@ -60,7 +60,7 @@ func (manager *GoModManager) ExtractDependencies(filePath string) ([]*Dependency
 		}
 		// Match a module
 		if match := findNamedMatchesWithIndex(moduleRegex, line, false); match != nil {
-			newDepencency := &Dependency{
+			newDepencency := &core.Dependency{
 				Name:       match["module"][0].Value,
 				Type:       "direct",
 				Version:    match["version"][0].Value,
@@ -84,7 +84,7 @@ func (manager *GoModManager) ExtractDependencies(filePath string) ([]*Dependency
 	return foundDependencies, nil
 }
 
-func (manager *GoModManager) ApplyDependencyUpdate(dependencyUpdate *DependencyUpdate) error {
+func (manager *GoModManager) ApplyDependencyUpdate(dependencyUpdate *core.DependencyUpdate) error {
 	command := exec.Command("go", "get", fmt.Sprintf("%s@%s", dependencyUpdate.Dependency, dependencyUpdate.NewVersion))
 	err := command.Run()
 	return err

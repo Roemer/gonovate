@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"gonovate/core"
+	"gonovate/datasources"
 	"gonovate/managers"
 	"gonovate/platforms"
 	"log/slog"
@@ -115,7 +116,8 @@ func RunCmd(args []string) error {
 		}
 
 		// V2
-		// Loop thru the managers
+		// Loop thru the managers and collect the dependencies
+		allDependencies := []*core.Dependency{}
 		for _, managerConfig := range projectConfig.Managers {
 			// Build the relevant settings for thsi manager, also collect all package settings that might apply for this manager
 			mergedManagerSettings, possiblePackageRules := config.FilterForManager(managerConfig)
@@ -150,19 +152,35 @@ func RunCmd(args []string) error {
 			// Loop thru the files
 			for _, candidate := range candidates {
 				// Extract the dependencies for this file
-				dependencies, err := manager.ExtractDependencies(candidate)
+				currDependencies, err := manager.ExtractDependencies(candidate)
 				if err != nil {
 					return err
 				}
-				fmt.Println(dependencies)
+				allDependencies = append(allDependencies, currDependencies...)
+			}
+		}
+
+		// Search for updates for the dependencies
+		for _, dependency := range allDependencies {
+			// Lookup the correct datasource
+			ds, err := datasources.GetDatasource(logger, nil, dependency.Datasource)
+			if err != nil {
+				return err
 			}
 
-			// Search for updates for the dependencies
-			// Group the dependencies which have updates according to rules
-			// Loop thru the groups
-			// Create the branch
-			// Apply the changes
+			// Search for a new version
+			newReleaseInfo, currentVersion, err := ds.SearchPackageUpdate(dependency.Version, nil)
+			if err != nil {
+				return err
+			}
+			fmt.Println(currentVersion.Raw)
+			fmt.Println(newReleaseInfo.Version.Raw)
 		}
+
+		// Group the dependencies which have updates according to rules
+		// Loop thru the groups
+		// Create the branch
+		// Apply the changes
 		// Commit/Submit/Notify
 
 		// Loop thru the managers
