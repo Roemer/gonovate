@@ -5,13 +5,13 @@ import (
 	"context"
 	"fmt"
 	"go/build"
-	"gonovate/core"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/google/go-github/v62/github"
+	"github.com/roemer/gonovate/internal/version"
 	"github.com/roemer/gotaskr"
 	"github.com/roemer/gotaskr/execr"
 	"github.com/roemer/gotaskr/log"
@@ -103,7 +103,7 @@ func init() {
 	})
 
 	gotaskr.Task("Release", func() error {
-		fullVersionName := fmt.Sprintf("v%s", core.Version)
+		fullVersionName := fmt.Sprintf("v%s", version.GonovateVersion)
 		log.Informationf("Creating new release for version %s", fullVersionName)
 		gitHubRepoParts := strings.Split(os.Getenv("GITHUB_REPOSITORY"), "/")
 		gitHubOwner := gitHubRepoParts[0]
@@ -152,11 +152,11 @@ func init() {
 
 func compile(ext string) (string, error) {
 	outputFile := filepath.Join(outputDirectory, "gonovate"+ext)
-	return outputFile, execr.Run(true, "go", "build", "-o", outputFile)
+	return outputFile, execr.Run(true, "go", "build", "-o", outputFile, "./cmd/gonovate")
 }
 
 func zipRelease(file string) error {
-	zipFilePath := filepath.Join(outputDirectory, fmt.Sprintf("gonovate-%s-%s-%s.zip", os.Getenv("GOOS"), core.Version, os.Getenv("GOARCH")))
+	zipFilePath := filepath.Join(outputDirectory, fmt.Sprintf("gonovate-%s-%s-%s.zip", os.Getenv("GOOS"), version.GonovateVersion, os.Getenv("GOARCH")))
 
 	a, err := os.Create(zipFilePath)
 	if err != nil {

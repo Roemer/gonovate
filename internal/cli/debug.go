@@ -4,8 +4,9 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"gonovate/core"
 	"strings"
+
+	"github.com/roemer/gonovate/internal/util"
 )
 
 func DebugCmd(args []string) error {
@@ -31,7 +32,7 @@ func DebugCmd(args []string) error {
 }
 
 func debugCmdClearGitBranches() error {
-	stdout, _, err := core.Git.Run("branch", "--list", "gonovate/*")
+	stdout, _, err := util.Git.Run("branch", "--list", "gonovate/*")
 	if err != nil {
 		return err
 	}
@@ -39,7 +40,7 @@ func debugCmdClearGitBranches() error {
 	for scanner.Scan() {
 		branchName := strings.TrimSpace(scanner.Text())
 		fmt.Printf("Deleting branch '%s'\n", branchName)
-		_, _, err := core.Git.Run("branch", "-D", branchName)
+		_, _, err := util.Git.Run("branch", "-D", branchName)
 		if err != nil {
 			return err
 		}

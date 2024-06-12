@@ -1,4 +1,4 @@
-module gonovate
+module github.com/roemer/gonovate
 
 go 1.22.1
 
