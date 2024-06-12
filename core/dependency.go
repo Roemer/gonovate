@@ -2,25 +2,83 @@ package core
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
 // This type represents a concrete dependency which was found by a manager.
 type Dependency struct {
-	// The name of the dependency.
-	Name string
+	PackageSettings
 	// The current version of the dependency.
 	Version string
-	// The datasource of the dependency.
-	Datasource DatasourceType
 	// The type of the dependency. Used to allow different handlings per type in the manager.
 	Type string
 }
 
 func (d *Dependency) String() string {
-	return fmt.Sprintf("{name: %s, version: %s, datasource: %s, type: %s}", d.Name, d.Version, d.Datasource, d.Name)
+	parts := []string{}
+	if d.PackageName != "" {
+		parts = append(parts, fmt.Sprintf("name: %s", d.PackageName))
+	}
+	if d.Version != "" {
+		parts = append(parts, fmt.Sprintf("version: %s", d.Version))
+	}
+	if d.Datasource != "" {
+		parts = append(parts, fmt.Sprintf("datasource: %s", d.Datasource))
+	}
+	if d.Type != "" {
+		parts = append(parts, fmt.Sprintf("type: %s", d.Type))
+	}
+	return fmt.Sprintf("{%s}", strings.Join(parts, ", "))
 }
 
+/*func (d *Dependency) ApplySettingsAndRules(possiblePackageRules []*Rule) {
+	mergedPackageSettings := &PackageSettings{}
+	// Loop thru the rules and apply the ones that match
+	for _, rule := range possiblePackageRules {
+		isAnyMatch := rule.Matches.IsMatchAll()
+		// Check if there is at least one condition that matches
+		if !isAnyMatch && rule.Matches != nil {
+			// Manager-IDs
+			if !isAnyMatch && len(rule.Matches.Managers) > 0 {
+				if slices.Contains(rule.Matches.Managers, managerId) {
+					isAnyMatch = true
+				}
+			}
+			// Files
+			if !isAnyMatch && len(rule.Matches.Files) > 0 {
+				isMatch, err := core.FilePathMatchesPattern(currentFile, rule.Matches.Files...)
+				if err != nil {
+					return nil, err
+				}
+				if isMatch {
+					isAnyMatch = true
+				}
+			}
+			// PackageName
+			if !isAnyMatch && len(rule.Matches.PackageNames) > 0 {
+				if packageSettings.PackageName != "" && slices.Contains(rule.Matches.PackageNames, packageSettings.PackageName) {
+					isAnyMatch = true
+				}
+			}
+			// Datasource
+			if !isAnyMatch && len(rule.Matches.Datasources) > 0 {
+				if packageSettings.Datasource != "" && slices.Contains(rule.Matches.Datasources, packageSettings.Datasource) {
+					isAnyMatch = true
+				}
+			}
+		}
+		// The rule has at least one match, add it
+		if isAnyMatch {
+			// Merge the current rules package settings
+			packageSettings.MergeWith(rule.PackageSettings)
+			// Make sure that the priority settings are not overwritten
+			packageSettings.MergeWith(priorityPackageSettings)
+		}
+	}
+}*/
+
+// ?
 type DependencyLookupInfo struct {
 	// ReplaceString
 	// Start/End-Index

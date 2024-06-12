@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// This type represents the root config object.
 type Config struct {
 	Platform           PlatformType                  `json:"platform"`
 	PlatformSettings   *PlatformSettings             `json:"platformSettings"`
@@ -22,6 +23,7 @@ func (c *Config) String() string {
 	return string(b)
 }
 
+// This type defines settings regarding the platform.
 type PlatformSettings struct {
 	Token     string   `json:"token"`
 	GitAuthor string   `json:"gitAuthor"`
@@ -43,12 +45,13 @@ type MatchStringPreset struct {
 	ParameterDefaults []string `json:"parameterDefaults"`
 }
 
+// This type defines a manager with its settings and settings that apply for all dependencies.
 type Manager struct {
 	Id   string      `json:"id"`
 	Type ManagerType `json:"type"`
 	// The settings are converted to rules to keep the right order, so they should not be used directly
-	ManagerSettings *ManagerSettings `json:"managerSettings"`
-	PackageSettings *PackageSettings `json:"packageSettings"`
+	managerSettings *ManagerSettings `json:"managerSettings"`
+	packageSettings *PackageSettings `json:"packageSettings"`
 }
 
 func (m *Manager) String() string {

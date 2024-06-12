@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"gonovate/core"
-	"gonovate/datasources"
 	"gonovate/managers"
 	"gonovate/platforms"
 	"log/slog"
@@ -118,50 +117,69 @@ func RunCmd(args []string) error {
 		// V2
 		// Loop thru the managers and collect the dependencies
 		allDependencies := []*core.Dependency{}
+		logger.Info(fmt.Sprintf("Searching for dependencies in %d manager(s)", len(projectConfig.Managers)))
 		for _, managerConfig := range projectConfig.Managers {
-			// Build the relevant settings for thsi manager, also collect all package settings that might apply for this manager
-			mergedManagerSettings, possiblePackageRules := config.FilterForManager(managerConfig)
+			// Build the relevant settings for this manager, also collect all rules that might apply for this manager
+			mergedManagerSettings, possiblePackageRules := projectConfig.FilterForManager(managerConfig)
 			goext.Pass(possiblePackageRules)
 			goext.Pass(hasProject)
+
+			// DEBUG
+			if managerConfig.Type != core.MANAGER_TYPE_GOMOD && managerConfig.Type != core.MANAGER_TYPE_INLINE {
+				mergedManagerSettings.Disabled = core.Ptr(true)
+			}
 
 			// Skip the manager if it is disabled
 			if mergedManagerSettings.Disabled != nil && *mergedManagerSettings.Disabled {
 				logger.Info(fmt.Sprintf("Manager '%s': Skip as it is disabled", managerConfig.Id))
 				continue
 			}
-
-			// DEBUG
-			if managerConfig.Type != core.MANAGER_TYPE_GOMOD {
-				continue
-			}
+			logger.Info(fmt.Sprintf("Processing Manager '%s'", managerConfig.Id))
 
 			// Get the manager
-			manager, err := managers.GetManager2(logger, managerConfig)
+			manager, err := managers.GetManager2(logger, projectConfig, managerConfig)
 			if err != nil {
 				return err
 			}
 
 			// Search for the files relevant for the manager
 			logger.Debug(fmt.Sprintf("Searching files with %d pattern(s)", len(mergedManagerSettings.FilePatterns)))
-			candidates, err := core.SearchFiles(".", mergedManagerSettings.FilePatterns, config.IgnorePatterns)
-			logger.Debug(fmt.Sprintf("Found %d matching file(s)", len(candidates)))
+			matchingFiles, err := core.SearchFiles(".", mergedManagerSettings.FilePatterns, config.IgnorePatterns)
+			logger.Debug(fmt.Sprintf("Found %d matching file(s)", len(matchingFiles)))
 			if err != nil {
 				return err
 			}
 
-			// Loop thru the files
-			for _, candidate := range candidates {
+			// Loop thru the files and collect the dependnecies
+			dependenciesInManager := []*core.Dependency{}
+			for _, matchingFile := range matchingFiles {
+				logger.Debug(fmt.Sprintf("Processing file '%s'", matchingFile))
 				// Extract the dependencies for this file
-				currDependencies, err := manager.ExtractDependencies(candidate)
+				currDependencies, err := manager.ExtractDependencies(matchingFile)
 				if err != nil {
 					return err
 				}
-				allDependencies = append(allDependencies, currDependencies...)
+				logger.Debug(fmt.Sprintf("Found %d dependencies in file", len(currDependencies)))
+				// Apply rules for the dependencies
+				/*for _, dependency := range currDependencies {
+					for _, rule := range possiblePackageRules {
+
+					}
+					dependency.MergeWith(managerConfig.PackageSettings)
+					dependency.ApplySettingsAndRules(mergedManagerSettings, possiblePackageRules)
+				}*/
+				dependenciesInManager = append(dependenciesInManager, currDependencies...)
 			}
+			// Add all dependencies
+			logger.Info(fmt.Sprintf("Found %d dependencies in manager", len(dependenciesInManager)))
+			allDependencies = append(allDependencies, dependenciesInManager...)
 		}
+		logger.Info(fmt.Sprintf("Found %d dependencies in total", len(allDependencies)))
+
+		logger.Info(fmt.Sprintf("%v", allDependencies))
 
 		// Search for updates for the dependencies
-		for _, dependency := range allDependencies {
+		/*for _, dependency := range allDependencies {
 			// Lookup the correct datasource
 			ds, err := datasources.GetDatasource(logger, nil, dependency.Datasource)
 			if err != nil {
@@ -169,13 +187,13 @@ func RunCmd(args []string) error {
 			}
 
 			// Search for a new version
-			newReleaseInfo, currentVersion, err := ds.SearchPackageUpdate(dependency.Version, nil)
+			newReleaseInfo, currentVersion, err := ds.SearchPackageUpdate2(dependency)
 			if err != nil {
 				return err
 			}
 			fmt.Println(currentVersion.Raw)
 			fmt.Println(newReleaseInfo.Version.Raw)
-		}
+		}*/
 
 		// Group the dependencies which have updates according to rules
 		// Loop thru the groups

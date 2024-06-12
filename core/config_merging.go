@@ -7,9 +7,9 @@ import (
 	"github.com/samber/lo"
 )
 
-func (configA *Config) MergeWith(configB *Config) {
+func (configA *Config) MergeWith(configB *Config) *Config {
 	if configB == nil {
-		return
+		return configA
 	}
 	// Platform
 	if configB.Platform != "" {
@@ -40,20 +40,20 @@ func (configA *Config) MergeWith(configB *Config) {
 			configA.Managers = append(configA.Managers, manager)
 		}
 		// Convert managerSettings/packageSettings to rules and add them to keep the priority order
-		if manager.ManagerSettings != nil {
+		if manager.managerSettings != nil {
 			configA.Rules = append(configA.Rules, &Rule{
 				Matches: &RuleMatch{
 					Managers: []string{manager.Id},
 				},
-				ManagerSettings: (&ManagerSettings{}).MergeWith(manager.ManagerSettings),
+				ManagerSettings: (&ManagerSettings{}).MergeWith(manager.managerSettings),
 			})
 		}
-		if manager.PackageSettings != nil {
+		if manager.packageSettings != nil {
 			configA.Rules = append(configA.Rules, &Rule{
 				Matches: &RuleMatch{
 					Managers: []string{manager.Id},
 				},
-				PackageSettings: (&PackageSettings{}).MergeWith(manager.PackageSettings),
+				PackageSettings: (&PackageSettings{}).MergeWith(manager.packageSettings),
 			})
 		}
 	}
@@ -61,6 +61,8 @@ func (configA *Config) MergeWith(configB *Config) {
 	configA.Rules = append(configA.Rules, configB.Rules...)
 	// Host Rules
 	configA.HostRules = append(configA.HostRules, configB.HostRules...)
+
+	return configA
 }
 
 func (platformSettingsA *PlatformSettings) MergeWith(platformSettingsB *PlatformSettings) *PlatformSettings {
@@ -103,10 +105,10 @@ func (platformSettingsA *PlatformSettings) MergeWith(platformSettingsB *Platform
 
 func (managerA *Manager) MergeWith(managerB *Manager) {
 	// Manager Settings
-	managerA.ManagerSettings = managerA.ManagerSettings.MergeWith(managerB.ManagerSettings)
+	managerA.managerSettings = managerA.managerSettings.MergeWith(managerB.managerSettings)
 
 	// Package Settings
-	managerA.PackageSettings = managerA.PackageSettings.MergeWith(managerB.PackageSettings)
+	managerA.packageSettings = managerA.packageSettings.MergeWith(managerB.packageSettings)
 }
 
 func (managerSettingsA *ManagerSettings) MergeWith(managerSettingsB *ManagerSettings) *ManagerSettings {

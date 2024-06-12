@@ -1,10 +1,59 @@
 package core
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMergeMultipleProjects(t *testing.T) {
+	//assert := assert.New(t)
+
+	globalConfig := &Config{
+		Platform: PLATFORM_TYPE_GITLAB,
+		Managers: []*Manager{
+			{
+				Id:   "Manager A",
+				Type: MANAGER_TYPE_REGEX,
+				packageSettings: &PackageSettings{
+					PackageName: "init",
+					Versioning:  "init",
+				},
+			},
+		},
+	}
+
+	configA := &Config{
+		Managers: []*Manager{
+			{
+				Id:              "Manager A",
+				packageSettings: &PackageSettings{PackageName: "a"},
+			},
+		},
+	}
+
+	configB := &Config{
+		Managers: []*Manager{
+			{
+				Id:              "Manager A",
+				packageSettings: &PackageSettings{Versioning: "b"},
+			},
+		},
+	}
+
+	mergedConfigA := globalConfig.MergeWith(configA)
+	mergedConfigB := globalConfig.MergeWith(configB)
+
+	a, _ := json.MarshalIndent(mergedConfigA, "", "  ")
+	b, _ := json.MarshalIndent(mergedConfigB, "", "  ")
+
+	fmt.Println(string(a))
+	fmt.Println(string(b))
+
+	//go test -timeout 30s -run ^TestMergeMultipleProjects$ gonovate/core
+}
 
 func TestSomething(t *testing.T) {
 	assert := assert.New(t)
@@ -15,7 +64,7 @@ func TestSomething(t *testing.T) {
 			{
 				Id:              "Manager A",
 				Type:            MANAGER_TYPE_REGEX,
-				ManagerSettings: &ManagerSettings{Disabled: Ptr(false)},
+				managerSettings: &ManagerSettings{Disabled: Ptr(false)},
 			},
 		},
 		Rules: []*Rule{

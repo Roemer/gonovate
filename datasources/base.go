@@ -24,7 +24,8 @@ type datasourceBase struct {
 }
 
 func (ds *datasourceBase) SearchPackageUpdate2(dependency *core.Dependency) (*core.ReleaseInfo, *gover.Version, error) {
-	// Setup
+	return nil, nil, nil
+	/*// Setup
 	cacheIdentifier := fmt.Sprintf("%s|%s", ds.name, dependency.Name)
 	allowUnstable := false
 	if packageSettings.AllowUnstable != nil {
@@ -133,7 +134,7 @@ func (ds *datasourceBase) SearchPackageUpdate2(dependency *core.Dependency) (*co
 
 	// It is not the same, return the new version
 	ds.logger.Info(fmt.Sprintf("Found a new version: %s", maxValidRelease.Version.Raw))
-	return maxValidRelease, curr, nil
+	return maxValidRelease, curr, nil*/
 }
 
 func (ds *datasourceBase) SearchPackageUpdate(currentVersion string, packageSettings *core.PackageSettings) (*core.ReleaseInfo, *gover.Version, error) {

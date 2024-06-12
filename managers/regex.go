@@ -107,7 +107,7 @@ func (manager *RegexManager) getChanges(mergedManagerSettings *core.ManagerSetti
 					priorityPackageSettings.ExtractVersion = extractVersionObject[0].Value
 				}
 				// Build the merge package settings
-				packageSettings, err := buildMergedPackageSettings(manager.ManagerConfig.PackageSettings, priorityPackageSettings, possiblePackageRules, candidate, manager.ManagerConfig.Id)
+				packageSettings, err := buildMergedPackageSettings(nil, priorityPackageSettings, possiblePackageRules, candidate, manager.ManagerConfig.Id)
 				if err != nil {
 					return nil, err
 				}

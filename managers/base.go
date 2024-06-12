@@ -15,7 +15,7 @@ type IManager2 interface {
 	// Extracts a single dependency from the manager.
 	ExtractDependency(dependencyName string) (*core.Dependency, error)
 	// Extracts all dependencies from the manager.
-	ExtractDependencies(content string) ([]*core.Dependency, error)
+	ExtractDependencies(filePath string) ([]*core.Dependency, error)
 	// Applies a dependency update with the manager.
 	ApplyDependencyUpdate(dependencyUpdate *core.DependencyUpdate) error
 }
@@ -34,8 +34,9 @@ type IManager interface {
 
 type managerBase2 struct {
 	logger        *slog.Logger
-	ManagerConfig *core.Manager
 	impl          IManager2
+	Config        *core.Config
+	ManagerConfig *core.Manager
 }
 
 type managerBase struct {
@@ -45,12 +46,14 @@ type managerBase struct {
 	impl          IManager
 }
 
-func GetManager2(logger *slog.Logger, managerConfig *core.Manager) (IManager2, error) {
+func GetManager2(logger *slog.Logger, config *core.Config, managerConfig *core.Manager) (IManager2, error) {
 	switch managerConfig.Type {
 	case core.MANAGER_TYPE_GOMOD:
-		return NewGoModManager(logger, managerConfig), nil
+		return NewGoModManager(logger, config, managerConfig), nil
+	case core.MANAGER_TYPE_INLINE:
+		return NewInline2Manager(logger, config, managerConfig), nil
 	}
-	return nil, fmt.Errorf("no manager defined for '%s'", managerConfig.Type)
+	return nil, fmt.Errorf("no manager defined for type '%s'", managerConfig.Type)
 }
 
 func GetManager(logger *slog.Logger, config *core.Config, managerConfig *core.Manager) (IManager, error) {

@@ -13,9 +13,9 @@ func buildMergedPackageSettings(initialPackageSettings, priorityPackageSettings 
 	// Build the packageSettings which holds all relevant rules
 	packageSettings := &core.PackageSettings{}
 	// Merge the initial package settings (usually from the manager)
-	packageSettings.MergeWith(initialPackageSettings)
+	//???packageSettings.MergeWith(initialPackageSettings)
 	// Initially apply the priority settings (as they can be used to evaluate further matches)
-	packageSettings.MergeWith(priorityPackageSettings)
+	//???packageSettings.MergeWith(priorityPackageSettings)
 	// Loop thru the rules and apply the ones that match
 	for _, rule := range possiblePackageRules {
 		isAnyMatch := rule.Matches.IsMatchAll()

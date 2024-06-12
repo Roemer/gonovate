@@ -33,7 +33,7 @@ func TestExtractGoVersion(t *testing.T) {
 
 func assertDependencyInSlice(assert *assert.Assertions, dependencies []*core.Dependency, expectedName string, expectedVersion string, expectedType string) {
 	for _, dep := range dependencies {
-		if dep.Name == expectedName && dep.Version == expectedVersion && dep.Type == expectedType {
+		if dep.PackageName == expectedName && dep.Version == expectedVersion && dep.Type == expectedType {
 			return
 		}
 	}

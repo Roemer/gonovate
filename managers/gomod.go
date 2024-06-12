@@ -15,10 +15,11 @@ type GoModManager struct {
 	managerBase2
 }
 
-func NewGoModManager(logger *slog.Logger, managerConfig *core.Manager) IManager2 {
+func NewGoModManager(logger *slog.Logger, config *core.Config, managerConfig *core.Manager) IManager2 {
 	manager := &GoModManager{
 		managerBase2: managerBase2{
 			logger:        logger.With(slog.String("handlerId", managerConfig.Id)),
+			Config:        config,
 			ManagerConfig: managerConfig,
 		},
 	}
@@ -50,10 +51,12 @@ func (manager *GoModManager) ExtractDependencies(filePath string) ([]*core.Depen
 		// Match the golang version
 		if match := goVersionRegex.FindStringSubmatch(line); match != nil {
 			newDepencency := &core.Dependency{
-				Name:       "go",
-				Type:       "golang",
-				Version:    match[1],
-				Datasource: core.DATASOURCE_TYPE_GOVERSION,
+				PackageSettings: core.PackageSettings{
+					PackageName: "go",
+					Datasource:  core.DATASOURCE_TYPE_GOVERSION,
+				},
+				Type:    "golang",
+				Version: match[1],
 			}
 			foundDependencies = append(foundDependencies, newDepencency)
 			continue
@@ -61,10 +64,12 @@ func (manager *GoModManager) ExtractDependencies(filePath string) ([]*core.Depen
 		// Match a module
 		if match := findNamedMatchesWithIndex(moduleRegex, line, false); match != nil {
 			newDepencency := &core.Dependency{
-				Name:       match["module"][0].Value,
-				Type:       "direct",
-				Version:    match["version"][0].Value,
-				Datasource: core.DATASOURCE_TYPE_GOMOD,
+				PackageSettings: core.PackageSettings{
+					PackageName: match["module"][0].Value,
+					Datasource:  core.DATASOURCE_TYPE_GOMOD,
+				},
+				Type:    "direct",
+				Version: match["version"][0].Value,
 			}
 			if v, ok := match["comment"]; ok && v[0].Value == "indirect" {
 				newDepencency.Type = "indirect"
