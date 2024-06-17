@@ -7,7 +7,7 @@ import (
 	"slices"
 
 	"github.com/roemer/gonovate/internal/cli"
-	"github.com/roemer/gonovate/internal/version"
+	"github.com/roemer/gonovate/internal/core"
 )
 
 // Holds information about a CLI command that can be executed
@@ -45,7 +45,7 @@ func main() {
 
 // Prints the base usage
 func printUsage() {
-	fmt.Fprintf(os.Stderr, "gonovate v%s", version.GonovateVersion)
+	fmt.Fprintf(os.Stderr, "gonovate v%s", core.GonovateVersion)
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Usage:")
