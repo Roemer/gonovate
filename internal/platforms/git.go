@@ -12,7 +12,7 @@ type GitPlatform struct {
 	platformBase
 }
 
-func NewGitPlatform(logger *slog.Logger, config *config.Config) *GitPlatform {
+func NewGitPlatform(logger *slog.Logger, config *config.RootConfig) *GitPlatform {
 	platform := &GitPlatform{
 		platformBase: platformBase{
 			logger: logger,

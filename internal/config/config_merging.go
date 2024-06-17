@@ -7,7 +7,7 @@ import (
 	"github.com/samber/lo"
 )
 
-func (configA *Config) MergeWith(configB *Config) *Config {
+func (configA *RootConfig) MergeWith(configB *RootConfig) *RootConfig {
 	if configB == nil {
 		return configA
 	}
@@ -33,13 +33,13 @@ func (configA *Config) MergeWith(configB *Config) *Config {
 	maps.Copy(configA.VersioningPresets, configB.VersioningPresets)
 	// Managers
 	for _, manager := range configB.Managers {
-		managerAIndex := slices.IndexFunc(configA.Managers, func(m *Manager) bool { return m.Id == manager.Id })
+		managerAIndex := slices.IndexFunc(configA.Managers, func(m *ManagerConfig) bool { return m.Id == manager.Id })
 		if managerAIndex >= 0 {
 			configA.Managers[managerAIndex].MergeWith(manager)
 		} else {
 			configA.Managers = append(configA.Managers, manager)
 		}
-		// Convert managerSettings/packageSettings to rules and add them to keep the priority order
+		// Convert managerSettings/dependencySettings to rules and add them to keep the priority order
 		if manager.managerSettings != nil {
 			configA.Rules = append(configA.Rules, &Rule{
 				Matches: &RuleMatch{
@@ -48,12 +48,12 @@ func (configA *Config) MergeWith(configB *Config) *Config {
 				ManagerSettings: (&ManagerSettings{}).MergeWith(manager.managerSettings),
 			})
 		}
-		if manager.packageSettings != nil {
+		if manager.dependencySettings != nil {
 			configA.Rules = append(configA.Rules, &Rule{
 				Matches: &RuleMatch{
 					Managers: []string{manager.Id},
 				},
-				PackageSettings: (&PackageSettings{}).MergeWith(manager.packageSettings),
+				DependencySettings: (&DependencySettings{}).MergeWith(manager.dependencySettings),
 			})
 		}
 	}
@@ -103,12 +103,12 @@ func (platformSettingsA *PlatformSettings) MergeWith(platformSettingsB *Platform
 	return platformSettingsA
 }
 
-func (managerA *Manager) MergeWith(managerB *Manager) {
+func (managerA *ManagerConfig) MergeWith(managerB *ManagerConfig) {
 	// Manager Settings
 	managerA.managerSettings = managerA.managerSettings.MergeWith(managerB.managerSettings)
 
-	// Package Settings
-	managerA.packageSettings = managerA.packageSettings.MergeWith(managerB.packageSettings)
+	// Dependency Settings
+	managerA.dependencySettings = managerA.dependencySettings.MergeWith(managerB.dependencySettings)
 }
 
 func (managerSettingsA *ManagerSettings) MergeWith(managerSettingsB *ManagerSettings) *ManagerSettings {
@@ -131,46 +131,46 @@ func (managerSettingsA *ManagerSettings) MergeWith(managerSettingsB *ManagerSett
 	return managerSettingsA
 }
 
-func (packageSettingsA *PackageSettings) MergeWith(packageSettingsB *PackageSettings) *PackageSettings {
+func (dependencySettingsA *DependencySettings) MergeWith(dependencySettingsB *DependencySettings) *DependencySettings {
 	// Check if any of the objects is nil and if so, return the other (which might also be nil)
-	if packageSettingsA == nil {
-		return packageSettingsB
+	if dependencySettingsA == nil {
+		return dependencySettingsB
 	}
-	if packageSettingsB == nil {
-		return packageSettingsA
+	if dependencySettingsB == nil {
+		return dependencySettingsA
 	}
 	// Both are set, so merge them
 	// MaxUpdateType
-	if packageSettingsB.MaxUpdateType != "" {
-		packageSettingsA.MaxUpdateType = packageSettingsB.MaxUpdateType
+	if dependencySettingsB.MaxUpdateType != "" {
+		dependencySettingsA.MaxUpdateType = dependencySettingsB.MaxUpdateType
 	}
 	// AllowUnstable
-	if packageSettingsB.AllowUnstable != nil {
-		packageSettingsA.AllowUnstable = packageSettingsB.AllowUnstable
+	if dependencySettingsB.AllowUnstable != nil {
+		dependencySettingsA.AllowUnstable = dependencySettingsB.AllowUnstable
 	}
 	// RegistryUrls
-	packageSettingsA.RegistryUrls = lo.Union(packageSettingsA.RegistryUrls, packageSettingsB.RegistryUrls)
+	dependencySettingsA.RegistryUrls = lo.Union(dependencySettingsA.RegistryUrls, dependencySettingsB.RegistryUrls)
 	// Versioning
-	if packageSettingsB.Versioning != "" {
-		packageSettingsA.Versioning = packageSettingsB.Versioning
+	if dependencySettingsB.Versioning != "" {
+		dependencySettingsA.Versioning = dependencySettingsB.Versioning
 	}
 	// ExtractVersion
-	if packageSettingsB.ExtractVersion != "" {
-		packageSettingsA.ExtractVersion = packageSettingsB.ExtractVersion
+	if dependencySettingsB.ExtractVersion != "" {
+		dependencySettingsA.ExtractVersion = dependencySettingsB.ExtractVersion
 	}
 	// IgnoreNonMatching
-	if packageSettingsB.IgnoreNonMatching != nil {
-		packageSettingsA.IgnoreNonMatching = packageSettingsB.IgnoreNonMatching
+	if dependencySettingsB.IgnoreNonMatching != nil {
+		dependencySettingsA.IgnoreNonMatching = dependencySettingsB.IgnoreNonMatching
 	}
-	// PackageName
-	if packageSettingsB.PackageName != "" {
-		packageSettingsA.PackageName = packageSettingsB.PackageName
+	// DependencyName
+	if dependencySettingsB.DependencyName != "" {
+		dependencySettingsA.DependencyName = dependencySettingsB.DependencyName
 	}
 	// Datasource
-	if packageSettingsB.Datasource != "" {
-		packageSettingsA.Datasource = packageSettingsB.Datasource
+	if dependencySettingsB.Datasource != "" {
+		dependencySettingsA.Datasource = dependencySettingsB.Datasource
 	}
 	// PostUpgradeReplacements
-	packageSettingsA.PostUpgradeReplacements = lo.Union(packageSettingsA.PostUpgradeReplacements, packageSettingsB.PostUpgradeReplacements)
-	return packageSettingsA
+	dependencySettingsA.PostUpgradeReplacements = lo.Union(dependencySettingsA.PostUpgradeReplacements, dependencySettingsB.PostUpgradeReplacements)
+	return dependencySettingsA
 }

@@ -18,7 +18,7 @@ type InlineManager struct {
 	managerBase
 }
 
-func NewInlineManager(logger *slog.Logger, config *config.Config, managerConfig *config.Manager) IManager {
+func NewInlineManager(logger *slog.Logger, config *config.RootConfig, managerConfig *config.ManagerConfig) IManager {
 	manager := &InlineManager{
 		managerBase: managerBase{
 			logger:        logger.With(slog.String("handlerId", managerConfig.Id)),
@@ -91,53 +91,53 @@ func (manager *InlineManager) getChanges(mergedManagerSettings *config.ManagerSe
 			}
 			//  Optional fields
 			datasourceObject, datasourceOk := match["datasource"]
-			packageObject, packageOk := match["packageName"]
+			dependencyObject, dependencyOk := match["dependencyName"]
 			versioningObject, versioningOk := match["versioning"]
 			maxUpdateTypeObject, maxUpdateTypeOk := match["maxUpdateType"]
 			extractVersionObject, extractVersionOk := match["extractVersion"]
 
 			// Build a package settings from the marker and the following direct match. This rule always has the highest priority
-			priorityPackageSettings := &config.PackageSettings{}
-			if inlineConfig.PackageName != "" {
-				priorityPackageSettings.PackageName = inlineConfig.PackageName
+			priorityDependencySettings := &config.DependencySettings{}
+			if inlineConfig.DependencyName != "" {
+				priorityDependencySettings.DependencyName = inlineConfig.DependencyName
 			}
 			if inlineConfig.Datasource != "" {
-				priorityPackageSettings.Datasource = inlineConfig.Datasource
+				priorityDependencySettings.Datasource = inlineConfig.Datasource
 			}
 			if inlineConfig.Versioning != "" {
-				priorityPackageSettings.Versioning = inlineConfig.Versioning
+				priorityDependencySettings.Versioning = inlineConfig.Versioning
 			}
 			if inlineConfig.MaxUpdateType != "" {
-				priorityPackageSettings.MaxUpdateType = inlineConfig.MaxUpdateType
+				priorityDependencySettings.MaxUpdateType = inlineConfig.MaxUpdateType
 			}
 			if inlineConfig.ExtractVersion != "" {
-				priorityPackageSettings.ExtractVersion = inlineConfig.ExtractVersion
+				priorityDependencySettings.ExtractVersion = inlineConfig.ExtractVersion
 			}
 			// Now overwrite from direct matches
-			if packageOk {
-				priorityPackageSettings.PackageName = packageObject[0].Value
+			if dependencyOk {
+				priorityDependencySettings.DependencyName = dependencyObject[0].Value
 			}
 			if datasourceOk {
-				priorityPackageSettings.Datasource = core.DatasourceType(datasourceObject[0].Value)
+				priorityDependencySettings.Datasource = core.DatasourceType(datasourceObject[0].Value)
 			}
 			if versioningOk {
-				priorityPackageSettings.Versioning = versioningObject[0].Value
+				priorityDependencySettings.Versioning = versioningObject[0].Value
 			}
 			if maxUpdateTypeOk {
-				priorityPackageSettings.MaxUpdateType = core.UpdateType(maxUpdateTypeObject[0].Value)
+				priorityDependencySettings.MaxUpdateType = core.UpdateType(maxUpdateTypeObject[0].Value)
 			}
 			if extractVersionOk {
-				priorityPackageSettings.ExtractVersion = extractVersionObject[0].Value
+				priorityDependencySettings.ExtractVersion = extractVersionObject[0].Value
 			}
-			// Build the merge package settings
-			packageSettings, err := buildMergedPackageSettings(nil, priorityPackageSettings, possiblePackageRules, candidate, manager.ManagerConfig.Id)
+			// Build the merged dependency settings
+			dependencySettings, err := buildMergedPackageSettings(nil, priorityDependencySettings, possiblePackageRules, candidate, manager.ManagerConfig.Id)
 			if err != nil {
 				return nil, err
 			}
 
-			// Search for a new version for the package
+			// Search for a new version for the dependency
 			currentVersionString, _ := manager.sanitizeString(versionObject[0].Value)
-			newReleaseInfo, currentVersion, err := manager.searchPackageUpdate(currentVersionString, packageSettings)
+			newReleaseInfo, currentVersion, err := manager.searchPackageUpdate(currentVersionString, dependencySettings)
 			if err != nil {
 				return nil, err
 			}
@@ -145,8 +145,8 @@ func (manager *InlineManager) getChanges(mergedManagerSettings *config.ManagerSe
 				// There is a new version, so build the change object
 				change := &inlineManagerChange{
 					ChangeMeta: &core.ChangeMeta{
-						Datasource:     packageSettings.Datasource,
-						PackageName:    packageSettings.PackageName,
+						Datasource:     dependencySettings.Datasource,
+						DependencyName: dependencySettings.DependencyName,
 						File:           candidate,
 						CurrentVersion: currentVersion,
 						NewRelease:     newReleaseInfo,
@@ -201,7 +201,7 @@ func (manager *InlineManager) applyChanges(changes []core.IChange) error {
 }
 
 type inlineManagerConfig struct {
-	PackageName    string              `json:"packageName"`
+	DependencyName string              `json:"dependencyName"`
 	Datasource     core.DatasourceType `json:"datasource"`
 	MatchString    string              `json:"matchString"`
 	Versioning     string              `json:"versioning"`

@@ -16,7 +16,7 @@ type NpmDatasource struct {
 	datasourceBase
 }
 
-func NewNpmDatasource(logger *slog.Logger, config *config.Config) IDatasource {
+func NewNpmDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
 	newDatasource := &NpmDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
@@ -28,15 +28,15 @@ func NewNpmDatasource(logger *slog.Logger, config *config.Config) IDatasource {
 	return newDatasource
 }
 
-func (ds *NpmDatasource) getReleases(packageSettings *config.PackageSettings) ([]*core.ReleaseInfo, error) {
+func (ds *NpmDatasource) getReleases(dependencySettings *config.DependencySettings) ([]*core.ReleaseInfo, error) {
 	baseUrl := "https://registry.npmjs.org"
-	if len(packageSettings.RegistryUrls) > 0 {
-		baseUrl = packageSettings.RegistryUrls[0]
+	if len(dependencySettings.RegistryUrls) > 0 {
+		baseUrl = dependencySettings.RegistryUrls[0]
 		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", baseUrl))
 	}
 
 	// Download the index file
-	downloadUrl, err := url.JoinPath(baseUrl, packageSettings.PackageName)
+	downloadUrl, err := url.JoinPath(baseUrl, dependencySettings.DependencyName)
 	if err != nil {
 		return nil, err
 	}

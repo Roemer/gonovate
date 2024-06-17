@@ -17,7 +17,7 @@ type GoModManager struct {
 	managerBase2
 }
 
-func NewGoModManager(logger *slog.Logger, config *config.Config, managerConfig *config.Manager) IManager2 {
+func NewGoModManager(logger *slog.Logger, config *config.RootConfig, managerConfig *config.ManagerConfig) IManager2 {
 	manager := &GoModManager{
 		managerBase2: managerBase2{
 			logger:        logger.With(slog.String("handlerId", managerConfig.Id)),

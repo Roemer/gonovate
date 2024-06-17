@@ -14,7 +14,7 @@ type GitHubReleasesDatasource struct {
 	datasourceBase
 }
 
-func NewGitHubReleasesDatasource(logger *slog.Logger, config *config.Config) IDatasource {
+func NewGitHubReleasesDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
 	newDatasource := &GitHubReleasesDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
@@ -26,11 +26,11 @@ func NewGitHubReleasesDatasource(logger *slog.Logger, config *config.Config) IDa
 	return newDatasource
 }
 
-func (ds *GitHubReleasesDatasource) getReleases(packageSettings *config.PackageSettings) ([]*core.ReleaseInfo, error) {
+func (ds *GitHubReleasesDatasource) getReleases(dependencySettings *config.DependencySettings) ([]*core.ReleaseInfo, error) {
 	client := github.NewClient(nil)
 	// TODO: WithAuthToken(token)
 
-	parts := strings.SplitN(packageSettings.PackageName, "/", 2)
+	parts := strings.SplitN(dependencySettings.DependencyName, "/", 2)
 	owner := parts[0]
 	repository := parts[1]
 

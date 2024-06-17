@@ -36,18 +36,18 @@ type IManager interface {
 type managerBase2 struct {
 	logger        *slog.Logger
 	impl          IManager2
-	Config        *config.Config
-	ManagerConfig *config.Manager
+	Config        *config.RootConfig
+	ManagerConfig *config.ManagerConfig
 }
 
 type managerBase struct {
 	logger        *slog.Logger
-	Config        *config.Config
-	ManagerConfig *config.Manager
+	Config        *config.RootConfig
+	ManagerConfig *config.ManagerConfig
 	impl          IManager
 }
 
-func GetManager2(logger *slog.Logger, config *config.Config, managerConfig *config.Manager) (IManager2, error) {
+func GetManager2(logger *slog.Logger, config *config.RootConfig, managerConfig *config.ManagerConfig) (IManager2, error) {
 	switch managerConfig.Type {
 	case core.MANAGER_TYPE_GOMOD:
 		return NewGoModManager(logger, config, managerConfig), nil
@@ -57,7 +57,7 @@ func GetManager2(logger *slog.Logger, config *config.Config, managerConfig *conf
 	return nil, fmt.Errorf("no manager defined for type '%s'", managerConfig.Type)
 }
 
-func GetManager(logger *slog.Logger, config *config.Config, managerConfig *config.Manager) (IManager, error) {
+func GetManager(logger *slog.Logger, config *config.RootConfig, managerConfig *config.ManagerConfig) (IManager, error) {
 	switch managerConfig.Type {
 	case core.MANAGER_TYPE_INLINE:
 		return NewInlineManager(logger, config, managerConfig), nil
@@ -96,30 +96,30 @@ func (manager *managerBase) ApplyChanges(changes []core.IChange) error {
 }
 
 // Searches for a new package version with the correct datasource.
-func (manager *managerBase) searchPackageUpdate(currentVersionString string, packageSettings *config.PackageSettings) (*core.ReleaseInfo, *gover.Version, error) {
+func (manager *managerBase) searchPackageUpdate(currentVersionString string, dependencySettings *config.DependencySettings) (*core.ReleaseInfo, *gover.Version, error) {
 	// Validate the mandatory fields
 	if len(currentVersionString) == 0 {
 		return nil, nil, fmt.Errorf("no version defined")
 	}
-	if len(packageSettings.PackageName) == 0 {
-		return nil, nil, fmt.Errorf("no packageName defined")
+	if len(dependencySettings.DependencyName) == 0 {
+		return nil, nil, fmt.Errorf("no dependencyName defined")
 	}
-	if len(packageSettings.Datasource) == 0 {
+	if len(dependencySettings.Datasource) == 0 {
 		return nil, nil, fmt.Errorf("no datasource defined")
 	}
 	// Sanitize some values like trimming (eg. for forgotten \r in Windows files...)
 	currentVersionString, _ = manager.sanitizeString(currentVersionString)
 	// Log
-	manager.logger.Info(fmt.Sprintf("Searching a '%s' update for '%s' with version '%s' on datasource '%s'", packageSettings.MaxUpdateType, packageSettings.PackageName, currentVersionString, packageSettings.Datasource))
+	manager.logger.Info(fmt.Sprintf("Searching a '%s' update for '%s' with version '%s' on datasource '%s'", dependencySettings.MaxUpdateType, dependencySettings.DependencyName, currentVersionString, dependencySettings.Datasource))
 
 	// Lookup the correct datasource
-	ds, err := datasources.GetDatasource(manager.logger, manager.Config, packageSettings.Datasource)
+	ds, err := datasources.GetDatasource(manager.logger, manager.Config, dependencySettings.Datasource)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Search for a new version
-	newReleaseInfo, currentVersion, err := ds.SearchPackageUpdate(currentVersionString, packageSettings)
+	newReleaseInfo, currentVersion, err := ds.SearchPackageUpdate(currentVersionString, dependencySettings)
 
 	// Return the result
 	return newReleaseInfo, currentVersion, err

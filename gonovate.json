@@ -21,7 +21,7 @@
                     ".devcontainer/devcontainer.json"
                 ]
             },
-            "packageSettings": {
+            "dependencySettings": {
                 "ignoreNonMatching": true
             }
         },

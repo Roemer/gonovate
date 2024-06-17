@@ -15,7 +15,7 @@ type MavenDatasource struct {
 	datasourceBase
 }
 
-func NewMavenDatasource(logger *slog.Logger, config *config.Config) IDatasource {
+func NewMavenDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
 	newDatasource := &MavenDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
@@ -27,15 +27,15 @@ func NewMavenDatasource(logger *slog.Logger, config *config.Config) IDatasource 
 	return newDatasource
 }
 
-func (ds *MavenDatasource) getReleases(packageSettings *config.PackageSettings) ([]*core.ReleaseInfo, error) {
+func (ds *MavenDatasource) getReleases(dependencySettings *config.DependencySettings) ([]*core.ReleaseInfo, error) {
 	repositoryUrl := "https://repo.maven.apache.org/maven2"
-	if len(packageSettings.RegistryUrls) > 0 {
-		repositoryUrl = packageSettings.RegistryUrls[0]
+	if len(dependencySettings.RegistryUrls) > 0 {
+		repositoryUrl = dependencySettings.RegistryUrls[0]
 		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", repositoryUrl))
 	}
 
 	// Get XML-Metadata
-	packageParts := strings.Split(packageSettings.PackageName, ":")
+	packageParts := strings.Split(dependencySettings.DependencyName, ":")
 	group := packageParts[0]
 	pkg := packageParts[1]
 	packageMetadataUrl, err := url.JoinPath(repositoryUrl, strings.ReplaceAll(group, ".", "/"), pkg, "maven-metadata.xml")

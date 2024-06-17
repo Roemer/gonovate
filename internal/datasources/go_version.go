@@ -14,7 +14,7 @@ type GoVersionDatasource struct {
 	datasourceBase
 }
 
-func NewGoVersionDatasource(logger *slog.Logger, config *config.Config) IDatasource {
+func NewGoVersionDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
 	newDatasource := &GoVersionDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
@@ -26,14 +26,14 @@ func NewGoVersionDatasource(logger *slog.Logger, config *config.Config) IDatasou
 	return newDatasource
 }
 
-func (ds *GoVersionDatasource) getReleases(packageSettings *config.PackageSettings) ([]*core.ReleaseInfo, error) {
+func (ds *GoVersionDatasource) getReleases(dependencySettings *config.DependencySettings) ([]*core.ReleaseInfo, error) {
 	baseUrl := "https://go.dev"
-	if len(packageSettings.RegistryUrls) > 0 {
-		baseUrl = packageSettings.RegistryUrls[0]
+	if len(dependencySettings.RegistryUrls) > 0 {
+		baseUrl = dependencySettings.RegistryUrls[0]
 		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", baseUrl))
 	}
 	indexFilePath := "dl/?mode=json&include=all"
-	stableOnly := strings.HasSuffix(packageSettings.PackageName, "stable")
+	stableOnly := strings.HasSuffix(dependencySettings.DependencyName, "stable")
 
 	// Download the index file
 	downloadUrl := baseUrl

@@ -10,8 +10,8 @@ import (
 var configMatchStringPresetRegex = regexp.MustCompile(`preset:\s*(.*?)(?:\((.*)\))?\s*$`)
 var configVersioningPrexetRegex = regexp.MustCompile(`preset:\s*(.*?)\s*$`)
 
-// Filters all rules, creating a combined settings object for the manager and a list of possible rules for packages.
-func (config *Config) FilterForManager(managerConfig *Manager) (*ManagerSettings, []*Rule) {
+// Filters all rules, creating a combined settings object for the manager and a list of possible rules for dependencies.
+func (config *RootConfig) FilterForManager(managerConfig *ManagerConfig) (*ManagerSettings, []*Rule) {
 	possiblePackageRules := []*Rule{}
 	managerSettings := &ManagerSettings{}
 	// Loop thru all the rules
@@ -25,8 +25,8 @@ func (config *Config) FilterForManager(managerConfig *Manager) (*ManagerSettings
 		}
 		// Process and apply the settings for the manager
 		managerSettings.MergeWith(rule.ManagerSettings)
-		// The rule contains settings for packages, so add it to the list
-		if rule.PackageSettings != nil {
+		// The rule contains settings for dependencies, so add it to the list
+		if rule.DependencySettings != nil {
 			possiblePackageRules = append(possiblePackageRules, rule)
 		}
 	}
@@ -34,7 +34,7 @@ func (config *Config) FilterForManager(managerConfig *Manager) (*ManagerSettings
 }
 
 // Resolves a given match string with a preset (if any).
-func (config *Config) ResolveMatchString(matchString string) (string, error) {
+func (config *RootConfig) ResolveMatchString(matchString string) (string, error) {
 	m := configMatchStringPresetRegex.FindStringSubmatch(matchString)
 	if m != nil {
 		// Get the name and check if it exists
@@ -77,7 +77,7 @@ func (config *Config) ResolveMatchString(matchString string) (string, error) {
 }
 
 // Resolves a given versioning with a preset (if any).
-func (config *Config) ResolveVersioning(versioning string) (string, error) {
+func (config *RootConfig) ResolveVersioning(versioning string) (string, error) {
 	m := configVersioningPrexetRegex.FindStringSubmatch(versioning)
 	if m != nil {
 		presetName := m[1]
@@ -91,7 +91,7 @@ func (config *Config) ResolveVersioning(versioning string) (string, error) {
 }
 
 // Filters the host rules by the given host and returns the first match.
-func (config *Config) FilterHostConfigsForHost(host string) *HostRule {
+func (config *RootConfig) FilterHostConfigsForHost(host string) *HostRule {
 	for _, hostRule := range config.HostRules {
 		if strings.Contains(host, hostRule.MatchHost) {
 			return hostRule

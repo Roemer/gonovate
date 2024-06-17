@@ -61,13 +61,13 @@ func (d *Dependency) String() string {
 			}
 			// PackageName
 			if !isAnyMatch && len(rule.Matches.PackageNames) > 0 {
-				if packageSettings.PackageName != "" && slices.Contains(rule.Matches.PackageNames, packageSettings.PackageName) {
+				if dependencySettings.PackageName != "" && slices.Contains(rule.Matches.PackageNames, dependencySettings.PackageName) {
 					isAnyMatch = true
 				}
 			}
 			// Datasource
 			if !isAnyMatch && len(rule.Matches.Datasources) > 0 {
-				if packageSettings.Datasource != "" && slices.Contains(rule.Matches.Datasources, packageSettings.Datasource) {
+				if dependencySettings.Datasource != "" && slices.Contains(rule.Matches.Datasources, dependencySettings.Datasource) {
 					isAnyMatch = true
 				}
 			}
@@ -75,9 +75,9 @@ func (d *Dependency) String() string {
 		// The rule has at least one match, add it
 		if isAnyMatch {
 			// Merge the current rules package settings
-			packageSettings.MergeWith(rule.PackageSettings)
+			dependencySettings.MergeWith(rule.PackageSettings)
 			// Make sure that the priority settings are not overwritten
-			packageSettings.MergeWith(priorityPackageSettings)
+			dependencySettings.MergeWith(priorityPackageSettings)
 		}
 	}
 }*/

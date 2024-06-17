@@ -14,7 +14,7 @@ type GitlabPlatform struct {
 	GitPlatform
 }
 
-func NewGitlabPlatform(logger *slog.Logger, config *config.Config) *GitlabPlatform {
+func NewGitlabPlatform(logger *slog.Logger, config *config.RootConfig) *GitlabPlatform {
 	platform := &GitlabPlatform{
 		GitPlatform: *NewGitPlatform(logger, config),
 	}

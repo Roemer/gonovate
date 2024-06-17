@@ -17,7 +17,7 @@ type ArtifactoryDatasource struct {
 	datasourceBase
 }
 
-func NewArtifactoryDatasource(logger *slog.Logger, config *config.Config) IDatasource {
+func NewArtifactoryDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
 	newDatasource := &ArtifactoryDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
@@ -29,12 +29,12 @@ func NewArtifactoryDatasource(logger *slog.Logger, config *config.Config) IDatas
 	return newDatasource
 }
 
-func (ds *ArtifactoryDatasource) getReleases(packageSettings *config.PackageSettings) ([]*core.ReleaseInfo, error) {
+func (ds *ArtifactoryDatasource) getReleases(dependencySettings *config.DependencySettings) ([]*core.ReleaseInfo, error) {
 	// Get the base url for artifactory
-	if packageSettings == nil || len(packageSettings.RegistryUrls) == 0 {
-		return nil, fmt.Errorf("no registry url for artifactory for packageName '%s'", packageSettings.PackageName)
+	if dependencySettings == nil || len(dependencySettings.RegistryUrls) == 0 {
+		return nil, fmt.Errorf("no registry url for artifactory for dependencyName '%s'", dependencySettings.DependencyName)
 	}
-	registryUrl := packageSettings.RegistryUrls[0]
+	registryUrl := dependencySettings.RegistryUrls[0]
 
 	// Get a host rule if any was defined
 	relevantHostRule := ds.Config.FilterHostConfigsForHost(registryUrl)
@@ -51,7 +51,7 @@ func (ds *ArtifactoryDatasource) getReleases(packageSettings *config.PackageSett
 
 	// Search with the pattern
 	params := services.NewSearchParams()
-	params.Pattern = packageSettings.PackageName
+	params.Pattern = dependencySettings.DependencyName
 	items, err := ds.getSearchResults(artifactoryManager, params)
 	if err != nil {
 		return nil, err

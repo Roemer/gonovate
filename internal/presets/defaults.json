@@ -11,10 +11,10 @@
     ],
     "matchStringPresets": {
         "docker-image-in-quotes": {
-            "matchString": "(?m)^\\s*\"(?P<packageName>.*):(?P<version>.*)\".*$"
+            "matchString": "(?m)^\\s*\"(?P<dependencyName>.*):(?P<version>.*)\".*$"
         },
         "docker-image-from": {
-            "matchString": "(?m)^FROM (?P<packageName>.*):(?P<version>.*)\\s*$"
+            "matchString": "(?m)^FROM (?P<dependencyName>.*):(?P<version>.*)\\s*$"
         },
         "json-version": {
             "matchString": "(?m)^\\s*\"%s\":\\s*\"(?P<version>.*)\".*$",
@@ -28,7 +28,7 @@
     },
     "rules": [
         {
-            "packageSettings": {
+            "dependencySettings": {
                 "maxUpdateType": "minor",
                 "versioning": "preset:major-minor-patch"
             }
@@ -39,7 +39,7 @@
                     "maven"
                 ]
             },
-            "packageSettings": {
+            "dependencySettings": {
                 "versioning": "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:-([^-]+))?(?:-(\\d+))?$"
             }
         },
@@ -49,7 +49,7 @@
                     "nodejs"
                 ]
             },
-            "packageSettings": {
+            "dependencySettings": {
                 "extractVersion": "v(.*)"
             }
         },
@@ -59,7 +59,7 @@
                     "npm"
                 ]
             },
-            "packageSettings": {
+            "dependencySettings": {
                 "versioning": "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-(.+?))?(?:[-\\.](\\d+))?(?:[-\\.](\\d+))?$"
             }
         },
@@ -69,7 +69,7 @@
                     "go-version"
                 ]
             },
-            "packageSettings": {
+            "dependencySettings": {
                 "extractVersion": "go(.*)",
                 "versioning": "(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+)?)?$"
             }

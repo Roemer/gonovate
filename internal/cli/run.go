@@ -80,7 +80,7 @@ func RunCmd(args []string) error {
 	// Process the projects
 	for _, project := range projects {
 		// Prepare the config for the project
-		projectConfig := &config.Config{}
+		projectConfig := &config.RootConfig{}
 		projectConfig.MergeWith(rootConfig)
 		// Fetch the project if needed
 		oldWorkdir := ""

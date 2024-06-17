@@ -17,7 +17,7 @@ type DockerDatasource struct {
 	datasourceBase
 }
 
-func NewDockerDatasource(logger *slog.Logger, config *config.Config) IDatasource {
+func NewDockerDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
 	newDatasource := &DockerDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
@@ -32,13 +32,13 @@ func NewDockerDatasource(logger *slog.Logger, config *config.Config) IDatasource
 var dockerIoRegex = regexp.MustCompile(`^(https?://)?([a-zA-Z-_0-9\.]*docker\.io)($|/)`)
 var httpSchemeRegex = regexp.MustCompile(`^https?://(.*)`)
 
-func (ds *DockerDatasource) getReleases(packageSettings *config.PackageSettings) ([]*core.ReleaseInfo, error) {
+func (ds *DockerDatasource) getReleases(dependencySettings *config.DependencySettings) ([]*core.ReleaseInfo, error) {
 	// Prepare the registry host
 	customRegistryUrl := ""
-	if packageSettings != nil && len(packageSettings.RegistryUrls) > 0 {
-		customRegistryUrl = packageSettings.RegistryUrls[0]
+	if dependencySettings != nil && len(dependencySettings.RegistryUrls) > 0 {
+		customRegistryUrl = dependencySettings.RegistryUrls[0]
 	}
-	registryUrl, imagePath, err := getDockerRegistry(packageSettings.PackageName, customRegistryUrl)
+	registryUrl, imagePath, err := getDockerRegistry(dependencySettings.DependencyName, customRegistryUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (ds *DockerDatasource) getReleases(packageSettings *config.PackageSettings)
 }
 
 // Processes the package name and registry url and returns the concrete host and image path
-func getDockerRegistry(packageName string, registryUrl string) (string, string, error) {
+func getDockerRegistry(dependencyName string, registryUrl string) (string, string, error) {
 	// Makes sure that the given url (if not empty) has a http/https scheme or it appends https
 	if registryUrl != "" && !httpSchemeRegex.MatchString(registryUrl) {
 		registryUrl = "https://" + registryUrl
@@ -111,41 +111,41 @@ func getDockerRegistry(packageName string, registryUrl string) (string, string, 
 
 	// Make sure all *.docker.io registries point to index.docker.io
 	registryUrl = normalizeDockerIo(registryUrl)
-	packageName = normalizeDockerIo(packageName)
+	dependencyName = normalizeDockerIo(dependencyName)
 
-	// If the packageName equals the passed registryUrl, move all path parts from the registryUrl to the packageName
+	// If the dependencyName equals the passed registryUrl, move all path parts from the registryUrl to the dependencyName
 	simplifiedRegistryUrl := ensureTrailingSlash(removeScheme(registryUrl))
-	if simplifiedRegistryUrl != "" && strings.HasPrefix(packageName, simplifiedRegistryUrl) {
+	if simplifiedRegistryUrl != "" && strings.HasPrefix(dependencyName, simplifiedRegistryUrl) {
 		var err error
-		registryUrl, packageName, err = moveRegistryPathToPackage(registryUrl, strings.Replace(packageName, simplifiedRegistryUrl, "", 1))
+		registryUrl, dependencyName, err = moveRegistryPathToPackage(registryUrl, strings.Replace(dependencyName, simplifiedRegistryUrl, "", 1))
 		if err != nil {
 			return "", "", err
 		}
 	} else {
-		// Split the packageName into parts
-		split := strings.Split(packageName, "/")
-		// Check if the packageName seems to contain a host (eg. with a . or a :)
+		// Split the dependencyName into parts
+		split := strings.Split(dependencyName, "/")
+		// Check if the dependencyName seems to contain a host (eg. with a . or a :)
 		if len(split) > 1 && strings.ContainsAny(split[0], ".:") {
 			// It does, so use it as the host with https
 			registryUrl = fmt.Sprintf("https://%s", split[0])
-			packageName = strings.Join(split[1:], "/")
+			dependencyName = strings.Join(split[1:], "/")
 		} else {
 			var err error
-			registryUrl, packageName, err = moveRegistryPathToPackage(registryUrl, packageName)
+			registryUrl, dependencyName, err = moveRegistryPathToPackage(registryUrl, dependencyName)
 			if err != nil {
 				return "", "", err
 			}
 		}
 	}
 
-	// Special handling for docker.io: if the packageName is a single entry, add "library/"
+	// Special handling for docker.io: if the dependencyName is a single entry, add "library/"
 	if dockerIoRegex.MatchString(registryUrl) {
-		if !strings.Contains(packageName, "/") {
-			packageName = "library/" + packageName
+		if !strings.Contains(dependencyName, "/") {
+			dependencyName = "library/" + dependencyName
 		}
 	}
 
-	return registryUrl, packageName, nil
+	return registryUrl, dependencyName, nil
 }
 
 // Makes sure that docker.io urls (like just docker.io or registry-1.docker.io) are replaced with index.docker.io
@@ -153,9 +153,9 @@ func normalizeDockerIo(value string) string {
 	return dockerIoRegex.ReplaceAllString(value, "${1}index.docker.io${3}")
 }
 
-// Move all path parts (if any) from the registryUrl to the packageName
-func moveRegistryPathToPackage(registryUrl, packageName string) (string, string, error) {
-	fullUrl, err := url.JoinPath(registryUrl, packageName)
+// Move all path parts (if any) from the registryUrl to the dependencyName
+func moveRegistryPathToPackage(registryUrl, dependencyName string) (string, string, error) {
+	fullUrl, err := url.JoinPath(registryUrl, dependencyName)
 	if err != nil {
 		return "", "", err
 	}
@@ -177,42 +177,42 @@ func ensureTrailingSlash(url string) string {
 	return url + "/"
 }
 
-func (ds *DockerDatasource) getTagsForDocker(baseUrl *url.URL, packageName string, hostRule *config.HostRule) ([]string, error) {
-	token, err := ds.getJwtToken("https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull", packageName, hostRule)
+func (ds *DockerDatasource) getTagsForDocker(baseUrl *url.URL, dependencyName string, hostRule *config.HostRule) ([]string, error) {
+	token, err := ds.getJwtToken("https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull", dependencyName, hostRule)
 	if err != nil {
 		return nil, err
 	}
-	return ds.getTagsWithToken(baseUrl, packageName, token)
+	return ds.getTagsWithToken(baseUrl, dependencyName, token)
 }
 
-func (ds *DockerDatasource) getTagsForGhcr(baseUrl *url.URL, packageName string, hostRule *config.HostRule) ([]string, error) {
-	token, err := ds.getJwtToken("https://ghcr.io/token?service=ghcr.io&scope=repository:%s:pull", packageName, hostRule)
+func (ds *DockerDatasource) getTagsForGhcr(baseUrl *url.URL, dependencyName string, hostRule *config.HostRule) ([]string, error) {
+	token, err := ds.getJwtToken("https://ghcr.io/token?service=ghcr.io&scope=repository:%s:pull", dependencyName, hostRule)
 	if err != nil {
 		return nil, err
 	}
-	return ds.getTagsWithToken(baseUrl, packageName, token)
+	return ds.getTagsWithToken(baseUrl, dependencyName, token)
 }
 
-func (ds *DockerDatasource) getTagsForGcr(baseUrl *url.URL, packageName string, hostRule *config.HostRule) ([]string, error) {
-	token, err := ds.getJwtToken("https://gcr.io/v2/token?service=gcr.io&scope=repository:%s:pull", packageName, hostRule)
+func (ds *DockerDatasource) getTagsForGcr(baseUrl *url.URL, dependencyName string, hostRule *config.HostRule) ([]string, error) {
+	token, err := ds.getJwtToken("https://gcr.io/v2/token?service=gcr.io&scope=repository:%s:pull", dependencyName, hostRule)
 	if err != nil {
 		return nil, err
 	}
-	return ds.getTagsWithToken(baseUrl, packageName, token)
+	return ds.getTagsWithToken(baseUrl, dependencyName, token)
 }
 
-func (ds *DockerDatasource) getTagsForQuay(baseUrl *url.URL, packageName string, hostRule *config.HostRule) ([]string, error) {
-	token, err := ds.getJwtToken("https://quay.io/v2/auth?service=quay.io&scope=repository:%s:pull", packageName, hostRule)
+func (ds *DockerDatasource) getTagsForQuay(baseUrl *url.URL, dependencyName string, hostRule *config.HostRule) ([]string, error) {
+	token, err := ds.getJwtToken("https://quay.io/v2/auth?service=quay.io&scope=repository:%s:pull", dependencyName, hostRule)
 	if err != nil {
 		return nil, err
 	}
-	return ds.getTagsWithToken(baseUrl, packageName, token)
+	return ds.getTagsWithToken(baseUrl, dependencyName, token)
 }
 
 // Creates a request to get a token and returns the token. Uses basic auth uf username/password is provided.
-func (ds *DockerDatasource) getJwtToken(authUrl string, packageName string, hostRule *config.HostRule) (string, error) {
+func (ds *DockerDatasource) getJwtToken(authUrl string, dependencyName string, hostRule *config.HostRule) (string, error) {
 	// Get a token
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(authUrl, packageName), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(authUrl, dependencyName), nil)
 	if err != nil {
 		return "", err
 	}
@@ -235,9 +235,9 @@ func (ds *DockerDatasource) getJwtToken(authUrl string, packageName string, host
 }
 
 // Gets the tags according to the v2 api spec. It uses a  bearer (token) if one is given.
-func (ds *DockerDatasource) getTagsWithToken(baseUrl *url.URL, packageName string, bearerToken string) ([]string, error) {
+func (ds *DockerDatasource) getTagsWithToken(baseUrl *url.URL, dependencyName string, bearerToken string) ([]string, error) {
 	// Build the initial url
-	tagListUrl := baseUrl.JoinPath(packageName, "tags/list")
+	tagListUrl := baseUrl.JoinPath(dependencyName, "tags/list")
 	tagListUrl.RawQuery = url.Values{
 		"n": {"1000"},
 	}.Encode()

@@ -16,7 +16,7 @@ type NodeJsDatasource struct {
 	datasourceBase
 }
 
-func NewNodeJsDatasource(logger *slog.Logger, config *config.Config) IDatasource {
+func NewNodeJsDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
 	newDatasource := &NodeJsDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
@@ -28,14 +28,14 @@ func NewNodeJsDatasource(logger *slog.Logger, config *config.Config) IDatasource
 	return newDatasource
 }
 
-func (ds *NodeJsDatasource) getReleases(packageSettings *config.PackageSettings) ([]*core.ReleaseInfo, error) {
+func (ds *NodeJsDatasource) getReleases(dependencySettings *config.DependencySettings) ([]*core.ReleaseInfo, error) {
 	baseUrl := "https://nodejs.org/dist"
-	if len(packageSettings.RegistryUrls) > 0 {
-		baseUrl = packageSettings.RegistryUrls[0]
+	if len(dependencySettings.RegistryUrls) > 0 {
+		baseUrl = dependencySettings.RegistryUrls[0]
 		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", baseUrl))
 	}
 	indexFilePath := "index.json"
-	ltsOnly := strings.HasSuffix(packageSettings.PackageName, "lts")
+	ltsOnly := strings.HasSuffix(dependencySettings.DependencyName, "lts")
 
 	// Download the index file
 	downloadUrl, err := url.JoinPath(baseUrl, indexFilePath)

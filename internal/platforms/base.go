@@ -29,10 +29,10 @@ type IPlatform interface {
 
 type platformBase struct {
 	logger *slog.Logger
-	Config *config.Config
+	Config *config.RootConfig
 }
 
-func GetPlatform(logger *slog.Logger, config *config.Config) (IPlatform, error) {
+func GetPlatform(logger *slog.Logger, config *config.RootConfig) (IPlatform, error) {
 	switch config.Platform {
 	case core.PLATFORM_TYPE_GIT:
 		return NewGitPlatform(logger, config), nil

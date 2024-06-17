@@ -17,7 +17,7 @@ type RegexManager struct {
 	managerBase
 }
 
-func NewRegexManager(logger *slog.Logger, globalConfig *config.Config, managerConfig *config.Manager) IManager {
+func NewRegexManager(logger *slog.Logger, globalConfig *config.RootConfig, managerConfig *config.ManagerConfig) IManager {
 	manager := &RegexManager{
 		managerBase: managerBase{
 			logger:        logger.With(slog.String("handlerId", managerConfig.Id)),
@@ -82,7 +82,7 @@ func (manager *RegexManager) getChanges(mergedManagerSettings *config.ManagerSet
 				}
 				//  Optional fields
 				datasourceObject, datasourceOk := match["datasource"]
-				packageObject, packageOk := match["packageName"]
+				dependencyObject, dependencyOk := match["dependencyName"]
 				versioningObject, versioningOk := match["versioning"]
 				maxUpdateTypeObject, maxUpdateTypeOk := match["maxUpdateType"]
 				extractVersionObject, extractVersionOk := match["extractVersion"]
@@ -90,32 +90,32 @@ func (manager *RegexManager) getChanges(mergedManagerSettings *config.ManagerSet
 				// Log
 				fileLogger.Debug(fmt.Sprintf("Found a match for regex '%s'", regex.String()))
 
-				// Build a package settings from the direct match. This rule always has the highest priority
-				priorityPackageSettings := &config.PackageSettings{}
-				if packageOk {
-					priorityPackageSettings.PackageName = packageObject[0].Value
+				// Build a dependency settings from the direct match. This rule always has the highest priority
+				priorityDependencySettings := &config.DependencySettings{}
+				if dependencyOk {
+					priorityDependencySettings.DependencyName = dependencyObject[0].Value
 				}
 				if datasourceOk {
-					priorityPackageSettings.Datasource = core.DatasourceType(datasourceObject[0].Value)
+					priorityDependencySettings.Datasource = core.DatasourceType(datasourceObject[0].Value)
 				}
 				if versioningOk {
-					priorityPackageSettings.Versioning = versioningObject[0].Value
+					priorityDependencySettings.Versioning = versioningObject[0].Value
 				}
 				if maxUpdateTypeOk {
-					priorityPackageSettings.MaxUpdateType = core.UpdateType(maxUpdateTypeObject[0].Value)
+					priorityDependencySettings.MaxUpdateType = core.UpdateType(maxUpdateTypeObject[0].Value)
 				}
 				if extractVersionOk {
-					priorityPackageSettings.ExtractVersion = extractVersionObject[0].Value
+					priorityDependencySettings.ExtractVersion = extractVersionObject[0].Value
 				}
-				// Build the merge package settings
-				packageSettings, err := buildMergedPackageSettings(nil, priorityPackageSettings, possiblePackageRules, candidate, manager.ManagerConfig.Id)
+				// Build the merged dependency settings
+				dependencySettings, err := buildMergedPackageSettings(nil, priorityDependencySettings, possiblePackageRules, candidate, manager.ManagerConfig.Id)
 				if err != nil {
 					return nil, err
 				}
 
-				// Search for a new version for the package
+				// Search for a new version for the dependency
 				currentVersionString, _ := manager.sanitizeString(versionObject[0].Value)
-				newReleaseInfo, currentVersion, err := manager.searchPackageUpdate(currentVersionString, packageSettings)
+				newReleaseInfo, currentVersion, err := manager.searchPackageUpdate(currentVersionString, dependencySettings)
 				if err != nil {
 					return nil, err
 				}
@@ -123,12 +123,12 @@ func (manager *RegexManager) getChanges(mergedManagerSettings *config.ManagerSet
 					// There is a new version, so build the change object
 					change := &regexManagerChange{
 						ChangeMeta: &core.ChangeMeta{
-							Datasource:              packageSettings.Datasource,
-							PackageName:             packageSettings.PackageName,
+							Datasource:              dependencySettings.Datasource,
+							DependencyName:          dependencySettings.DependencyName,
 							File:                    candidate,
 							CurrentVersion:          currentVersion,
 							NewRelease:              newReleaseInfo,
-							PostUpgradeReplacements: packageSettings.PostUpgradeReplacements,
+							PostUpgradeReplacements: dependencySettings.PostUpgradeReplacements,
 						},
 						StartIndex: versionObject[0].StartIndex,
 						EndIndex:   versionObject[0].EndIndex,

@@ -15,7 +15,7 @@ type Inline2Manager struct {
 	managerBase2
 }
 
-func NewInline2Manager(logger *slog.Logger, config *config.Config, managerConfig *config.Manager) IManager2 {
+func NewInline2Manager(logger *slog.Logger, config *config.RootConfig, managerConfig *config.ManagerConfig) IManager2 {
 	manager := &Inline2Manager{
 		managerBase2: managerBase2{
 			logger:        logger.With(slog.String("handlerId", managerConfig.Id)),
@@ -81,7 +81,7 @@ func (manager *Inline2Manager) ExtractDependencies(filePath string) ([]*core.Dep
 		}
 		//  Optional fields
 		datasourceObject, datasourceOk := match["datasource"]
-		packageObject, packageOk := match["packageName"]
+		dependencyObject, dependencyOk := match["dependencyName"]
 		versioningObject, versioningOk := match["versioning"]
 		maxUpdateTypeObject, maxUpdateTypeOk := match["maxUpdateType"]
 		extractVersionObject, extractVersionOk := match["extractVersion"]
@@ -95,10 +95,10 @@ func (manager *Inline2Manager) ExtractDependencies(filePath string) ([]*core.Dep
 		} else if inlineConfig.Datasource != "" {
 			newDepencency.Datasource = inlineConfig.Datasource
 		}
-		if packageOk {
-			newDepencency.Name = packageObject[0].Value
-		} else if inlineConfig.PackageName != "" {
-			newDepencency.Name = inlineConfig.PackageName
+		if dependencyOk {
+			newDepencency.Name = dependencyObject[0].Value
+		} else if inlineConfig.DependencyName != "" {
+			newDepencency.Name = inlineConfig.DependencyName
 		}
 		if versioningOk {
 			newDepencency.Versioning = versioningObject[0].Value

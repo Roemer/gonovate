@@ -8,19 +8,28 @@ import (
 )
 
 // This type represents the root config object.
-type Config struct {
-	Platform           core.PlatformType             `json:"platform"`
-	PlatformSettings   *PlatformSettings             `json:"platformSettings"`
-	Extends            []string                      `json:"extends"`
-	IgnorePatterns     []string                      `json:"ignorePatterns"`
+type RootConfig struct {
+	// The type of the platform to use.
+	Platform core.PlatformType `json:"platform"`
+	// Settings that are relevant for the specified platform.
+	PlatformSettings *PlatformSettings `json:"platformSettings"`
+	// A list of presets to also load before loading this config. All configs are merged together.
+	Extends []string `json:"extends"`
+	// A list of patterns that will be completely ignored.
+	IgnorePatterns []string `json:"ignorePatterns"`
+	// A map of presets for matchstrings that can be used and referenced.
 	MatchStringPresets map[string]*MatchStringPreset `json:"matchStringPresets"`
-	VersioningPresets  map[string]string             `json:"versioningPresets"`
-	Managers           []*Manager                    `json:"managers"`
-	Rules              []*Rule                       `json:"rules"`
-	HostRules          []*HostRule                   `json:"hostRules"`
+	// A map of presets for versionings that can be used and referenced.
+	VersioningPresets map[string]string `json:"versioningPresets"`
+	// A list of configurations for managers
+	Managers []*ManagerConfig `json:"managers"`
+	// A list of rules that can apply to managers or dependencies.
+	Rules []*Rule `json:"rules"`
+	// A list of rules that can apply to hosts.
+	HostRules []*HostRule `json:"hostRules"`
 }
 
-func (c *Config) String() string {
+func (c *RootConfig) String() string {
 	b, _ := json.MarshalIndent(c, "", "  ")
 	return string(b)
 }
@@ -47,39 +56,39 @@ type MatchStringPreset struct {
 	ParameterDefaults []string `json:"parameterDefaults"`
 }
 
-// This type defines a manager with its settings and settings that apply for all dependencies.
-type Manager struct {
+// This type represents the config for a manager with its settings and settings that apply for all dependencies.
+type ManagerConfig struct {
 	Id   string           `json:"id"`
 	Type core.ManagerType `json:"type"`
-	// These settings are converted to rules to keep the right order, so they should not be used directly
-	managerSettings *ManagerSettings `json:"managerSettings"`
-	packageSettings *PackageSettings `json:"packageSettings"`
+	// These settings are immediately converted to rules to keep the right order, so they should not be used directly
+	managerSettings    *ManagerSettings    `json:"managerSettings"`
+	dependencySettings *DependencySettings `json:"dependencySettings"`
 }
 
-func (m *Manager) String() string {
+func (m *ManagerConfig) String() string {
 	b, _ := json.MarshalIndent(m, "", "  ")
 	return string(b)
 }
 
 type Rule struct {
-	Matches         *RuleMatch       `json:"matches"`
-	ManagerSettings *ManagerSettings `json:"managerSettings"`
-	PackageSettings *PackageSettings `json:"packageSettings"`
+	Matches            *RuleMatch          `json:"matches"`
+	ManagerSettings    *ManagerSettings    `json:"managerSettings"`
+	DependencySettings *DependencySettings `json:"dependencySettings"`
 }
 
 type RuleMatch struct {
 	Managers []string `json:"managers"`
 	//TODO: ManagerTypes []ManagerType    `json:"managerTypes"`
-	Files        []string              `json:"files"`
-	PackageNames []string              `json:"packageNames"`
-	Datasources  []core.DatasourceType `json:"datasources"`
+	Files           []string              `json:"files"`
+	DependencyNames []string              `json:"dependencyNames"`
+	Datasources     []core.DatasourceType `json:"datasources"`
 }
 
 // A MatchAll rule is a rule that has no matches defined at all, so it will match all.
 func (rm *RuleMatch) IsMatchAll() bool {
 	return rm == nil || (len(rm.Managers) == 0 &&
 		len(rm.Files) == 0 &&
-		len(rm.PackageNames) == 0 &&
+		len(rm.DependencyNames) == 0 &&
 		len(rm.Datasources) == 0)
 }
 
@@ -91,7 +100,7 @@ type ManagerSettings struct {
 	MatchStrings []string `json:"matchStrings"`
 }
 
-type PackageSettings struct {
+type DependencySettings struct {
 	// Defines how much the dependency is allowed to update. Can be "major", "minor", or "patch".
 	MaxUpdateType core.UpdateType `json:"maxUpdateType"`
 	// This flag defines if unstable releases are allowed. Unstable usually means a version that also has parts with text.
@@ -104,11 +113,11 @@ type PackageSettings struct {
 	ExtractVersion string `json:"extractVersion"`
 	// A flag to indicate if versions from a remote that do not match the versioning should be ignored or give an exception.
 	IgnoreNonMatching *bool `json:"ignoreNonMatching"`
-	// Allows hard-coding a packageName in rules. Is used if it is not captured via matchString.
-	PackageName string `json:"packageName"`
+	// Allows hard-coding a dependencyName in rules. Is used if it is not captured via matchString.
+	DependencyName string `json:"dependencyName"`
 	// Allows hard-coding a datasource in rules. Is used if it is not captured via matchString.
 	Datasource core.DatasourceType `json:"datasource"`
-	// Allows defining regexes that replace further information from packages (like hash) after updating
+	// Allows defining regexes that replace further information from dependencies (like hash) after updating
 	PostUpgradeReplacements []string `json:"postUpgradeReplacements"`
 }
 

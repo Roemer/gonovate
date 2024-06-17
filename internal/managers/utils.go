@@ -10,14 +10,14 @@ import (
 	"github.com/roemer/gonovate/internal/core"
 )
 
-// Build a PackageSettings object out of the various settings that can be relevant.
-func buildMergedPackageSettings(initialPackageSettings, priorityPackageSettings *config.PackageSettings, possiblePackageRules []*config.Rule, currentFile string, managerId string) (*config.PackageSettings, error) {
-	// Build the packageSettings which holds all relevant rules
-	packageSettings := &config.PackageSettings{}
+// Build a DependencySettings object out of the various settings that can be relevant.
+func buildMergedPackageSettings(initialPackageSettings, priorityPackageSettings *config.DependencySettings, possiblePackageRules []*config.Rule, currentFile string, managerId string) (*config.DependencySettings, error) {
+	// Build the dependencySettings which holds all relevant rules
+	dependencySettings := &config.DependencySettings{}
 	// Merge the initial package settings (usually from the manager)
-	//???packageSettings.MergeWith(initialPackageSettings)
+	//???dependencySettings.MergeWith(initialPackageSettings)
 	// Initially apply the priority settings (as they can be used to evaluate further matches)
-	//???packageSettings.MergeWith(priorityPackageSettings)
+	//???dependencySettings.MergeWith(priorityPackageSettings)
 	// Loop thru the rules and apply the ones that match
 	for _, rule := range possiblePackageRules {
 		isAnyMatch := rule.Matches.IsMatchAll()
@@ -39,29 +39,29 @@ func buildMergedPackageSettings(initialPackageSettings, priorityPackageSettings 
 					isAnyMatch = true
 				}
 			}
-			// PackageName
-			if !isAnyMatch && len(rule.Matches.PackageNames) > 0 {
-				if packageSettings.PackageName != "" && slices.Contains(rule.Matches.PackageNames, packageSettings.PackageName) {
+			// DependencyName
+			if !isAnyMatch && len(rule.Matches.DependencyNames) > 0 {
+				if dependencySettings.DependencyName != "" && slices.Contains(rule.Matches.DependencyNames, dependencySettings.DependencyName) {
 					isAnyMatch = true
 				}
 			}
 			// Datasource
 			if !isAnyMatch && len(rule.Matches.Datasources) > 0 {
-				if packageSettings.Datasource != "" && slices.Contains(rule.Matches.Datasources, packageSettings.Datasource) {
+				if dependencySettings.Datasource != "" && slices.Contains(rule.Matches.Datasources, dependencySettings.Datasource) {
 					isAnyMatch = true
 				}
 			}
 		}
 		// The rule has at least one match, add it
 		if isAnyMatch {
-			// Merge the current rules package settings
-			packageSettings.MergeWith(rule.PackageSettings)
+			// Merge the current rules dependency settings
+			dependencySettings.MergeWith(rule.DependencySettings)
 			// Make sure that the priority settings are not overwritten
-			packageSettings.MergeWith(priorityPackageSettings)
+			dependencySettings.MergeWith(priorityPackageSettings)
 		}
 	}
 
-	return packageSettings, nil
+	return dependencySettings, nil
 }
 
 func findNamedMatchesWithIndex(regex *regexp.Regexp, str string, includeNotMatchedOptional bool) map[string][]*capturedGroup {

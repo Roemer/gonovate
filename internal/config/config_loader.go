@@ -55,7 +55,7 @@ func (c loader) HasProjectConfig() (bool, error) {
 	return core.FileExists("gonovate.json")
 }
 
-func (c loader) LoadConfig(configPath string) (*Config, error) {
+func (c loader) LoadConfig(configPath string) (*RootConfig, error) {
 	if configPath == "" {
 		configPath = "gonovate.json"
 	}
@@ -66,8 +66,8 @@ func (c loader) LoadConfig(configPath string) (*Config, error) {
 	return c.loadConfig(nil, configInfo)
 }
 
-func (c loader) loadConfig(parentInfo, newInfo *configInfo) (*Config, error) {
-	var newConfig *Config
+func (c loader) loadConfig(parentInfo, newInfo *configInfo) (*RootConfig, error) {
+	var newConfig *RootConfig
 	var err error
 	// Try load the config according to the type
 	if newInfo.Type == infoTypeFile {
@@ -80,7 +80,7 @@ func (c loader) loadConfig(parentInfo, newInfo *configInfo) (*Config, error) {
 	}
 
 	// Create a new object for the merged config with the presets
-	mergedConfig := &Config{}
+	mergedConfig := &RootConfig{}
 	// Process the "Extends" presets first
 	for _, presetLookupInfo := range newConfig.Extends {
 		presetInfo, err := newConfigInfo(presetLookupInfo)
@@ -102,7 +102,7 @@ func (c loader) loadConfig(parentInfo, newInfo *configInfo) (*Config, error) {
 	return mergedConfig, nil
 }
 
-func (c loader) loadConfigFromFile(parentInfo, newInfo *configInfo) (*Config, error) {
+func (c loader) loadConfigFromFile(parentInfo, newInfo *configInfo) (*RootConfig, error) {
 	// If the path is absolute, use it directly
 	if filepath.IsAbs(newInfo.Location) {
 		return c.readConfigFromFile(newInfo.Location)
@@ -186,28 +186,28 @@ func (c loader) loadConfigFromFile(parentInfo, newInfo *configInfo) (*Config, er
 	return nil, fmt.Errorf("file not found for '%s'", newInfo.Location)
 }
 
-func (c loader) readConfigFromFile(configPath string) (*Config, error) {
+func (c loader) readConfigFromFile(configPath string) (*RootConfig, error) {
 	configFile, err := os.Open(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed opening file '%s': %w", configPath, err)
 	}
 	defer configFile.Close()
 
-	config := &Config{}
+	config := &RootConfig{}
 	if err = json.NewDecoder(configFile).Decode(config); err != nil {
 		return nil, fmt.Errorf("failed parsing file '%s': %w", configPath, err)
 	}
 	return config, nil
 }
 
-func (c loader) readConfigFromEmbeddedFile(configPath string) (*Config, error) {
+func (c loader) readConfigFromEmbeddedFile(configPath string) (*RootConfig, error) {
 	configFile, err := presets.Presets.Open(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed opening embedded file '%s': %w", configPath, err)
 	}
 	defer configFile.Close()
 
-	config := &Config{}
+	config := &RootConfig{}
 	if err = json.NewDecoder(configFile).Decode(config); err != nil {
 		return nil, fmt.Errorf("failed parsing embedded file '%s': %w", configPath, err)
 	}

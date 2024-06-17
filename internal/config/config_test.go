@@ -12,34 +12,34 @@ import (
 func TestMergeMultipleProjects(t *testing.T) {
 	//assert := assert.New(t)
 
-	globalConfig := &Config{
+	globalConfig := &RootConfig{
 		Platform: core.PLATFORM_TYPE_GITLAB,
-		Managers: []*Manager{
+		Managers: []*ManagerConfig{
 			{
 				Id:   "Manager A",
 				Type: core.MANAGER_TYPE_REGEX,
-				packageSettings: &PackageSettings{
-					PackageName: "init",
-					Versioning:  "init",
+				dependencySettings: &DependencySettings{
+					DependencyName: "init",
+					Versioning:     "init",
 				},
 			},
 		},
 	}
 
-	configA := &Config{
-		Managers: []*Manager{
+	configA := &RootConfig{
+		Managers: []*ManagerConfig{
 			{
-				Id:              "Manager A",
-				packageSettings: &PackageSettings{PackageName: "a"},
+				Id:                 "Manager A",
+				dependencySettings: &DependencySettings{DependencyName: "a"},
 			},
 		},
 	}
 
-	configB := &Config{
-		Managers: []*Manager{
+	configB := &RootConfig{
+		Managers: []*ManagerConfig{
 			{
-				Id:              "Manager A",
-				packageSettings: &PackageSettings{Versioning: "b"},
+				Id:                 "Manager A",
+				dependencySettings: &DependencySettings{Versioning: "b"},
 			},
 		},
 	}
@@ -59,9 +59,9 @@ func TestMergeMultipleProjects(t *testing.T) {
 func TestSomething(t *testing.T) {
 	assert := assert.New(t)
 
-	config := &Config{
+	config := &RootConfig{
 		Platform: core.PLATFORM_TYPE_GITLAB,
-		Managers: []*Manager{
+		Managers: []*ManagerConfig{
 			{
 				Id:              "Manager A",
 				Type:            core.MANAGER_TYPE_REGEX,
@@ -89,7 +89,7 @@ func TestSomething(t *testing.T) {
 func TestMatchStringPresets(t *testing.T) {
 	assert := assert.New(t)
 
-	config := &Config{
+	config := &RootConfig{
 		MatchStringPresets: map[string]*MatchStringPreset{
 			"test-0p": {
 				MatchString: "0p",
@@ -143,7 +143,7 @@ func TestMatchStringPresets(t *testing.T) {
 func TestVersioningPresets(t *testing.T) {
 	assert := assert.New(t)
 
-	config := &Config{
+	config := &RootConfig{
 		VersioningPresets: map[string]string{
 			"a": "foo",
 		},
