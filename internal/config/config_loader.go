@@ -18,9 +18,9 @@ const (
 	infoTypeFile string = "file"
 )
 
-type configLoader struct{}
+type loader struct{}
 
-var ConfigLoader configLoader = configLoader{}
+var Loader loader = loader{}
 
 type configInfo struct {
 	Type     string
@@ -51,11 +51,11 @@ func newConfigInfo(info string) (*configInfo, error) {
 	}, nil
 }
 
-func (c configLoader) HasProjectConfig() (bool, error) {
+func (c loader) HasProjectConfig() (bool, error) {
 	return core.FileExists("gonovate.json")
 }
 
-func (c configLoader) LoadConfig(configPath string) (*Config, error) {
+func (c loader) LoadConfig(configPath string) (*Config, error) {
 	if configPath == "" {
 		configPath = "gonovate.json"
 	}
@@ -66,7 +66,7 @@ func (c configLoader) LoadConfig(configPath string) (*Config, error) {
 	return c.loadConfig(nil, configInfo)
 }
 
-func (c configLoader) loadConfig(parentInfo, newInfo *configInfo) (*Config, error) {
+func (c loader) loadConfig(parentInfo, newInfo *configInfo) (*Config, error) {
 	var newConfig *Config
 	var err error
 	// Try load the config according to the type
@@ -102,7 +102,7 @@ func (c configLoader) loadConfig(parentInfo, newInfo *configInfo) (*Config, erro
 	return mergedConfig, nil
 }
 
-func (c configLoader) loadConfigFromFile(parentInfo, newInfo *configInfo) (*Config, error) {
+func (c loader) loadConfigFromFile(parentInfo, newInfo *configInfo) (*Config, error) {
 	// If the path is absolute, use it directly
 	if filepath.IsAbs(newInfo.Location) {
 		return c.readConfigFromFile(newInfo.Location)
@@ -186,7 +186,7 @@ func (c configLoader) loadConfigFromFile(parentInfo, newInfo *configInfo) (*Conf
 	return nil, fmt.Errorf("file not found for '%s'", newInfo.Location)
 }
 
-func (c configLoader) readConfigFromFile(configPath string) (*Config, error) {
+func (c loader) readConfigFromFile(configPath string) (*Config, error) {
 	configFile, err := os.Open(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed opening file '%s': %w", configPath, err)
@@ -200,7 +200,7 @@ func (c configLoader) readConfigFromFile(configPath string) (*Config, error) {
 	return config, nil
 }
 
-func (c configLoader) readConfigFromEmbeddedFile(configPath string) (*Config, error) {
+func (c loader) readConfigFromEmbeddedFile(configPath string) (*Config, error) {
 	configFile, err := presets.Presets.Open(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed opening embedded file '%s': %w", configPath, err)

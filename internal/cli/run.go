@@ -35,7 +35,7 @@ func RunCmd(args []string) error {
 		}
 	}
 	// Read the configuration
-	rootConfig, err := config.ConfigLoader.LoadConfig(configFile)
+	rootConfig, err := config.Loader.LoadConfig(configFile)
 	if err != nil {
 		return err
 	}
@@ -98,10 +98,10 @@ func RunCmd(args []string) error {
 				return err
 			}
 			// If the project has its own config file, merge it
-			if hasProjectConfig, err := config.ConfigLoader.HasProjectConfig(); err != nil {
+			if hasProjectConfig, err := config.Loader.HasProjectConfig(); err != nil {
 				return err
 			} else if hasProjectConfig {
-				projectConfigFromFile, err := config.ConfigLoader.LoadConfig("")
+				projectConfigFromFile, err := config.Loader.LoadConfig("")
 				if err != nil {
 					return err
 				}
