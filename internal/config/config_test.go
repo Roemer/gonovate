@@ -9,6 +9,55 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestPreProcess(t *testing.T) {
+	assert := assert.New(t)
+
+	rootConfig := &RootConfig{
+		Platform: core.PLATFORM_TYPE_GITLAB,
+		Managers: []*ManagerConfig{
+			{
+				Id:   "Manager A",
+				Type: core.MANAGER_TYPE_REGEX,
+				managerSettings: &ManagerSettings{
+					FilePatterns: []string{"pattern"},
+				},
+				dependencySettings: &DependencySettings{
+					DependencyName: "depName",
+					Versioning:     "1.0.0",
+				},
+			},
+		},
+	}
+
+	// Test without pre-process
+	assert.NotNil(rootConfig.Managers[0].managerSettings)
+	assert.NotNil(rootConfig.Managers[0].dependencySettings)
+	assert.Len(rootConfig.Rules, 0)
+
+	// Pre-process
+	rootConfig.PreProcess()
+
+	// Test after pre-process
+	assert.Nil(rootConfig.Managers[0].managerSettings)
+	assert.Nil(rootConfig.Managers[0].dependencySettings)
+	assert.Len(rootConfig.Rules, 2)
+
+	// Check rule 1
+	checkRule := rootConfig.Rules[0]
+	assert.ElementsMatch(checkRule.Matches.Managers, []string{"Manager A"})
+	assert.Nil(checkRule.ManagerSettings)
+	assert.NotNil(checkRule.DependencySettings)
+	assert.Equal(checkRule.DependencySettings.DependencyName, "depName")
+	assert.Equal(checkRule.DependencySettings.Versioning, "1.0.0")
+
+	// Check rule 2
+	checkRule = rootConfig.Rules[1]
+	assert.ElementsMatch(checkRule.Matches.Managers, []string{"Manager A"})
+	assert.NotNil(checkRule.ManagerSettings)
+	assert.ElementsMatch(checkRule.ManagerSettings.FilePatterns, []string{"pattern"})
+	assert.Nil(checkRule.DependencySettings)
+}
+
 func TestMergeMultipleProjects(t *testing.T) {
 	//assert := assert.New(t)
 

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/roemer/gonovate/internal/core"
+	"github.com/roemer/gotaskr/goext"
 )
 
 // This type represents the root config object.
@@ -32,6 +33,31 @@ type RootConfig struct {
 func (c *RootConfig) String() string {
 	b, _ := json.MarshalIndent(c, "", "  ")
 	return string(b)
+}
+
+// This method pre processes the root config object. This should be called on any config object at the very beginning.
+func (c *RootConfig) PreProcess() {
+	// Convert managerSettings/dependencySettings to rules and add them to keep the priority order
+	for _, managerConfig := range c.Managers {
+		if managerConfig.managerSettings != nil {
+			c.Rules = goext.Prepend(c.Rules, &Rule{
+				Matches: &RuleMatch{
+					Managers: []string{managerConfig.Id},
+				},
+				ManagerSettings: (&ManagerSettings{}).MergeWith(managerConfig.managerSettings),
+			})
+			managerConfig.managerSettings = nil
+		}
+		if managerConfig.dependencySettings != nil {
+			c.Rules = goext.Prepend(c.Rules, &Rule{
+				Matches: &RuleMatch{
+					Managers: []string{managerConfig.Id},
+				},
+				DependencySettings: (&DependencySettings{}).MergeWith(managerConfig.dependencySettings),
+			})
+			managerConfig.dependencySettings = nil
+		}
+	}
 }
 
 // This type defines settings regarding the platform.

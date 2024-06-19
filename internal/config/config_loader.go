@@ -12,7 +12,6 @@ import (
 
 	"github.com/roemer/gonovate/internal/core"
 	"github.com/roemer/gonovate/internal/presets"
-	"github.com/roemer/gotaskr/goext"
 )
 
 const (
@@ -80,28 +79,8 @@ func (c loader) loadConfig(parentInfo, newInfo *configInfo) (*RootConfig, error)
 		return nil, fmt.Errorf("unknown preset type '%s'", newInfo.Type)
 	}
 
-	// Pre-Process the config
-	for _, managerConfig := range newConfig.Managers {
-		// Convert managerSettings/dependencySettings to rules and add them to keep the priority order
-		if managerConfig.managerSettings != nil {
-			newConfig.Rules = goext.Prepend(newConfig.Rules, &Rule{
-				Matches: &RuleMatch{
-					Managers: []string{managerConfig.Id},
-				},
-				ManagerSettings: (&ManagerSettings{}).MergeWith(managerConfig.managerSettings),
-			})
-			managerConfig.managerSettings = nil
-		}
-		if managerConfig.dependencySettings != nil {
-			newConfig.Rules = goext.Prepend(newConfig.Rules, &Rule{
-				Matches: &RuleMatch{
-					Managers: []string{managerConfig.Id},
-				},
-				DependencySettings: (&DependencySettings{}).MergeWith(managerConfig.dependencySettings),
-			})
-			managerConfig.dependencySettings = nil
-		}
-	}
+	// PreProcess the config
+	newConfig.PreProcess()
 
 	// Create a new object for the merged config with the presets
 	mergedConfig := &RootConfig{}
