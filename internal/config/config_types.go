@@ -39,23 +39,21 @@ func (c *RootConfig) String() string {
 func (c *RootConfig) PreProcess() {
 	// Convert managerSettings/dependencySettings to rules and add them to keep the priority order
 	for _, managerConfig := range c.Managers {
-		if managerConfig.managerSettings != nil {
-			c.Rules = goext.Prepend(c.Rules, &Rule{
+		if managerConfig.managerSettings != nil || managerConfig.dependencySettings != nil {
+			newRule := &Rule{
 				Matches: &RuleMatch{
 					Managers: []string{managerConfig.Id},
 				},
-				ManagerSettings: (&ManagerSettings{}).MergeWith(managerConfig.managerSettings),
-			})
-			managerConfig.managerSettings = nil
-		}
-		if managerConfig.dependencySettings != nil {
-			c.Rules = goext.Prepend(c.Rules, &Rule{
-				Matches: &RuleMatch{
-					Managers: []string{managerConfig.Id},
-				},
-				DependencySettings: (&DependencySettings{}).MergeWith(managerConfig.dependencySettings),
-			})
-			managerConfig.dependencySettings = nil
+			}
+			if managerConfig.managerSettings != nil {
+				newRule.ManagerSettings = (&ManagerSettings{}).MergeWith(managerConfig.managerSettings)
+				managerConfig.managerSettings = nil
+			}
+			if managerConfig.dependencySettings != nil {
+				newRule.DependencySettings = (&DependencySettings{}).MergeWith(managerConfig.dependencySettings)
+				managerConfig.dependencySettings = nil
+			}
+			c.Rules = goext.Prepend(c.Rules, newRule)
 		}
 	}
 }
