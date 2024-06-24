@@ -33,14 +33,23 @@ func (ds *GitHubReleasesDatasource) getReleases(packageSettings *core.PackageSet
 	owner := parts[0]
 	repository := parts[1]
 
-	gitHubReleases, _, err := client.Repositories.ListReleases(context.Background(), owner, repository, &github.ListOptions{})
-	if err != nil {
-		return nil, err
+	allReleases := []*github.RepositoryRelease{}
+	listOptions := &github.ListOptions{PerPage: 100}
+	for {
+		gitHubReleases, resp, err := client.Repositories.ListReleases(context.Background(), owner, repository, listOptions)
+		if err != nil {
+			return nil, err
+		}
+		allReleases = append(allReleases, gitHubReleases...)
+		if resp.NextPage == 0 {
+			break
+		}
+		listOptions.Page = resp.NextPage
 	}
 
 	// Convert all entries to objects
 	releases := []*core.ReleaseInfo{}
-	for _, entry := range gitHubReleases {
+	for _, entry := range allReleases {
 		versionString := *entry.Name
 		releases = append(releases, &core.ReleaseInfo{
 			VersionString: versionString,
