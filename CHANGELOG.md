@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.2.3 (2024-06-24)
+
+### Fix
+
+* GitHub tags/releases now use paging
+
 ## v0.2.2 (2024-06-06)
 
 ### Fix
