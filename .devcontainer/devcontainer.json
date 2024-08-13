@@ -9,9 +9,9 @@
 	],
 	"features": {
 		// gonovate: { "datasource":"docker", "matchString":"preset:docker-image-in-quotes" }
-		"ghcr.io/devcontainers/features/go:1": {
-			// gonovate: { "datasource":"go-version", "packageName":"go-stable", "matchString":"preset:json-version" }
-			"version": "1.21"
+		"ghcr.io/devcontainers/features/go:1.0.0": {
+			// gonovate: { "datasource":"go-version", "dependencyName":"go-stable", "matchString":"preset:json-version" }
+			"version": "1.21.0"
 		}
 	},
 	"customizations": {

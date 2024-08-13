@@ -1,0 +1,100 @@
+{
+    "platformSettings": {
+        "baseBranch": "main",
+        "branchPrefix": "gonovate/",
+        "gitAuthor": "gonovate-bot <bot@gonovate.org>"
+    },
+    "ignorePatterns": [
+        "**/node_modules",
+        "**/bower_components",
+        "**/.git"
+    ],
+    "matchStringPresets": {
+        "docker-image-in-quotes": {
+            "matchString": "(?m)^\\s*\"(?P<dependencyName>.*):(?P<version>.*)\".*$"
+        },
+        "docker-image-from": {
+            "matchString": "(?m)^FROM (?P<dependencyName>.*):(?P<version>.*)\\s*$"
+        },
+        "json-version": {
+            "matchString": "(?m)^\\s*\"%s\":\\s*\"(?P<version>.*)\".*$",
+            "parameterDefaults": [
+                "version"
+            ]
+        }
+    },
+    "versioningPresets": {
+        "major-minor-patch": "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$"
+    },
+    "rules": [
+        {
+            "dependencySettings": {
+                "maxUpdateType": "minor",
+                "versioning": "preset:major-minor-patch"
+            }
+        },
+        {
+            "matches": {
+                "ManagerTypes": [
+                    "dockerfile"
+                ]
+            },
+            "managerSettings": {
+                "filePatterns": [
+                    "**/Dockerfile"
+                ]
+            }
+        },
+        {
+            "matches": {
+                "datasources": [
+                    "maven"
+                ]
+            },
+            "dependencySettings": {
+                "versioning": "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:-([^-]+))?(?:-(\\d+))?$"
+            }
+        },
+        {
+            "matches": {
+                "datasources": [
+                    "nodejs"
+                ]
+            },
+            "dependencySettings": {
+                "extractVersion": "v(.*)"
+            }
+        },
+        {
+            "matches": {
+                "datasources": [
+                    "npm"
+                ]
+            },
+            "dependencySettings": {
+                "versioning": "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-(.+?))?(?:[-\\.](\\d+))?(?:[-\\.](\\d+))?$"
+            }
+        },
+        {
+            "matches": {
+                "datasources": [
+                    "go-version"
+                ]
+            },
+            "dependencySettings": {
+                "extractVersion": "go(.*)",
+                "versioning": "(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+)?)?$"
+            }
+        },
+        {
+            "matches": {
+                "datasources": [
+                    "go-mod"
+                ]
+            },
+            "dependencySettings": {
+                "versioning": "v?(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+)?)?$"
+            }
+        }
+    ]
+}

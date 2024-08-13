@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Gonovate (Verbose)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "cmd/gonovate/main.go",
+            "cwd": ".",
+            "args": ["run", "-v"]
+        }
+    ]
+}
