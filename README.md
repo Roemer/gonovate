@@ -11,7 +11,7 @@ Most components from gonovate are similar to the ones from other updaters. The m
 - Manager: Defines a set settings on how to find files, versions and how to update them
 - Datasource: A source which can be checked for updates
 - Platform: A platform defines how the project to check for updates is checked out and how to inform about updates
-- Package: A package is a concrete dependency that has a version and might need updating
+- Dependency: A dependency is a concrete dependency that has a version and might need updating
 - Rules: A very flexible way to configure all parts of a manager or versioning
 - HostRules: Contains credentials to access datasources to check for updates
 
@@ -19,7 +19,7 @@ Most components from gonovate are similar to the ones from other updaters. The m
 The follownig managers are currently implemented:
 
 ### Regex
-This manager allows to use regular expressions to search for package names and versions which are used to find updates.
+This manager allows to use regular expressions to search for dependency names and versions which are used to find updates.
 
 ### Inline
 This manager allows to use inline comments in files with all the information on how to find and update versions.
@@ -55,7 +55,7 @@ There is usually a `gonovate.json` file which contains your specific configurati
 
 ### Manager Configuration
 A manager needs an `id` and a `type` and contains `managerSettings` which configure which files should be handled by the manager and how.
-Additionally, it can contain `packageSettings` that define some behavior for all packages that are handled by this manager.
+Additionally, it can contain `dependencySettings` that define some behavior for all dependencies that are handled by this manager.
 
 Example:
 ```json
@@ -67,17 +67,17 @@ Example:
             "**/[Dd]ockerfile"
         ],
         "matchStrings": [
-            "^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<packageName>.*?)[[:blank:]]*$"
+            "^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<dependencyName>.*?)[[:blank:]]*$"
         ]
     },
-    "packageSettings": {
+    "dependencySettings": {
         "maxUpdateType": "major"
     }
 }
 ```
 
 ### Rules Configuration
-The rules contain a `matches` section which describe the criteria when this rule should match and `managerSettings` and/or `packageSettings` that should be applied when this rule matches.
+The rules contain a `matches` section which describe the criteria when this rule should match and `managerSettings` and/or `dependencySettings` that should be applied when this rule matches.
 
 Example:
 ```json

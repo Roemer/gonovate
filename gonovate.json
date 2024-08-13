@@ -1,9 +1,9 @@
 {
-    "platform": "github",
+    "platform": "noop",
     "platformSettings": {
         "token": "$GONOVATE_GITHUB_LOCAL_TOKEN",
         "gitAuthor": "gonovate-bot <bot@gonovate.org>",
-        "direct": true,
+        "inplace": true,
         "projects": [
             "roemer/gonovate"
         ]
@@ -13,20 +13,43 @@
     ],
     "managers": [
         {
+            "id": "docker",
+            "type": "dockerfile"
+        },
+        {
             "id": "devcontainer",
             "type": "inline",
             "managerSettings":{
                 "filePatterns": [
-                    ".devcontainer/Dockerfile",
                     ".devcontainer/devcontainer.json"
                 ]
             },
-            "packageSettings": {
+            "dependencySettings": {
                 "ignoreNonMatching": true
+            }
+        },
+        {
+            "id": "go-mod",
+            "type": "go-mod",
+            "managerSettings":{
+                "filePatterns": [
+                    "go.mod"
+                ]
             }
         }
     ],
     "rules": [
+        {
+            "matches": {
+                "DependencyNames": [
+                    "mcr.microsoft.com/devcontainers/base"
+                ]
+            },
+            "dependencySettings": {
+                "versioning": "^(\\d+)\\.(\\d+)\\.(\\d+)-bookworm$",
+                "ignoreNonMatching": true
+            }
+        }
     ],
     "hostRules": [
         {
