@@ -128,6 +128,7 @@ func RunCmd(args []string) error {
 		logger.Info(fmt.Sprintf("Searching for dependencies in %d manager(s)", len(projectConfig.Managers)))
 		for _, managerConfig := range projectConfig.Managers {
 			// Get the merged settings for the current manager
+			// TODO: Make sure this is used inside the manager as managersettings
 			mergedManagerSettings := projectConfig.GetMergedManagerSettings(managerConfig)
 
 			// Skip the manager if it is disabled

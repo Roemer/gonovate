@@ -1,7 +1,7 @@
 {
     "platform": "noop",
     "platformSettings": {
-        "direct": true
+        "inplace": true
     },
     "extends": [
         "defaults"
@@ -15,11 +15,11 @@
                     "**/[Dd]ockerfile"
                 ],
                 "matchStrings": [
-                    "(?m)^FROM alpine:(?P<version>.*) # (?P<datasource>.*?)\/(?P<packageName>.*?)\\s*$",
-                    "(?m)^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<packageName>.*?)\\s*$"
+                    "(?m)^FROM alpine:(?P<version>.*) # (?P<datasource>.*?)\/(?P<dependencyName>.*?)\\s*$",
+                    "(?m)^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<dependencyName>.*?)\\s*$"
                 ]
             },
-            "packageSettings": {
+            "dependencySettings": {
                 "maxUpdateType": "major",
                 "ignoreNonMatching": true
             }
@@ -28,11 +28,11 @@
     "rules": [
         {
             "matches": {
-                "packageNames": [
+                "dependencyNames": [
                     "lodash"
                 ]
             },
-            "packageSettings": {
+            "dependencySettings": {
                 "postUpgradeReplacements": [
                     "(?m)^.*\"Lodash Hash:[[:blank:]]*(?P<sha512>.+)\".*$"
                 ]
