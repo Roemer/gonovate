@@ -1,57 +1,67 @@
 # gonovate
-Go renovate your dependencies with style
+Update your dependencies with Go.
 
 ## Introduction
-gonovate is a tool that allows updating dependencies of your projects. One of the main goals of gonovate is developer-friendlyness, so it should be easy to configure, test and use.
+gonovate is a tool that allows updating dependencies of your projects.
+One of the main goals of gonovate is developer-friendlyness, so it should be easy to configure, test and use.
 
 ## Concepts
-Most components from gonovate are similar to the ones from other updaters. The main components are:
-- Configurations: One or more json files which hold the configuration
+Most components from gonovate are similar to the ones from other updaters.
+The main components are:
+- Configuration: One or more json files which hold the configuration
 - Preset: One or more configuration files which can be used as a base of your configuration
-- Manager: Defines a set settings on how to find files, versions and how to update them
-- Datasource: A source which can be checked for updates
-- Platform: A platform defines how the project to check for updates is checked out and how to inform about updates
-- Dependency: A dependency is a concrete dependency that has a version and might need updating
-- Rules: A very flexible way to configure all parts of a manager or versioning
-- HostRules: Contains credentials to access datasources to check for updates
-
-## Managers
-The follownig managers are currently implemented:
-
-### Regex
-This manager allows to use regular expressions to search for dependency names and versions which are used to find updates.
-
-### Inline
-This manager allows to use inline comments in files with all the information on how to find and update versions.
+- Platform: Defines how the project to check for updates is checked out and how to inform about updates
+- Manager: Searches for existing dependencies and knows how to update them
+- Datasource: Searches for updates for existing dependencies
+- Dependency: A concrete dependency that has a version and might need updating
+- Rules: A very flexible way to configure all parts of gonovate
+- HostRules: Contains credentials to access secured datasources to check for updates
 
 ## Configuration
-There is usually a `gonovate.json` file which contains your specific configuration. The basic structure of this file is:
+There is usually a `gonovate.json` file which contains your configuration. The basic structure of this file is:
+
 ```json
 {
-    "platform": "github",
+    "platform": "noop",
+    "platformSettings": {
+        ...
+    },
     "extends": [
         "defaults"
     ],
-    "ignorePatterns": [
-        "**/.git"
-    ],
     "managers": [
-        {
-            ...
-        }
+        ...
     ],
     "rules": [
-        {
-            ...
-        }
+        ...
     ],
     "hostRules": [
-        {
-            ...
-        }
+        ...
     ]
 }
 ```
+
+## Platforms
+Platforms are the component that interact with your project. That means, it is responsible for cloning, creating branches, pushing changes and creating pull-requests.
+
+The following platforms are available:
+| platform | description |
+| --- | --- |
+| git | This platform just uses git features. So it cannot create pull-requests for example. |
+| github | This platform supports all features and interacts with projects hosted on GitHub. |
+| gitlab | This platform supports all features and interacts with projects hosted on GitLab.|
+| noop | This platform does not implement any features. It is most usefull for applying changes locally without branches or commits. |
+
+## Managers
+Managers are the components that are responsible for finding dependencies in your project and writing back updates.
+
+The following managers are available:
+| manager | description |
+| --- | --- |
+| dockerfile | This manager updates Dockerfiles. |
+| gomod | This manager updates Go dependencies. |
+| inline | This manager uses inline comments in files to search dependencies in those files. |
+| regex | This manager uses regular expressions to search for dependencies. |
 
 ### Manager Configuration
 A manager needs an `id` and a `type` and contains `managerSettings` which configure which files should be handled by the manager and how.
@@ -76,6 +86,26 @@ Example:
 }
 ```
 
+## Datasources
+Datasources are responsible for fetching available versions for the dependencies.
+With that information, gonovate can decide which version a dependency should update to if there is an update.
+
+The following datasources are available:
+| manager | description |
+| --- | --- |
+| artifactory | Fetches information from a self hosted artifactory. |
+| docker | Fetches information from any docker registry. |
+| github_releases | Fetches information from GitHub releases. |
+| github_tags | Fetches information from GitHub tags. |
+| go_mod | Fetches information for go modules. |
+| go_version | Fetches information for the go version. |
+| maven | Fetches information for maven modules. |
+| nodejs | Fetches information for the node version. |
+| npm | Fetches information for npm modules. |
+
+## Rules
+Rules allow customizing managers and the handling of dependencies in a flexible way.
+
 ### Rules Configuration
 The rules contain a `matches` section which describe the criteria when this rule should match and `managerSettings` and/or `dependencySettings` that should be applied when this rule matches.
 
@@ -95,14 +125,14 @@ Example:
 }
 ```
 
-### Host Rules Configuration
+## Host Rules
 Host rules contain credentials that might be needed when accessing datasources to check for newer versions.
 
 Example: 
 ```json
 {
     "matchHost": "index.docker.io",
-    "username": "roemer",
+    "username": "docker_user",
     "password": "dckr_pat_abcdefghijklmnop"
 }
 ```
