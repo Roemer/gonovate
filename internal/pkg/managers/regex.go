@@ -14,12 +14,13 @@ type RegexManager struct {
 	managerBase
 }
 
-func NewRegexManager(logger *slog.Logger, config *config.RootConfig, managerConfig *config.ManagerConfig) IManager {
+func NewRegexManager(logger *slog.Logger, id string, rootConfig *config.RootConfig, managerSettings *config.ManagerSettings) IManager {
 	manager := &RegexManager{
 		managerBase: managerBase{
-			logger:        logger.With(slog.String("handlerId", managerConfig.Id)),
-			Config:        config,
-			ManagerConfig: managerConfig,
+			logger:     logger.With(slog.String("handlerId", id)),
+			id:         id,
+			rootConfig: rootConfig,
+			settings:   managerSettings,
 		},
 	}
 	manager.impl = manager
@@ -95,8 +96,8 @@ func (manager *RegexManager) ApplyDependencyUpdate(dependency *shared.Dependency
 func (manager *RegexManager) extractDependenciesFromString(fileContent string) ([]*shared.Dependency, error) {
 	// Precompile the regexes from the manager settings
 	precompiledRegexList := []*regexp.Regexp{}
-	for _, regStr := range manager.ManagerConfig.ManagerSettings.MatchStrings {
-		resolvedMatchString, err := manager.Config.ResolveMatchString(regStr)
+	for _, regStr := range manager.settings.MatchStrings {
+		resolvedMatchString, err := manager.rootConfig.ResolveMatchString(regStr)
 		if err != nil {
 			return nil, err
 		}

@@ -37,6 +37,16 @@
                     "(?m)^.*\"Lodash Hash:[[:blank:]]*(?P<sha512>.+)\".*$"
                 ]
             }
+        },
+        {
+            "matches": {
+                "dependencyNames": [
+                    "alpine"
+                ]
+            },
+            "dependencySettings": {
+                "maxUpdateType": "minor"
+            }
         }
     ]
 }
