@@ -11,9 +11,12 @@
     "extends": [
         "defaults"
     ],
+    "ignorePatterns": [
+        "examples"
+    ],
     "managers": [
         {
-            "id": "docker",
+            "id": "dockerfile",
             "type": "dockerfile"
         },
         {
@@ -21,15 +24,13 @@
             "type": "go-mod"
         },
         {
-            "id": "devcontainer",
+            "id": "inline",
             "type": "inline",
             "managerSettings":{
                 "filePatterns": [
-                    ".devcontainer/devcontainer.json"
+                    ".devcontainer/devcontainer.json",
+                    ".github/workflows/ci.yml"
                 ]
-            },
-            "dependencySettings": {
-                "ignoreNonMatching": true
             }
         }
     ],

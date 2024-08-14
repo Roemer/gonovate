@@ -11,13 +11,25 @@
     ],
     "matchStringPresets": {
         "docker-image-in-quotes": {
-            "matchString": "(?m)^\\s*\"(?P<dependencyName>.*):(?P<version>.*)\".*$"
+            "matchString": "(?m)^\\s*\"(?P<dependencyName>.+):(?P<version>.+)\".*$"
         },
         "docker-image-from": {
-            "matchString": "(?m)^FROM (?P<dependencyName>.*):(?P<version>.*)\\s*$"
+            "matchString": "(?m)^FROM (?P<dependencyName>.+):(?P<version>.+)\\s*$"
         },
         "json-version": {
-            "matchString": "(?m)^\\s*\"%s\":\\s*\"(?P<version>.*)\".*$",
+            "matchString": "(?m)^\\s*\"%s\"\\s*:\\s*\"(?P<version>.+)\".*$",
+            "parameterDefaults": [
+                "version"
+            ]
+        },
+        "key-value": {
+            "matchString": "(?m)^\\s*%s\\s*:\\s*(?P<version>\\S+)\\s*$",
+            "parameterDefaults": [
+                "version"
+            ]
+        },
+        "key-value-in-quotes": {
+            "matchString": "(?m)^\\s*\"%s\"\\s*:\\s*\"(?P<version>.+)\".*$",
             "parameterDefaults": [
                 "version"
             ]
