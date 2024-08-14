@@ -18,12 +18,13 @@ type DockerfileManager struct {
 	managerBase
 }
 
-func NewDockerfileManager(logger *slog.Logger, config *config.RootConfig, managerConfig *config.ManagerConfig) IManager {
+func NewDockerfileManager(logger *slog.Logger, id string, rootConfig *config.RootConfig, managerSettings *config.ManagerSettings) IManager {
 	manager := &DockerfileManager{
 		managerBase: managerBase{
-			logger:        logger.With(slog.String("handlerId", managerConfig.Id)),
-			Config:        config,
-			ManagerConfig: managerConfig,
+			logger:     logger.With(slog.String("handlerId", id)),
+			id:         id,
+			rootConfig: rootConfig,
+			settings:   managerSettings,
 		},
 	}
 	manager.impl = manager

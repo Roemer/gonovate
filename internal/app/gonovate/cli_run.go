@@ -128,7 +128,6 @@ func RunCmd(args []string) error {
 		logger.Info(fmt.Sprintf("Searching for dependencies in %d manager(s)", len(projectConfig.Managers)))
 		for _, managerConfig := range projectConfig.Managers {
 			// Get the merged settings for the current manager
-			// TODO: Make sure this is used inside the manager as managersettings
 			mergedManagerSettings := projectConfig.GetMergedManagerSettings(managerConfig)
 
 			// Skip the manager if it is disabled
@@ -139,7 +138,7 @@ func RunCmd(args []string) error {
 			logger.Info(fmt.Sprintf("Processing Manager '%s' (%s)", managerConfig.Id, managerConfig.Type))
 
 			// Get the manager
-			manager, err := managers.GetManager(logger, projectConfig, managerConfig)
+			manager, err := managers.GetManager(logger, projectConfig, managerConfig, mergedManagerSettings)
 			if err != nil {
 				return err
 			}
@@ -238,7 +237,11 @@ func RunCmd(args []string) error {
 			for _, dependency := range updateGroup.Dependencies {
 				logger.Info(fmt.Sprintf("Updating dependency '%s' from '%s' to '%s'", dependency.Name, dependency.Version, dependency.NewRelease.VersionString))
 				managerConfig := projectConfig.GetManagerConfigById(dependency.ManagerId)
-				manager, err := managers.GetManager(logger, projectConfig, managerConfig)
+				// Get the merged settings for the current manager
+				mergedManagerSettings := projectConfig.GetMergedManagerSettings(managerConfig)
+
+				// Get the manager
+				manager, err := managers.GetManager(logger, projectConfig, managerConfig, mergedManagerSettings)
 				if err != nil {
 					return err
 				}

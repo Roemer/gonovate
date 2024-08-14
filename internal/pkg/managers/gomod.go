@@ -16,12 +16,13 @@ type GoModManager struct {
 	managerBase
 }
 
-func NewGoModManager(logger *slog.Logger, config *config.RootConfig, managerConfig *config.ManagerConfig) IManager {
+func NewGoModManager(logger *slog.Logger, id string, rootConfig *config.RootConfig, managerSettings *config.ManagerSettings) IManager {
 	manager := &GoModManager{
 		managerBase: managerBase{
-			logger:        logger.With(slog.String("handlerId", managerConfig.Id)),
-			Config:        config,
-			ManagerConfig: managerConfig,
+			logger:     logger.With(slog.String("handlerId", id)),
+			id:         id,
+			rootConfig: rootConfig,
+			settings:   managerSettings,
 		},
 	}
 	manager.impl = manager

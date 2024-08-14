@@ -15,12 +15,13 @@ type InlineManager struct {
 	managerBase
 }
 
-func NewInlineManager(logger *slog.Logger, config *config.RootConfig, managerConfig *config.ManagerConfig) IManager {
+func NewInlineManager(logger *slog.Logger, id string, rootConfig *config.RootConfig, managerSettings *config.ManagerSettings) IManager {
 	manager := &InlineManager{
 		managerBase: managerBase{
-			logger:        logger.With(slog.String("handlerId", managerConfig.Id)),
-			Config:        config,
-			ManagerConfig: managerConfig,
+			logger:     logger.With(slog.String("handlerId", id)),
+			id:         id,
+			rootConfig: rootConfig,
+			settings:   managerSettings,
 		},
 	}
 	manager.impl = manager
@@ -115,7 +116,7 @@ func (manager *InlineManager) extractDependenciesFromString(fileContent string) 
 		}
 
 		// Build the regex that was defined in the marker
-		resolvedMatchString, err := manager.Config.ResolveMatchString(inlineConfig.MatchString)
+		resolvedMatchString, err := manager.rootConfig.ResolveMatchString(inlineConfig.MatchString)
 		if err != nil {
 			return nil, err
 		}

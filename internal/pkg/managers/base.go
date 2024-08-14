@@ -20,28 +20,29 @@ type IManager interface {
 }
 
 type managerBase struct {
-	logger        *slog.Logger
-	impl          IManager
-	Config        *config.RootConfig
-	ManagerConfig *config.ManagerConfig
+	logger     *slog.Logger
+	impl       IManager
+	id         string
+	rootConfig *config.RootConfig
+	settings   *config.ManagerSettings
 }
 
-func GetManager(logger *slog.Logger, config *config.RootConfig, managerConfig *config.ManagerConfig) (IManager, error) {
+func GetManager(logger *slog.Logger, rootConfig *config.RootConfig, managerConfig *config.ManagerConfig, managerSettings *config.ManagerSettings) (IManager, error) {
 	switch managerConfig.Type {
 	case shared.MANAGER_TYPE_DOCKERFILE:
-		return NewDockerfileManager(logger, config, managerConfig), nil
+		return NewDockerfileManager(logger, managerConfig.Id, rootConfig, managerSettings), nil
 	case shared.MANAGER_TYPE_GOMOD:
-		return NewGoModManager(logger, config, managerConfig), nil
+		return NewGoModManager(logger, managerConfig.Id, rootConfig, managerSettings), nil
 	case shared.MANAGER_TYPE_INLINE:
-		return NewInlineManager(logger, config, managerConfig), nil
+		return NewInlineManager(logger, managerConfig.Id, rootConfig, managerSettings), nil
 	case shared.MANAGER_TYPE_REGEX:
-		return NewRegexManager(logger, config, managerConfig), nil
+		return NewRegexManager(logger, managerConfig.Id, rootConfig, managerSettings), nil
 	}
 	return nil, fmt.Errorf("no manager defined for type '%s'", managerConfig.Type)
 }
 
 func (manager *managerBase) Id() string {
-	return manager.ManagerConfig.Id
+	return manager.id
 }
 
 // Returns a single dependency from a dependency slice.
