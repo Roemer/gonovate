@@ -17,6 +17,10 @@
             "type": "dockerfile"
         },
         {
+            "id": "go-mod",
+            "type": "go-mod"
+        },
+        {
             "id": "devcontainer",
             "type": "inline",
             "managerSettings":{
@@ -26,15 +30,6 @@
             },
             "dependencySettings": {
                 "ignoreNonMatching": true
-            }
-        },
-        {
-            "id": "go-mod",
-            "type": "go-mod",
-            "managerSettings":{
-                "filePatterns": [
-                    "go.mod"
-                ]
             }
         }
     ],

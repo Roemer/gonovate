@@ -47,6 +47,18 @@
         },
         {
             "matches": {
+                "ManagerTypes": [
+                    "go-mod"
+                ]
+            },
+            "managerSettings": {
+                "filePatterns": [
+                    "go.mod"
+                ]
+            }
+        },
+        {
+            "matches": {
                 "datasources": [
                     "maven"
                 ]
