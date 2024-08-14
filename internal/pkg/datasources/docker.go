@@ -11,6 +11,7 @@ import (
 
 	"github.com/roemer/gonovate/internal/pkg/config"
 	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/samber/lo"
 )
 
 type DockerDatasource struct {
@@ -88,7 +89,12 @@ func (ds *DockerDatasource) getReleases(dependency *shared.Dependency) ([]*share
 			return nil, err
 		}
 	}
+	// Filter out common tags
+	tags = lo.Filter(tags, func(x string, index int) bool {
+		return x != "latest"
+	})
 	ds.logger.Debug(fmt.Sprintf("Found %d tag(s)", len(tags)))
+	// Convert the tags to release infos
 	releases := []*shared.ReleaseInfo{}
 	for _, tag := range tags {
 		releases = append(releases, &shared.ReleaseInfo{

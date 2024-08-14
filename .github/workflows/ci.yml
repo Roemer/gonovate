@@ -14,6 +14,7 @@ on:
         type: boolean
 
 env:
+  # gonovate: { "datasource":"go-version", "dependencyName":"go-stable", "matchString":"preset:key-value(GO_VERSION)" }
   GO_VERSION: 1.22.5
 
 jobs:
