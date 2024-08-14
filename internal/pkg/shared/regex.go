@@ -1,8 +1,10 @@
 package shared
 
 import (
+	"cmp"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -49,6 +51,27 @@ func FindAllNamedMatchesWithIndex(regex *regexp.Regexp, str string, includeNotMa
 	}
 
 	return allResults
+}
+
+// Replaces the given replacements from the map inside the passed string.
+func ReplaceMatchesInRegex(regex *regexp.Regexp, str string, replacementMap map[string]string) (string, int) {
+	matchList := FindAllNamedMatchesWithIndex(regex, str, true, -1)
+	orderedCaptures := []*CapturedGroup{}
+	for _, match := range matchList {
+		for _, value := range match {
+			orderedCaptures = append(orderedCaptures, value...)
+		}
+	}
+	// Make sure the sorting is correct (by startIndex)
+	slices.SortFunc(orderedCaptures, func(a, b *CapturedGroup) int {
+		return cmp.Compare(a.StartIndex, b.StartIndex)
+	})
+	diff := 0
+	for _, value := range orderedCaptures {
+		str = str[:(value.StartIndex+diff)] + replacementMap[value.Key] + str[value.EndIndex+diff:]
+		diff += len(replacementMap[value.Key]) - len(value.Value)
+	}
+	return str, diff
 }
 
 type CapturedGroup struct {

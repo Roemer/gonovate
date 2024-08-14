@@ -35,6 +35,9 @@ type Dependency struct {
 	// A flag to indicate if versions from a remote that do not match the versioning should be ignored or give an exception.
 	IgnoreNonMatching *bool
 
+	// Allows defining regexes that replace further information from dependencies (like hash) after updating
+	PostUpgradeReplacements []string
+
 	// Contains the information about the new release if any is found.
 	NewRelease *ReleaseInfo
 }
