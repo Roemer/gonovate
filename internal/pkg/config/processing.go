@@ -120,6 +120,7 @@ func (config *RootConfig) EnrichDependencyFromRules(dependency *shared.Dependenc
 	if dependency.IgnoreNonMatching == nil {
 		dependency.IgnoreNonMatching = mergedDependencySettings.IgnoreNonMatching
 	}
+	dependency.PostUpgradeReplacements = lo.Union(dependency.PostUpgradeReplacements, mergedDependencySettings.PostUpgradeReplacements)
 }
 
 // Resolves a given match string with a preset (if any).

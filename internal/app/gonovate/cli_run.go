@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"regexp"
 
 	"github.com/roemer/gonovate/internal/pkg/config"
 	"github.com/roemer/gonovate/internal/pkg/datasources"
@@ -247,6 +248,32 @@ func RunCmd(args []string) error {
 				}
 				if err := manager.ApplyDependencyUpdate(dependency); err != nil {
 					return err
+				}
+
+				// Run Post-Upgrade replacements
+				hasPostUpgradeReplacements := len(dependency.PostUpgradeReplacements) > 0
+				if hasPostUpgradeReplacements {
+					// Read the file
+					fileContentBytes, err := os.ReadFile(dependency.FilePath)
+					if err != nil {
+						return err
+					}
+					fileContent := string(fileContentBytes)
+					// Apply the replacements
+					for _, reStr := range dependency.PostUpgradeReplacements {
+						re := regexp.MustCompile(reStr)
+						fileContent, _ = shared.ReplaceMatchesInRegex(re, fileContent, map[string]string{
+							"version": dependency.NewRelease.Version.Raw,
+							"sha1":    dependency.NewRelease.Hashes["sha1"],
+							"sha256":  dependency.NewRelease.Hashes["sha256"],
+							"sha512":  dependency.NewRelease.Hashes["sha512"],
+							"md5":     dependency.NewRelease.Hashes["md5"],
+						})
+					}
+					// Write the file with the changes
+					if err := os.WriteFile(dependency.FilePath, []byte(fileContent), os.ModePerm); err != nil {
+						return err
+					}
 				}
 			}
 
