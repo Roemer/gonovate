@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"regexp"
+	"slices"
 
 	"github.com/roemer/gonovate/internal/pkg/config"
 	"github.com/roemer/gonovate/internal/pkg/datasources"
@@ -213,21 +214,28 @@ func RunCmd(args []string) error {
 		// For now, each dependency has its own group
 		updateGroups := []*shared.UpdateGroup{}
 		for _, dependency := range dependenciesWithUpdates {
-			title := fmt.Sprintf("Update %s from %s to %s", dependency.Name, dependency.Version, dependency.NewRelease.VersionString)
-			// Build the identifier for the changeset
+			title := fmt.Sprintf("Update %s from to %s", dependency.Name, dependency.NewRelease.VersionString)
+			// Build the branch name for the group
 			branchName := fmt.Sprintf("%s%s-%s-%s",
 				projectConfig.PlatformSettings.BranchPrefix,
 				shared.NormalizeString(projectConfig.PlatformSettings.BaseBranch, 20),
 				shared.NormalizeString(dependency.Name, 40),
 				shared.NormalizeString(dependency.NewRelease.VersionString, 0))
 
-			// Create the group
-			newGroup := &shared.UpdateGroup{
-				Title:        title,
-				BranchName:   branchName,
-				Dependencies: []*shared.Dependency{dependency},
+			// Check if such a group already exists
+			idx := slices.IndexFunc(updateGroups, func(g *shared.UpdateGroup) bool { return g.BranchName == branchName })
+			if idx >= 0 {
+				// It does, so just add the dependency to the existing group
+				updateGroups[idx].Dependencies = append(updateGroups[idx].Dependencies, dependency)
+			} else {
+				// Create the group
+				newGroup := &shared.UpdateGroup{
+					Title:        title,
+					BranchName:   branchName,
+					Dependencies: []*shared.Dependency{dependency},
+				}
+				updateGroups = append(updateGroups, newGroup)
 			}
-			updateGroups = append(updateGroups, newGroup)
 		}
 		logger.Info(fmt.Sprintf("Created %d group(s) with dependency updates", len(updateGroups)))
 
