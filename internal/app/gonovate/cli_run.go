@@ -21,11 +21,13 @@ func RunCmd(args []string) error {
 	var verbose bool
 	var configFile string
 	var workingDirectory string
+	var platformOverride string
 	flagSet := flag.NewFlagSet("run", flag.ExitOnError)
 	flagSet.BoolVar(&verbose, "verbose", false, "The flag to set in order to get verbose output")
 	flagSet.BoolVar(&verbose, "v", verbose, "Alias for -verbose")
 	flagSet.StringVar(&configFile, "config", "gonovate.json", "The path to the config file to read")
 	flagSet.StringVar(&workingDirectory, "workDir", "", "The path to the working directory")
+	flagSet.StringVar(&platformOverride, "platform", "", "Allows overriding the platform. Usefull for testing when setting to 'noop'.")
 	flagSet.Usage = func() { printCmdUsage(flagSet, "run", "") }
 	flagSet.Parse(args)
 
@@ -47,6 +49,11 @@ func RunCmd(args []string) error {
 	rootConfig, err := config.Load(configFile)
 	if err != nil {
 		return err
+	}
+
+	// Process overrides
+	if platformOverride != "" {
+		rootConfig.Platform = shared.PlatformType(platformOverride)
 	}
 
 	// Prepare the platform
