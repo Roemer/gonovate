@@ -8,7 +8,7 @@ require (
 	github.com/jfrog/jfrog-client-go v1.43.2
 	github.com/roemer/gotaskr v0.4.3
 	github.com/roemer/gover v0.6.0
-	github.com/samber/lo v1.46.0
+	github.com/samber/lo v1.47.0
 	github.com/stretchr/testify v1.9.0
 	github.com/xanzy/go-gitlab v0.107.0
 )
