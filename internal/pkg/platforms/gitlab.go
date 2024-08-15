@@ -64,6 +64,16 @@ func (p *GitlabPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 	}
 	if len(mergeRequests) > 0 {
 		p.logger.Info(fmt.Sprintf("PR already exists: %s", mergeRequests[0].WebURL))
+
+		// Update the title if it changed
+		if mergeRequests[0].Title != updateGroup.Title {
+			p.logger.Debug("Updating title")
+			if _, _, err := client.MergeRequests.UpdateMergeRequest(project.Path, mergeRequests[0].IID, &gitlab.UpdateMergeRequestOptions{
+				Title: gitlab.Ptr(updateGroup.Title),
+			}); err != nil {
+				return err
+			}
+		}
 	} else {
 		mr, _, err := client.MergeRequests.CreateMergeRequest(project.Path, &gitlab.CreateMergeRequestOptions{
 			Title:        gitlab.Ptr(updateGroup.Title),

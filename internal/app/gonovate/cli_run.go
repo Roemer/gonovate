@@ -214,7 +214,7 @@ func RunCmd(args []string) error {
 		// For now, each dependency has its own group
 		updateGroups := []*shared.UpdateGroup{}
 		for _, dependency := range dependenciesWithUpdates {
-			title := fmt.Sprintf("Update %s from to %s", dependency.Name, dependency.NewRelease.VersionString)
+			title := fmt.Sprintf("Update '%s' to '%s'", dependency.Name, dependency.NewRelease.VersionString)
 			// Build the branch name for the group
 			branchName := fmt.Sprintf("%s%s-%s-%s",
 				projectConfig.PlatformSettings.BranchPrefix,
@@ -251,7 +251,7 @@ func RunCmd(args []string) error {
 
 			// Apply the changes
 			for _, dependency := range updateGroup.Dependencies {
-				logger.Info(fmt.Sprintf("Updating dependency '%s' from '%s' to '%s'", dependency.Name, dependency.Version, dependency.NewRelease.VersionString))
+				logger.Info(fmt.Sprintf("Updating '%s' from '%s' to '%s'", dependency.Name, dependency.Version, dependency.NewRelease.VersionString))
 				managerConfig := projectConfig.GetManagerConfigById(dependency.ManagerId)
 				// Get the merged settings for the current manager
 				mergedManagerSettings := projectConfig.GetMergedManagerSettings(managerConfig)

@@ -74,6 +74,16 @@ func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 	existingPr, prExists := lo.Find(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == updateGroup.BranchName })
 	if prExists {
 		p.logger.Info(fmt.Sprintf("PR already exists: %s", *existingPr.HTMLURL))
+
+		// Update the title if it changed
+		if *existingPr.Title != updateGroup.Title {
+			p.logger.Debug("Updating title")
+			if _, _, err := client.PullRequests.Edit(context.Background(), owner, repository, existingPr.GetNumber(), &github.PullRequest{
+				Title: github.String(updateGroup.Title),
+			}); err != nil {
+				return err
+			}
+		}
 	} else {
 		// Create the PR
 		pr, _, err := client.PullRequests.Create(context.Background(), owner, repository, &github.NewPullRequest{
