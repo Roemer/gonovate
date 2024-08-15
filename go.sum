@@ -121,8 +121,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=
 github.com/rivo/uniseg v0.4.7/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
-github.com/roemer/gotaskr v0.4.3 h1:4VVF5yKJJLT17RMTu4pHWefrAUNSDZ90mK9xeEBzO1c=
-github.com/roemer/gotaskr v0.4.3/go.mod h1:KCqH1p7WeE1BdqaszF6IQ79JMX+avdSMWlDosTxeMmQ=
+github.com/roemer/gotaskr v0.4.4 h1:OD9xLV3zCeOj4MoNxOXkFfi/8Apk0fQdmCG3Kg5RWEQ=
+github.com/roemer/gotaskr v0.4.4/go.mod h1:KCqH1p7WeE1BdqaszF6IQ79JMX+avdSMWlDosTxeMmQ=
 github.com/roemer/gover v0.6.0 h1:O8uZkrEK14svb+pZ4YsnrbupAzgxOkMVzdIDZHhHCzw=
 github.com/roemer/gover v0.6.0/go.mod h1:mpNP8x0jTUfi6PuPHnGGLRf32Gh9HtOLa4b6O4jmT0I=
 github.com/rogpeppe/go-internal v1.11.0 h1:cWPaGQEPrBb5/AsnsZesgZZ9yb1OQ+GOISoDNXVBh4M=
