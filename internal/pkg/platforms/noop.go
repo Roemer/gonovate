@@ -48,3 +48,7 @@ func (p *NoopPlatform) NotifyChanges(project *shared.Project, updateGroup *share
 func (p *NoopPlatform) ResetToBase() error {
 	return nil
 }
+
+func (p *NoopPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error {
+	return nil
+}

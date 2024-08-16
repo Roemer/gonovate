@@ -325,7 +325,17 @@ func RunCmd(args []string) error {
 			}
 		}
 
-		// Cleanup
+		// Cleanup the platform (eg. unused PRs/MRs)
+		if err := platform.Cleanup(&platforms.PlatformCleanupSettings{
+			Project:      project,
+			UpdateGroups: updateGroups,
+			BaseBranch:   projectConfig.PlatformSettings.BaseBranch,
+			BranchPrefix: projectConfig.PlatformSettings.BranchPrefix,
+		}); err != nil {
+			return err
+		}
+
+		// Cleanup the working directory
 		if oldWorkdir != "" {
 			if err := os.Chdir(oldWorkdir); err != nil {
 				return err

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"slices"
+	"strings"
 
 	"github.com/google/go-github/v63/github"
 	"github.com/roemer/gonovate/internal/pkg/config"
@@ -109,6 +111,46 @@ func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 	}
 	return nil
 }
+
+func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error {
+	// Get the remote branches
+	stdout, _, err := shared.Git.Run("branch", "-r")
+	if err != nil {
+		return err
+	}
+	allBranches := strings.Split(stdout, "\n")
+	// Remove the origin prefix
+	allBranches = lo.Map(allBranches, func(x string, _ int) string { return strings.TrimPrefix(x, "origin/") })
+
+	// Filter to those that are relevant for gonovate
+	gonovateBranches := lo.Filter(allBranches, func(x string, _ int) bool {
+		return strings.HasPrefix(x, cleanupSettings.BranchPrefix)
+	})
+
+	// Get the branches that were used in this gonovate run
+	usedBranches := lo.FlatMap(cleanupSettings.UpdateGroups, func(x *shared.UpdateGroup, _ int) []string {
+		return []string{x.BranchName}
+	})
+
+	for _, potentialStaleBranch := range gonovateBranches {
+		if slices.Contains(usedBranches, potentialStaleBranch) {
+			// This branch is used
+			continue
+		}
+		// This branch is unused, delete the branch and a possible associated PR
+		p.logger.Info(fmt.Sprintf("Unused branch '%s'", potentialStaleBranch))
+
+		// TODO: Search for PR
+		// TODO: If a PR is found, delete/close it
+		// TODO: Delete the unused branch
+	}
+
+	return nil
+}
+
+////////////////////////////////////////////////////////////
+// Internal
+////////////////////////////////////////////////////////////
 
 func (p *GitHubPlatform) createClient() (*github.Client, error) {
 	if p.Config.PlatformSettings == nil || p.Config.PlatformSettings.Token == "" {

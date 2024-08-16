@@ -71,3 +71,8 @@ func (p *GitPlatform) ResetToBase() error {
 	_, _, err := shared.Git.Run("checkout", p.Config.PlatformSettings.BaseBranch)
 	return err
 }
+
+func (p *GitPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error {
+	// Not available
+	return nil
+}

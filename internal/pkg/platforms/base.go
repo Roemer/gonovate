@@ -23,6 +23,15 @@ type IPlatform interface {
 	NotifyChanges(project *shared.Project, updateGroup *shared.UpdateGroup) error
 	// Resets the project to the initial state for other changes.
 	ResetToBase() error
+	// Cleans the platform after a gonovate run.
+	Cleanup(cleanupSettings *PlatformCleanupSettings) error
+}
+
+type PlatformCleanupSettings struct {
+	Project      *shared.Project
+	UpdateGroups []*shared.UpdateGroup
+	BaseBranch   string
+	BranchPrefix string
 }
 
 type platformBase struct {
