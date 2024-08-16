@@ -3,6 +3,7 @@
 ## v0.3.0 (2024-08-16)
 
 ### Features
+
 * Major refactoring for the whole dependency handling
 * Implemented grouping
 * MRs/PRs now have a better title and a body text
@@ -10,18 +11,19 @@
 * Added Go-Mod manager
 * Added Dockerfile manager
 
-### Fix
+### Fixes
+
 * Ignore Docker "latest" tag
 
 ## v0.2.3 (2024-06-24)
 
-### Fix
+### Fixes
 
 * GitHub tags/releases now use paging
 
 ## v0.2.2 (2024-06-06)
 
-### Fix
+### Fixes
 
 * Fix maxUpdateType and extractVersion from inline definition
 
