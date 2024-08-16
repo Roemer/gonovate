@@ -54,6 +54,7 @@ func (p *GitlabPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 		return err
 	}
 
+	// Search for an existing MR
 	mergeRequests, _, err := client.MergeRequests.ListProjectMergeRequests(project.Path, &gitlab.ListProjectMergeRequestsOptions{
 		SourceBranch: gitlab.Ptr(updateGroup.BranchName),
 		TargetBranch: gitlab.Ptr(p.Config.PlatformSettings.BaseBranch),
@@ -62,14 +63,22 @@ func (p *GitlabPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 	if err != nil {
 		return err
 	}
-	if len(mergeRequests) > 0 {
-		p.logger.Info(fmt.Sprintf("PR already exists: %s", mergeRequests[0].WebURL))
 
-		// Update the title if it changed
-		if mergeRequests[0].Title != updateGroup.Title {
-			p.logger.Debug("Updating title")
+	// Build the content of the MR
+	content := ""
+	for _, dep := range updateGroup.Dependencies {
+		content += fmt.Sprintf("- %s from %s to %s\n", dep.Name, dep.Version, dep.NewRelease.VersionString)
+	}
+
+	if len(mergeRequests) > 0 {
+		p.logger.Info(fmt.Sprintf("MR already exists: %s", mergeRequests[0].WebURL))
+
+		// Update the MR if something changed
+		if mergeRequests[0].Title != updateGroup.Title || mergeRequests[0].Description != content {
+			p.logger.Debug("Updating MR")
 			if _, _, err := client.MergeRequests.UpdateMergeRequest(project.Path, mergeRequests[0].IID, &gitlab.UpdateMergeRequestOptions{
-				Title: gitlab.Ptr(updateGroup.Title),
+				Title:       gitlab.Ptr(updateGroup.Title),
+				Description: gitlab.Ptr(content),
 			}); err != nil {
 				return err
 			}
@@ -77,13 +86,14 @@ func (p *GitlabPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 	} else {
 		mr, _, err := client.MergeRequests.CreateMergeRequest(project.Path, &gitlab.CreateMergeRequestOptions{
 			Title:        gitlab.Ptr(updateGroup.Title),
+			Description:  gitlab.Ptr(content),
 			SourceBranch: gitlab.Ptr(updateGroup.BranchName),
 			TargetBranch: gitlab.Ptr(p.Config.PlatformSettings.BaseBranch),
 		})
 		if err != nil {
 			return err
 		}
-		p.logger.Info(fmt.Sprintf("Created PR: %s", mr.WebURL))
+		p.logger.Info(fmt.Sprintf("Created MR: %s", mr.WebURL))
 	}
 
 	return nil

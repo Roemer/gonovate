@@ -62,6 +62,8 @@ func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 	if err != nil {
 		return err
 	}
+
+	// Search for an existing PR
 	existingRequest, _, err := client.PullRequests.List(context.Background(), owner, repository, &github.PullRequestListOptions{
 		Head:  updateGroup.BranchName,
 		Base:  p.Config.PlatformSettings.BaseBranch,
@@ -70,16 +72,24 @@ func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 	if err != nil {
 		return err
 	}
-	// The Head search parameter does not work without "user:", so just make sure that the returned list really contains the branch
+
+	// Build the content of the PR
+	content := ""
+	for _, dep := range updateGroup.Dependencies {
+		content += fmt.Sprintf("- %s from %s to %s\n", dep.Name, dep.Version, dep.NewRelease.VersionString)
+	}
+
+	// The "Head" search parameter does not work without "user:", so just make sure that the returned list really contains the branch
 	existingPr, prExists := lo.Find(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == updateGroup.BranchName })
 	if prExists {
 		p.logger.Info(fmt.Sprintf("PR already exists: %s", *existingPr.HTMLURL))
 
-		// Update the title if it changed
-		if *existingPr.Title != updateGroup.Title {
-			p.logger.Debug("Updating title")
+		// Update the PR if something changed
+		if *existingPr.Title != updateGroup.Title || *existingPr.Body != content {
+			p.logger.Debug("Updating PR")
 			if _, _, err := client.PullRequests.Edit(context.Background(), owner, repository, existingPr.GetNumber(), &github.PullRequest{
 				Title: github.String(updateGroup.Title),
+				Body:  github.String(content),
 			}); err != nil {
 				return err
 			}
@@ -88,6 +98,7 @@ func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 		// Create the PR
 		pr, _, err := client.PullRequests.Create(context.Background(), owner, repository, &github.NewPullRequest{
 			Title: github.String(updateGroup.Title),
+			Body:  github.String(content),
 			Head:  github.String(updateGroup.BranchName),
 			Base:  github.String(p.Config.PlatformSettings.BaseBranch),
 		})
