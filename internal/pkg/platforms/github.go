@@ -85,7 +85,7 @@ func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 		p.logger.Info(fmt.Sprintf("PR already exists: %s", *existingPr.HTMLURL))
 
 		// Update the PR if something changed
-		if *existingPr.Title != updateGroup.Title || *existingPr.Body != content {
+		if existingPr.Title == nil || *existingPr.Title != updateGroup.Title || existingPr.Body == nil || *existingPr.Body != content {
 			p.logger.Debug("Updating PR")
 			if _, _, err := client.PullRequests.Edit(context.Background(), owner, repository, existingPr.GetNumber(), &github.PullRequest{
 				Title: github.String(updateGroup.Title),
