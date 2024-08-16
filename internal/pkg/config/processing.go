@@ -121,6 +121,9 @@ func (config *RootConfig) EnrichDependencyFromRules(dependency *shared.Dependenc
 		dependency.IgnoreNonMatching = mergedDependencySettings.IgnoreNonMatching
 	}
 	dependency.PostUpgradeReplacements = lo.Union(dependency.PostUpgradeReplacements, mergedDependencySettings.PostUpgradeReplacements)
+	if dependency.GroupName == "" {
+		dependency.GroupName = mergedDependencySettings.GroupName
+	}
 }
 
 // Resolves a given match string with a preset (if any).
