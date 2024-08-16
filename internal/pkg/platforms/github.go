@@ -120,7 +120,11 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 	}
 	allBranches := strings.Split(stdout, "\n")
 	// Remove the origin prefix
-	allBranches = lo.Map(allBranches, func(x string, _ int) string { return strings.TrimPrefix(x, "origin/") })
+	allBranches = lo.Map(allBranches, func(x string, _ int) string {
+		processedString := strings.TrimPrefix(x, "origin/")
+		processedString = strings.TrimSpace(processedString)
+		return processedString
+	})
 
 	// Filter to those that are relevant for gonovate
 	gonovateBranches := lo.Filter(allBranches, func(x string, _ int) bool {
