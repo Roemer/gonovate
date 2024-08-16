@@ -14,7 +14,7 @@ import (
 var configMatchStringPresetRegex = regexp.MustCompile(`preset:\s*(.*?)(?:\((.*)\))?\s*$`)
 var configVersioningPresetRegex = regexp.MustCompile(`preset:\s*(.*?)\s*$`)
 
-// This method processes the root config object. This should be called on any config object just after loadging.
+// This method processes the root config object. This should be called on any config object just after loading.
 func (c *RootConfig) PostLoadProcess() {
 	// Convert managerSettings/dependencySettings to rules and add them to keep the priority order
 	for _, managerConfig := range c.Managers {
