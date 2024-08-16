@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -121,12 +122,15 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 		return err
 	}
 	allBranches := strings.Split(stdout, "\n")
-	// Remove the remote-name prefix
+
+	// Map to only the branch name
+	lsRemoteRegex := regexp.MustCompile(`^[a-z0-9]+\s+refs/heads/(.*)$`)
 	allBranches = lo.Map(allBranches, func(x string, _ int) string {
-		processedString := x
-		processedString = strings.TrimSpace(processedString)
-		processedString = strings.TrimPrefix(processedString, remoteName+"/")
-		return processedString
+		matches := lsRemoteRegex.FindStringSubmatch(x)
+		if len(matches) != 2 {
+			return ""
+		}
+		return strings.TrimSpace(matches[1])
 	})
 
 	// Filter to those that are relevant for gonovate
