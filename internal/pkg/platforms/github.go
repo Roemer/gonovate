@@ -121,8 +121,9 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 	allBranches := strings.Split(stdout, "\n")
 	// Remove the origin prefix
 	allBranches = lo.Map(allBranches, func(x string, _ int) string {
-		processedString := strings.TrimPrefix(x, "origin/")
+		processedString := x
 		processedString = strings.TrimSpace(processedString)
+		processedString = strings.TrimPrefix(x, "origin/")
 		return processedString
 	})
 
