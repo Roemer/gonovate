@@ -49,7 +49,7 @@ func (manager *GoModManager) ExtractDependencies(filePath string) ([]*shared.Dep
 		// Match the golang version
 		if match := goVersionRegex.FindStringSubmatch(line); match != nil {
 			newDepencency := &shared.Dependency{
-				Name:       "go",
+				Name:       "go-stable",
 				Datasource: shared.DATASOURCE_TYPE_GOVERSION,
 				Type:       "golang",
 				Version:    match[1],
