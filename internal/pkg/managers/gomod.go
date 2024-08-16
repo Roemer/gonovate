@@ -84,7 +84,11 @@ func (manager *GoModManager) ExtractDependencies(filePath string) ([]*shared.Dep
 }
 
 func (manager *GoModManager) ApplyDependencyUpdate(dependency *shared.Dependency) error {
-	outStr, errStr, err := shared.Execute.RunGetOutput(false, "go", "get", fmt.Sprintf("%s@%s", dependency.Name, dependency.NewRelease.VersionString))
+	dependencyName := dependency.Name
+	if dependency.Type == "golang" {
+		dependencyName = "go"
+	}
+	outStr, errStr, err := shared.Execute.RunGetOutput(false, "go", "get", fmt.Sprintf("%s@%s", dependencyName, dependency.NewRelease.VersionString))
 	if err != nil {
 		return fmt.Errorf("go command failed: error: %w, stdout: %s, stderr: %s", err, outStr, errStr)
 	}
