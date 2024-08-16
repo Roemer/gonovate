@@ -123,7 +123,7 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 	allBranches = lo.Map(allBranches, func(x string, _ int) string {
 		processedString := x
 		processedString = strings.TrimSpace(processedString)
-		processedString = strings.TrimPrefix(x, "origin/")
+		processedString = strings.TrimPrefix(processedString, "origin/")
 		return processedString
 	})
 
