@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
-	"regexp"
 	"slices"
-	"strings"
 
 	"github.com/google/go-github/v63/github"
 	"github.com/roemer/gonovate/internal/pkg/config"
@@ -114,29 +112,13 @@ func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 }
 
 func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error {
-	// TODO: Should maybe be dynamic, eg. by "git remote -v"
-	remoteName := "origin"
-	// Get the remote branches
-	stdout, _, err := shared.Git.Run("ls-remote", "--heads", remoteName)
+	remoteName := p.getRemoteName()
+
+	// Get the remote branches for gonovate
+	gonovateBranches, err := p.getRemoteGonovateBranches(remoteName, cleanupSettings.BranchPrefix)
 	if err != nil {
 		return err
 	}
-	allBranches := strings.Split(stdout, "\n")
-
-	// Map to only the branch name
-	lsRemoteRegex := regexp.MustCompile(`^[a-z0-9]+\s+refs/heads/(.*)$`)
-	allBranches = lo.Map(allBranches, func(x string, _ int) string {
-		matches := lsRemoteRegex.FindStringSubmatch(x)
-		if len(matches) != 2 {
-			return ""
-		}
-		return strings.TrimSpace(matches[1])
-	})
-
-	// Filter to those that are relevant for gonovate
-	gonovateBranches := lo.Filter(allBranches, func(x string, _ int) bool {
-		return strings.HasPrefix(x, cleanupSettings.BranchPrefix)
-	})
 
 	// Get the branches that were used in this gonovate run
 	usedBranches := lo.FlatMap(cleanupSettings.UpdateGroups, func(x *shared.UpdateGroup, _ int) []string {
@@ -173,7 +155,6 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 		if err != nil {
 			return err
 		}
-
 		// The "Head" search parameter does not work without "user:", so just make sure that the returned list really contains the branch
 		existingPr, prExists := lo.Find(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == potentialStaleBranch })
 		if prExists {
@@ -185,6 +166,7 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 				return err
 			}
 		}
+
 		// Delete the unused branch
 		p.logger.Debug("Deleting the branch")
 		if _, _, err := shared.Git.Run("push", remoteName, "--delete", potentialStaleBranch); err != nil {

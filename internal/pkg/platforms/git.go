@@ -3,9 +3,12 @@ package platforms
 import (
 	"fmt"
 	"log/slog"
+	"regexp"
+	"strings"
 
 	"github.com/roemer/gonovate/internal/pkg/config"
 	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/samber/lo"
 )
 
 type GitPlatform struct {
@@ -75,4 +78,39 @@ func (p *GitPlatform) ResetToBase() error {
 func (p *GitPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error {
 	// Not available
 	return nil
+}
+
+////////////////////////////////////////////////////////////
+// Internal
+////////////////////////////////////////////////////////////
+
+func (p *GitPlatform) getRemoteName() string {
+	// TODO: Should maybe be dynamic, eg. by "git remote -v"
+	return "origin"
+}
+
+func (p *GitPlatform) getRemoteGonovateBranches(remoteName string, branchPrefix string) ([]string, error) {
+	// Get the remote branches
+	stdout, _, err := shared.Git.Run("ls-remote", "--heads", remoteName)
+	if err != nil {
+		return nil, err
+	}
+	allBranches := strings.Split(stdout, "\n")
+
+	// Map to only the branch name
+	lsRemoteRegex := regexp.MustCompile(`^[a-z0-9]+\s+refs/heads/(.*)$`)
+	allBranches = lo.Map(allBranches, func(x string, _ int) string {
+		matches := lsRemoteRegex.FindStringSubmatch(x)
+		if len(matches) != 2 {
+			return ""
+		}
+		return strings.TrimSpace(matches[1])
+	})
+
+	// Filter to those that are relevant for gonovate
+	gonovateBranches := lo.Filter(allBranches, func(x string, _ int) bool {
+		return strings.HasPrefix(x, branchPrefix)
+	})
+
+	return gonovateBranches, nil
 }
