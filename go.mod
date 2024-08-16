@@ -1,6 +1,6 @@
 module github.com/roemer/gonovate
 
-go 1.22.5
+go 1.23.0
 
 require (
 	github.com/bmatcuk/doublestar/v4 v4.6.1
