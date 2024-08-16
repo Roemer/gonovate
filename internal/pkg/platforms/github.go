@@ -65,6 +65,12 @@ func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 		return err
 	}
 
+	// Build the content of the PR
+	content := ""
+	for _, dep := range updateGroup.Dependencies {
+		content += fmt.Sprintf("- %s from %s to %s\n", dep.Name, dep.Version, dep.NewRelease.VersionString)
+	}
+
 	// Search for an existing PR
 	existingRequest, _, err := client.PullRequests.List(context.Background(), owner, repository, &github.PullRequestListOptions{
 		Head:  updateGroup.BranchName,
@@ -73,12 +79,6 @@ func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 	})
 	if err != nil {
 		return err
-	}
-
-	// Build the content of the PR
-	content := ""
-	for _, dep := range updateGroup.Dependencies {
-		content += fmt.Sprintf("- %s from %s to %s\n", dep.Name, dep.Version, dep.NewRelease.VersionString)
 	}
 
 	// The "Head" search parameter does not work without "user:", so just make sure that the returned list really contains the branch
@@ -137,18 +137,57 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 		return []string{x.BranchName}
 	})
 
+	// Prepare the data for the API
+	owner, repository := cleanupSettings.Project.SplitPath()
+
+	// Create the client
+	client, err := p.createClient()
+	if err != nil {
+		return err
+	}
+
+	// Loop thru the branches and check if they are active or not
+	activeBranchCount := 0
+	obsoleteBranchCount := 0
 	for _, potentialStaleBranch := range gonovateBranches {
 		if slices.Contains(usedBranches, potentialStaleBranch) {
 			// This branch is used
+			activeBranchCount++
 			continue
 		}
 		// This branch is unused, delete the branch and a possible associated PR
-		p.logger.Info(fmt.Sprintf("Unused branch '%s'", potentialStaleBranch))
+		p.logger.Info(fmt.Sprintf("Removing unused branch '%s'", potentialStaleBranch))
 
-		// TODO: Search for PR
-		// TODO: If a PR is found, delete/close it
-		// TODO: Delete the unused branch
+		// Search for an existing PR
+		existingRequest, _, err := client.PullRequests.List(context.Background(), owner, repository, &github.PullRequestListOptions{
+			Head:  potentialStaleBranch,
+			Base:  cleanupSettings.BaseBranch,
+			State: "open",
+		})
+		if err != nil {
+			return err
+		}
+
+		// The "Head" search parameter does not work without "user:", so just make sure that the returned list really contains the branch
+		existingPr, prExists := lo.Find(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == potentialStaleBranch })
+		if prExists {
+			// Close the PR
+			p.logger.Info(fmt.Sprintf("Closing associated PR: %s", *existingPr.HTMLURL))
+			if _, _, err := client.PullRequests.Edit(context.Background(), owner, repository, existingPr.GetNumber(), &github.PullRequest{
+				State: github.String("closed"),
+			}); err != nil {
+				return err
+			}
+		}
+		// Delete the unused branch
+		p.logger.Debug("Deleting the branch")
+		if _, _, err := shared.Git.Run("git", "push", "origin", "--delete", potentialStaleBranch); err != nil {
+			return err
+		}
+		obsoleteBranchCount++
 	}
+
+	p.logger.Info(fmt.Sprintf("Finished cleaning branches. Active: %d, Deleted: %d", activeBranchCount, obsoleteBranchCount))
 
 	return nil
 }
