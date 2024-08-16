@@ -113,17 +113,19 @@ func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 }
 
 func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error {
+	// TODO: Should maybe be dynamic, eg. by "git remote -v"
+	remoteName := "origin"
 	// Get the remote branches
-	stdout, _, err := shared.Git.Run("branch", "-r")
+	stdout, _, err := shared.Git.Run("ls-remote", "--heads", remoteName)
 	if err != nil {
 		return err
 	}
 	allBranches := strings.Split(stdout, "\n")
-	// Remove the origin prefix
+	// Remove the remote-name prefix
 	allBranches = lo.Map(allBranches, func(x string, _ int) string {
 		processedString := x
 		processedString = strings.TrimSpace(processedString)
-		processedString = strings.TrimPrefix(processedString, "origin/")
+		processedString = strings.TrimPrefix(processedString, remoteName+"/")
 		return processedString
 	})
 
@@ -181,8 +183,8 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 		}
 		// Delete the unused branch
 		p.logger.Debug("Deleting the branch")
-		if _, _, err := shared.Git.Run("push", "origin", "--delete", potentialStaleBranch); err != nil {
-			return err
+		if _, _, err := shared.Git.Run("push", remoteName, "--delete", potentialStaleBranch); err != nil {
+			return fmt.Errorf("failed to delete the remote branch '%s'", potentialStaleBranch)
 		}
 		obsoleteBranchCount++
 	}
