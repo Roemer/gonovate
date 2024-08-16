@@ -1,5 +1,18 @@
 # Change Log
 
+## v0.3.0 (2024-08-16)
+
+### Features
+* Major refactoring for the whole dependency handling
+* Implemented grouping
+* MRs/PRs now have a better title and a body text
+* Implemented platform cleanup (to cleanup stale branches and MRs/PRs)
+* Added Go-Mod manager
+* Added Dockerfile manager
+
+### Fix
+* Ignore Docker "latest" tag
+
 ## v0.2.3 (2024-06-24)
 
 ### Fix
