@@ -86,6 +86,8 @@ type DependencySettings struct {
 	Datasource shared.DatasourceType `json:"datasource"`
 	// Allows defining regexes that replace further information from dependencies (like hash) after updating
 	PostUpgradeReplacements []string `json:"postUpgradeReplacements"`
+	// An optional name of a group to group dependency updates together.
+	GroupName string `json:"groupName"`
 }
 
 type Rule struct {

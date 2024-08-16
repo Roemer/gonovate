@@ -209,18 +209,23 @@ func RunCmd(args []string) error {
 		}
 		logger.Info(fmt.Sprintf("Found %d dependenc(y/ies) with updates", len(dependenciesWithUpdates)))
 
-		// TODO:
-		// Group the dependencies which have updates according to rules
-		// For now, each dependency has its own group
+		// Group the dependencies which have updates according to group names
 		updateGroups := []*shared.UpdateGroup{}
 		for _, dependency := range dependenciesWithUpdates {
-			title := fmt.Sprintf("Update '%s' to '%s'", dependency.Name, dependency.NewRelease.VersionString)
-			// Build the branch name for the group
-			branchName := fmt.Sprintf("%s%s-%s-%s",
-				projectConfig.PlatformSettings.BranchPrefix,
-				shared.NormalizeString(projectConfig.PlatformSettings.BaseBranch, 20),
-				shared.NormalizeString(dependency.Name, 40),
-				shared.NormalizeString(dependency.NewRelease.VersionString, 0))
+			var title, branchName string
+			if dependency.GroupName != "" {
+				title = fmt.Sprintf("Update group '%s'", dependency.GroupName)
+				branchName = fmt.Sprintf("%s%s",
+					projectConfig.PlatformSettings.BranchPrefix,
+					dependency.GroupName)
+			} else {
+				title = fmt.Sprintf("Update '%s' to '%s'", dependency.Name, dependency.NewRelease.VersionString)
+				branchName = fmt.Sprintf("%s%s-%s-%s",
+					projectConfig.PlatformSettings.BranchPrefix,
+					shared.NormalizeString(projectConfig.PlatformSettings.BaseBranch, 20),
+					shared.NormalizeString(dependency.Name, 40),
+					shared.NormalizeString(dependency.NewRelease.VersionString, 0))
+			}
 
 			// Check if such a group already exists
 			idx := slices.IndexFunc(updateGroups, func(g *shared.UpdateGroup) bool { return g.BranchName == branchName })

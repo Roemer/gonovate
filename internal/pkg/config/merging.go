@@ -173,4 +173,8 @@ func (dependencySettingsA *DependencySettings) MergeWith(dependencySettingsB *De
 	}
 	// PostUpgradeReplacements
 	dependencySettingsA.PostUpgradeReplacements = lo.Union(dependencySettingsA.PostUpgradeReplacements, dependencySettingsB.PostUpgradeReplacements)
+	// GroupName
+	if dependencySettingsB.GroupName != "" {
+		dependencySettingsA.GroupName = dependencySettingsB.GroupName
+	}
 }
