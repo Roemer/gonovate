@@ -21,7 +21,10 @@
         },
         {
             "id": "go-mod",
-            "type": "go-mod"
+            "type": "go-mod",
+            "dependencySettings": {
+                "groupName": "go-modules"
+            }
         },
         {
             "id": "inline",
@@ -44,6 +47,16 @@
             "dependencySettings": {
                 "versioning": "^(\\d+)\\.(\\d+)\\.(\\d+)-bookworm$",
                 "ignoreNonMatching": true
+            }
+        },
+        {
+            "matches": {
+                "DependencyNames": [
+                    "go-stable"
+                ]
+            },
+            "dependencySettings": {
+                "groupName": "go"
             }
         }
     ],
