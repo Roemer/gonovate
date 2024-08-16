@@ -181,7 +181,7 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 		}
 		// Delete the unused branch
 		p.logger.Debug("Deleting the branch")
-		if _, _, err := shared.Git.Run("git", "push", "origin", "--delete", potentialStaleBranch); err != nil {
+		if _, _, err := shared.Git.Run("push", "origin", "--delete", potentialStaleBranch); err != nil {
 			return err
 		}
 		obsoleteBranchCount++
