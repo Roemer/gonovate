@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -17,7 +16,10 @@ import (
 // Loads the given configuration
 func Load(configPath string) (*RootConfig, error) {
 	if configPath == "" {
-		configPath = "gonovate.json"
+		configPath = "local:gonovate.json"
+	}
+	if !strings.HasPrefix(configPath, "local:") {
+		configPath = fmt.Sprintf("local:%s", configPath)
 	}
 	configInfo, err := newConfigInfo(configPath)
 	if err != nil {
@@ -31,7 +33,8 @@ func Load(configPath string) (*RootConfig, error) {
 ////////////////////////////////////////////////////////////
 
 const (
-	infoTypeFile string = "file"
+	infoTypePreset string = "preset"
+	infoTypeLocal  string = "local"
 )
 
 // Holds information about the type and location of a config
@@ -47,7 +50,7 @@ func newConfigInfo(info string) (*configInfo, error) {
 	parts := strings.SplitN(info, ":", 2)
 	var configType, configLoc string
 	if len(parts) == 1 {
-		configType = infoTypeFile
+		configType = infoTypePreset
 		configLoc = parts[0]
 	} else {
 		configType = parts[0]
@@ -68,13 +71,15 @@ func loadConfig(parentInfo, newInfo *configInfo) (*RootConfig, error) {
 	var newConfig *RootConfig
 	var err error
 	// Try load the config according to the type
-	if newInfo.Type == infoTypeFile {
+	if newInfo.Type == infoTypePreset {
+		newConfig, err = readConfigFromEmbeddedFile(newInfo.Location)
+	} else if newInfo.Type == infoTypeLocal {
 		newConfig, err = loadConfigFromFile(parentInfo, newInfo)
-		if err != nil {
-			return nil, err
-		}
 	} else {
 		return nil, fmt.Errorf("unknown preset type '%s'", newInfo.Type)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed reading config '%s:%s': %w", newInfo.Type, newInfo.Location, err)
 	}
 
 	// PreProcess the config
@@ -109,15 +114,15 @@ func loadConfigFromFile(parentInfo, newInfo *configInfo) (*RootConfig, error) {
 		return readConfigFromFile(newInfo.Location)
 	}
 
-	// A: Try load it from the current folder
+	// Try load it from the current folder
 	if exists, err := shared.FileExists(newInfo.Location); err != nil {
 		return nil, err
 	} else if exists {
 		return readConfigFromFile(newInfo.Location)
 	}
 
-	// B: Search in the folder of the parent config
-	if parentInfo != nil && parentInfo.Type == infoTypeFile && parentInfo.Location != "" {
+	// Search in the folder of the parent config
+	if parentInfo != nil && parentInfo.Type == infoTypeLocal && parentInfo.Location != "" {
 		tempPresetPath := filepath.Clean(filepath.Join(filepath.Dir(parentInfo.Location), newInfo.Location))
 		if exists, err := shared.FileExists(tempPresetPath); err != nil {
 			return nil, err
@@ -126,7 +131,7 @@ func loadConfigFromFile(parentInfo, newInfo *configInfo) (*RootConfig, error) {
 		}
 	}
 
-	// C: Search in the current executable directory
+	// Search in the current executable directory
 	if executablePath, err := os.Executable(); err != nil {
 		return nil, err
 	} else {
@@ -145,7 +150,7 @@ func loadConfigFromFile(parentInfo, newInfo *configInfo) (*RootConfig, error) {
 		}
 	}
 
-	// D: Search based on the current file that is executed (probably dev with go run . only)
+	// Search based on the current file that is executed (probably dev with go run . only)
 	if _, filename, _, ok := runtime.Caller(0); ok {
 		rootPath := filepath.Dir(filepath.Dir(filename))
 		tempPresetPath := filepath.Clean(filepath.Join(rootPath, newInfo.Location))
@@ -161,26 +166,6 @@ func loadConfigFromFile(parentInfo, newInfo *configInfo) (*RootConfig, error) {
 		} else if exists {
 			return readConfigFromFile(tempPresetPath)
 		}
-	}
-
-	// E: Search from the embedded presets
-	hasEmbedded := false
-	if err := fs.WalkDir(presets.Presets, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if !d.IsDir() {
-			if path == newInfo.Location {
-				hasEmbedded = true
-				return fs.SkipAll
-			}
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	if hasEmbedded {
-		return readConfigFromEmbeddedFile(newInfo.Location)
 	}
 
 	// Nothing found at all
