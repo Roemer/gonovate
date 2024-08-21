@@ -65,6 +65,8 @@ type ManagerSettings struct {
 	FilePatterns []string `json:"filePatterns"`
 	// Specific settings for RegexManager
 	MatchStrings []string `json:"matchStrings"`
+	// Specific settings for DevcontainerManager
+	DevcontainerSettings map[string][]*DevcontainerFeatureDependency `json:"devcontainerSettings"`
 }
 
 type DependencySettings struct {
@@ -129,4 +131,10 @@ func (hr *HostRule) PasswordExpanded() string {
 
 func (hr *HostRule) TokendExpanded() string {
 	return os.ExpandEnv(hr.Token)
+}
+
+type DevcontainerFeatureDependency struct {
+	Property       string                `json:"property"`
+	Datasource     shared.DatasourceType `json:"datasource"`
+	DependencyName string                `json:"dependencyName"`
 }

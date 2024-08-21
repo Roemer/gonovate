@@ -58,6 +58,7 @@ Managers are the components that are responsible for finding dependencies in you
 The following managers are available:
 | manager | description |
 | --- | --- |
+| devcontainer | This manager updates devcontainer.json files. |
 | dockerfile | This manager updates Dockerfiles. |
 | gomod | This manager updates Go dependencies. |
 | inline | This manager uses inline comments in files to search dependencies in those files. |
@@ -99,6 +100,8 @@ The following datasources are available:
 | github_tags | Fetches information from GitHub tags. |
 | go_mod | Fetches information for go modules. |
 | go_version | Fetches information for the go version. |
+| gradle_version | Fetches information for the gradle version. |
+| java_version | Fetches information for the java version. |
 | maven | Fetches information for maven modules. |
 | nodejs | Fetches information for the node version. |
 | npm | Fetches information for npm modules. |

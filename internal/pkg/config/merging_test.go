@@ -106,3 +106,98 @@ func TestMergePlatformSettings(t *testing.T) {
 
 	assert.Equal("token_b", merged.PlatformSettings.Token)
 }
+
+func TestMergeDevcontainerSettings(t *testing.T) {
+	assert := assert.New(t)
+
+	configA := &RootConfig{
+		Managers: []*ManagerConfig{
+			{
+				Id: "manager",
+				ManagerSettings: &ManagerSettings{
+					DevcontainerSettings: map[string][]*DevcontainerFeatureDependency{
+						"feature1": {
+							&DevcontainerFeatureDependency{
+								Property:       "prop1-1",
+								Datasource:     "ds1-1",
+								DependencyName: "dep1-1",
+							},
+						},
+						"feature2": {
+							{
+								Property:       "prop2-1",
+								Datasource:     "ds2-1",
+								DependencyName: "dep2-1",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	configB := &RootConfig{
+		Managers: []*ManagerConfig{
+			{
+				Id: "manager",
+				ManagerSettings: &ManagerSettings{
+					DevcontainerSettings: map[string][]*DevcontainerFeatureDependency{
+						"feature2": {
+							&DevcontainerFeatureDependency{
+								Property:       "prop2-2",
+								Datasource:     "ds2-2",
+								DependencyName: "dep2-2",
+							},
+							&DevcontainerFeatureDependency{
+								Property:       "prop2-1",
+								Datasource:     "ds2-1-new",
+								DependencyName: "dep2-1-new",
+							},
+						},
+						"feature3": {
+							{
+								Property:       "prop3-1",
+								Datasource:     "ds3-1",
+								DependencyName: "dep3-1",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	merged := configA.MergeWithAsCopy(configB)
+
+	settingsToCheck := merged.Managers[0].ManagerSettings.DevcontainerSettings
+	assert.Len(settingsToCheck, 3)
+	assert.Contains(settingsToCheck, "feature1")
+	assert.Contains(settingsToCheck, "feature2")
+	assert.Contains(settingsToCheck, "feature3")
+
+	{
+		feat1 := settingsToCheck["feature1"]
+		assert.Len(feat1, 1)
+		assert.Equal(feat1[0].Property, "prop1-1")
+		assert.Equal(feat1[0].Datasource, "ds1-1")
+		assert.Equal(feat1[0].DependencyName, "dep1-1")
+	}
+
+	{
+		feat2 := settingsToCheck["feature2"]
+		assert.Len(feat2, 2)
+		assert.Equal(feat2[0].Property, "prop2-1")
+		assert.Equal(feat2[0].Datasource, "ds2-1-new")
+		assert.Equal(feat2[0].DependencyName, "dep2-1-new")
+		assert.Equal(feat2[1].Property, "prop2-2")
+		assert.Equal(feat2[1].Datasource, "ds2-2")
+		assert.Equal(feat2[1].DependencyName, "dep2-2")
+	}
+
+	{
+		feat3 := settingsToCheck["feature3"]
+		assert.Len(feat3, 1)
+		assert.Equal(feat3[0].Property, "prop3-1")
+		assert.Equal(feat3[0].Datasource, "ds3-1")
+		assert.Equal(feat3[0].DependencyName, "dep3-1")
+	}
+}

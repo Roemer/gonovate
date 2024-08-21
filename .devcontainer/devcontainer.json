@@ -8,9 +8,7 @@
 		"--env-file=./.devcontainer/.env"
 	],
 	"features": {
-		// gonovate: { "datasource":"docker", "matchString":"preset:docker-image-in-quotes" }
 		"ghcr.io/devcontainers/features/go:1.3.0": {
-			// gonovate: { "datasource":"go-version", "dependencyName":"go-stable", "matchString":"preset:json-version" }
 			"version": "1.23.0"
 		}
 	},

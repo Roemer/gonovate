@@ -1,0 +1,14 @@
+{
+    "rules": [
+        {
+            "matches": {
+                "DependencyNames": [
+                    "alpine"
+                ]
+            },
+            "dependencySettings": {
+                "versioning": "preset:semver"
+            }
+        }
+    ]
+}

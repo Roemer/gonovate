@@ -135,6 +135,37 @@ func (managerSettingsA *ManagerSettings) MergeWith(managerSettingsB *ManagerSett
 	managerSettingsA.FilePatterns = lo.Union(managerSettingsA.FilePatterns, managerSettingsB.FilePatterns)
 	// MatchStrings
 	managerSettingsA.MatchStrings = lo.Union(managerSettingsA.MatchStrings, managerSettingsB.MatchStrings)
+	// DevcontainerSettings
+	if len(managerSettingsB.DevcontainerSettings) > 0 {
+		// Make sure the settings object exiss in A
+		if managerSettingsA.DevcontainerSettings == nil {
+			managerSettingsA.DevcontainerSettings = map[string][]*DevcontainerFeatureDependency{}
+		}
+
+		// Loop thru the features
+		for featureName, featureDependencies := range managerSettingsB.DevcontainerSettings {
+			// Make sure the feature exist in A
+			if _, ok := managerSettingsA.DevcontainerSettings[featureName]; !ok {
+				managerSettingsA.DevcontainerSettings[featureName] = []*DevcontainerFeatureDependency{}
+			}
+			// Merge the individual feature dependencies
+			for _, featureDependency := range featureDependencies {
+				// Search for an existing featureDependency in A with the same property
+				idx := slices.IndexFunc(managerSettingsA.DevcontainerSettings[featureName], func(m *DevcontainerFeatureDependency) bool {
+					return m.Property == featureDependency.Property
+				})
+				if idx >= 0 {
+					// Found one so merge it
+					managerSettingsA.DevcontainerSettings[featureName][idx].MergeWith(featureDependency)
+				} else {
+					// Not found, so add it
+					newFeature := &DevcontainerFeatureDependency{}
+					newFeature.MergeWith(featureDependency)
+					managerSettingsA.DevcontainerSettings[featureName] = append(managerSettingsA.DevcontainerSettings[featureName], newFeature)
+				}
+			}
+		}
+	}
 }
 
 func (dependencySettingsA *DependencySettings) MergeWith(dependencySettingsB *DependencySettings) {
@@ -176,5 +207,23 @@ func (dependencySettingsA *DependencySettings) MergeWith(dependencySettingsB *De
 	// GroupName
 	if dependencySettingsB.GroupName != "" {
 		dependencySettingsA.GroupName = dependencySettingsB.GroupName
+	}
+}
+
+func (objA *DevcontainerFeatureDependency) MergeWith(objB *DevcontainerFeatureDependency) {
+	if objB == nil {
+		return
+	}
+	// Property
+	if objB.Property != "" {
+		objA.Property = objB.Property
+	}
+	// Datasource
+	if objB.Datasource != "" {
+		objA.Datasource = objB.Datasource
+	}
+	// DependencyName
+	if objB.DependencyName != "" {
+		objA.DependencyName = objB.DependencyName
 	}
 }

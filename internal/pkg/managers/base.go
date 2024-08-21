@@ -29,6 +29,8 @@ type managerBase struct {
 
 func GetManager(logger *slog.Logger, rootConfig *config.RootConfig, managerConfig *config.ManagerConfig, managerSettings *config.ManagerSettings) (IManager, error) {
 	switch managerConfig.Type {
+	case shared.MANAGER_TYPE_DEVCONTAINER:
+		return NewDevcontainerManager(logger, managerConfig.Id, rootConfig, managerSettings), nil
 	case shared.MANAGER_TYPE_DOCKERFILE:
 		return NewDockerfileManager(logger, managerConfig.Id, rootConfig, managerSettings), nil
 	case shared.MANAGER_TYPE_GOMOD:

@@ -1,0 +1,42 @@
+{
+    "rules": [
+        {
+            "matches": {
+                "ManagerTypes": [
+                    "devcontainer"
+                ]
+            },
+            "managerSettings": {
+                "filePatterns": [
+                    "**/devcontainer.json"
+                ],
+                "devcontainerSettings": {
+                    "ghcr.io/devcontainers/features/go": [
+                        {
+                            "property": "version",
+                            "datasource": "go-version",
+                            "dependencyName": "go-stable"
+                        }
+                    ],
+                    "ghcr.io/devcontainers/features/java": [
+                        {
+                            "property": "version",
+                            "datasource": "java-version",
+                            "dependencyName": "java-jdk"
+                        },
+                        {
+                            "property": "mavenVersion",
+                            "datasource": "maven",
+                            "dependencyName": "org.apache.maven:maven"
+                        },
+                        {
+                            "property": "gradleVersion",
+                            "datasource": "gradle-version",
+                            "dependencyName": "gradle"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
