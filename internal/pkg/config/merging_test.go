@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	"github.com/roemer/gonovate/internal/pkg/shared"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -119,14 +120,14 @@ func TestMergeDevcontainerSettings(t *testing.T) {
 						"feature1": {
 							&DevcontainerFeatureDependency{
 								Property:       "prop1-1",
-								Datasource:     "ds1-1",
+								Datasource:     shared.DATASOURCE_TYPE_DOCKER,
 								DependencyName: "dep1-1",
 							},
 						},
 						"feature2": {
 							{
 								Property:       "prop2-1",
-								Datasource:     "ds2-1",
+								Datasource:     shared.DATASOURCE_TYPE_DOCKER,
 								DependencyName: "dep2-1",
 							},
 						},
@@ -144,19 +145,19 @@ func TestMergeDevcontainerSettings(t *testing.T) {
 						"feature2": {
 							&DevcontainerFeatureDependency{
 								Property:       "prop2-2",
-								Datasource:     "ds2-2",
+								Datasource:     shared.DATASOURCE_TYPE_DOCKER,
 								DependencyName: "dep2-2",
 							},
 							&DevcontainerFeatureDependency{
 								Property:       "prop2-1",
-								Datasource:     "ds2-1-new",
+								Datasource:     shared.DATASOURCE_TYPE_MAVEN,
 								DependencyName: "dep2-1-new",
 							},
 						},
 						"feature3": {
 							{
 								Property:       "prop3-1",
-								Datasource:     "ds3-1",
+								Datasource:     shared.DATASOURCE_TYPE_DOCKER,
 								DependencyName: "dep3-1",
 							},
 						},
@@ -178,7 +179,7 @@ func TestMergeDevcontainerSettings(t *testing.T) {
 		feat1 := settingsToCheck["feature1"]
 		assert.Len(feat1, 1)
 		assert.Equal(feat1[0].Property, "prop1-1")
-		assert.Equal(feat1[0].Datasource, "ds1-1")
+		assert.Equal(feat1[0].Datasource, shared.DATASOURCE_TYPE_DOCKER)
 		assert.Equal(feat1[0].DependencyName, "dep1-1")
 	}
 
@@ -186,10 +187,10 @@ func TestMergeDevcontainerSettings(t *testing.T) {
 		feat2 := settingsToCheck["feature2"]
 		assert.Len(feat2, 2)
 		assert.Equal(feat2[0].Property, "prop2-1")
-		assert.Equal(feat2[0].Datasource, "ds2-1-new")
+		assert.Equal(feat2[0].Datasource, shared.DATASOURCE_TYPE_MAVEN)
 		assert.Equal(feat2[0].DependencyName, "dep2-1-new")
 		assert.Equal(feat2[1].Property, "prop2-2")
-		assert.Equal(feat2[1].Datasource, "ds2-2")
+		assert.Equal(feat2[1].Datasource, shared.DATASOURCE_TYPE_DOCKER)
 		assert.Equal(feat2[1].DependencyName, "dep2-2")
 	}
 
@@ -197,7 +198,7 @@ func TestMergeDevcontainerSettings(t *testing.T) {
 		feat3 := settingsToCheck["feature3"]
 		assert.Len(feat3, 1)
 		assert.Equal(feat3[0].Property, "prop3-1")
-		assert.Equal(feat3[0].Datasource, "ds3-1")
+		assert.Equal(feat3[0].Datasource, shared.DATASOURCE_TYPE_DOCKER)
 		assert.Equal(feat3[0].DependencyName, "dep3-1")
 	}
 }

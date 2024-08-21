@@ -87,10 +87,7 @@ func init() {
 			return err
 		}
 		goTestReport := filepath.Join(reportsDirectory, "go-test-report.txt")
-		stdout, _, err := execr.RunGetOutput(false, "go", execr.SplitArgumentString("test -v ./... ")...)
-		if err != nil {
-			return nil
-		}
+		stdout, _, execErr := execr.RunGetOutput(false, "go", execr.SplitArgumentString("test -v ./...")...)
 		if err := os.WriteFile(goTestReport, []byte(stdout), os.ModePerm); err != nil {
 			return err
 		}
@@ -102,7 +99,7 @@ func init() {
 		if err := execr.Run(true, filepath.Join(build.Default.GOPATH, "bin/go-junit-report"), "-in", goTestReport, "-set-exit-code", "-out", junitTestReport); err != nil {
 			return err
 		}
-		return nil
+		return execErr
 	})
 
 	gotaskr.Task("Release", func() error {
