@@ -29,16 +29,12 @@ func NewNodeJsDatasource(logger *slog.Logger, config *config.RootConfig) IDataso
 }
 
 func (ds *NodeJsDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
-	baseUrl := "https://nodejs.org/dist"
-	if len(dependency.RegistryUrls) > 0 {
-		baseUrl = dependency.RegistryUrls[0]
-		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", baseUrl))
-	}
+	registryUrl := ds.getRegistryUrl("https://nodejs.org/dist", dependency.RegistryUrls)
 	indexFilePath := "index.json"
 	ltsOnly := strings.HasSuffix(dependency.Name, "lts")
 
 	// Download the index file
-	downloadUrl, err := url.JoinPath(baseUrl, indexFilePath)
+	downloadUrl, err := url.JoinPath(registryUrl, indexFilePath)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@ package datasources
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/url"
 	"strings"
@@ -29,14 +28,10 @@ func NewNpmDatasource(logger *slog.Logger, config *config.RootConfig) IDatasourc
 }
 
 func (ds *NpmDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
-	baseUrl := "https://registry.npmjs.org"
-	if len(dependency.RegistryUrls) > 0 {
-		baseUrl = dependency.RegistryUrls[0]
-		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", baseUrl))
-	}
+	registryUrl := ds.getRegistryUrl("https://registry.npmjs.org", dependency.RegistryUrls)
 
 	// Download the index file
-	downloadUrl, err := url.JoinPath(baseUrl, dependency.Name)
+	downloadUrl, err := url.JoinPath(registryUrl, dependency.Name)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
+	"strings"
 
 	"github.com/roemer/gonovate/internal/pkg/cache"
 	"github.com/roemer/gonovate/internal/pkg/config"
@@ -38,6 +39,10 @@ func GetDatasource(logger *slog.Logger, config *config.RootConfig, datasource sh
 		return NewGoModDatasource(logger, config), nil
 	case shared.DATASOURCE_TYPE_GOVERSION:
 		return NewGoVersionDatasource(logger, config), nil
+	case shared.DATASOURCE_TYPE_GRADLEVERSION:
+		return NewGradleVersionDatasource(logger, config), nil
+	case shared.DATASOURCE_TYPE_JAVAVERSION:
+		return NewJavaVersionDatasource(logger, config), nil
 	case shared.DATASOURCE_TYPE_MAVEN:
 		return NewMavenDatasource(logger, config), nil
 	case shared.DATASOURCE_TYPE_NODEJS:
@@ -172,4 +177,13 @@ func getReferenceVersionForUpdateType(updateType shared.UpdateType, currentVersi
 		return gover.ParseSimple(currentVersion.Major(), currentVersion.Minor()), nil
 	}
 	return nil, fmt.Errorf("missing updateType")
+}
+
+func (ds *datasourceBase) getRegistryUrl(baseUrl string, customRegistryUrls []string) string {
+	if len(customRegistryUrls) > 0 {
+		baseUrl = customRegistryUrls[0]
+		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", baseUrl))
+	}
+	baseUrl = strings.TrimSuffix(baseUrl, "/")
+	return baseUrl
 }

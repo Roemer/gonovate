@@ -36,6 +36,7 @@
         }
     },
     "versioningPresets": {
+        "semver": "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-([^+]+))?(?:\\+(.*))?$",
         "major-minor-patch": "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$"
     },
     "rules": [
@@ -67,6 +68,26 @@
                 "filePatterns": [
                     "go.mod"
                 ]
+            }
+        },
+        {
+            "matches": {
+                "datasources": [
+                    "gradle"
+                ]
+            },
+            "dependencySettings": {
+                "versioning": "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?$"
+            }
+        },
+        {
+            "matches": {
+                "datasources": [
+                    "java-version"
+                ]
+            },
+            "dependencySettings": {
+                "versioning": "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:\\.(\\d+))?(?:_(\\d+))?(?:\\+(\\d+))?(?:-(?:LTS|b[0-9]+))?$"
             }
         },
         {

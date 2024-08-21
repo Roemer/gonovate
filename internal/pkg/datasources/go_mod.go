@@ -1,8 +1,8 @@
 package datasources
 
 import (
-	"fmt"
 	"log/slog"
+	"net/url"
 	"strings"
 
 	"github.com/roemer/gonovate/internal/pkg/config"
@@ -26,15 +26,14 @@ func NewGoModDatasource(logger *slog.Logger, config *config.RootConfig) IDatasou
 }
 
 func (ds *GoModDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
-	baseUrl := "https://proxy.golang.org"
-	if len(dependency.RegistryUrls) > 0 {
-		baseUrl = dependency.RegistryUrls[0]
-		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", baseUrl))
-	}
+	registryUrl := ds.getRegistryUrl("https://proxy.golang.org", dependency.RegistryUrls)
 
 	// Download the list of versions
-	url := fmt.Sprintf("%s/%s/@v/list", baseUrl, dependency.Name)
-	data, err := shared.HttpUtil.DownloadToMemory(url)
+	downloadUrl, err := url.JoinPath(registryUrl, dependency.Name, "@v", "list")
+	if err != nil {
+		return nil, err
+	}
+	data, err := shared.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return nil, err
 	}
