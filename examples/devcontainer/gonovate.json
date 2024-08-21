@@ -1,0 +1,21 @@
+{
+    "platform": "noop",
+    "platformSettings": {
+        "inplace": true
+    },
+    "extends": [
+        "defaults",
+        "devcontainer",
+        "docker"
+    ],
+    "managers": [
+        {
+            "id": "devcontainer",
+            "type": "devcontainer",
+            "dependencySettings": {
+                "maxUpdateType": "major",
+                "ignoreNonMatching": true
+            }
+        }
+    ]
+}

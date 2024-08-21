@@ -12,10 +12,11 @@ const (
 type ManagerType string
 
 const (
-	MANAGER_TYPE_INLINE     ManagerType = "inline"
-	MANAGER_TYPE_REGEX      ManagerType = "regex"
-	MANAGER_TYPE_DOCKERFILE ManagerType = "dockerfile"
-	MANAGER_TYPE_GOMOD      ManagerType = "go-mod"
+	MANAGER_TYPE_DEVCONTAINER ManagerType = "devcontainer"
+	MANAGER_TYPE_DOCKERFILE   ManagerType = "dockerfile"
+	MANAGER_TYPE_GOMOD        ManagerType = "go-mod"
+	MANAGER_TYPE_INLINE       ManagerType = "inline"
+	MANAGER_TYPE_REGEX        ManagerType = "regex"
 )
 
 type DatasourceType string

@@ -3,6 +3,7 @@ module github.com/roemer/gonovate
 go 1.23.0
 
 require (
+	github.com/adhocore/jsonc v0.10.0
 	github.com/bmatcuk/doublestar/v4 v4.6.1
 	github.com/google/go-github/v63 v63.0.0
 	github.com/jfrog/jfrog-client-go v1.44.1

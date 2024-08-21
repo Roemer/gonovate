@@ -11,7 +11,6 @@ import (
 
 	"github.com/roemer/gonovate/internal/pkg/config"
 	"github.com/roemer/gonovate/internal/pkg/shared"
-	"github.com/samber/lo"
 )
 
 type DockerfileManager struct {
@@ -50,9 +49,7 @@ func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*share
 		line := scanner.Text()
 		// Search for the marker
 		if match := dockerFromRegex.FindStringSubmatch(line); match != nil {
-			parts := strings.Split(match[1], ":")
-			name := parts[0]
-			version := lo.Ternary(len(parts) > 1, parts[1], "latest")
+			name, version := splitDockerDependency(match[1])
 			newDepencency := &shared.Dependency{
 				Name:        name,
 				Datasource:  shared.DATASOURCE_TYPE_DOCKER,
