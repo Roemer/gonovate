@@ -34,11 +34,7 @@ var dockerIoRegex = regexp.MustCompile(`^(https?://)?([a-zA-Z-_0-9\.]*docker\.io
 var httpSchemeRegex = regexp.MustCompile(`^https?://(.*)`)
 
 func (ds *DockerDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
-	// Prepare the registry host
-	customRegistryUrl := ""
-	if len(dependency.RegistryUrls) > 0 {
-		customRegistryUrl = dependency.RegistryUrls[0]
-	}
+	customRegistryUrl := ds.getRegistryUrl("", dependency.RegistryUrls)
 	registryUrl, imagePath, err := getDockerRegistry(dependency.Name, customRegistryUrl)
 	if err != nil {
 		return nil, err

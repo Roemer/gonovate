@@ -2,7 +2,6 @@ package datasources
 
 import (
 	"encoding/xml"
-	"fmt"
 	"log/slog"
 	"net/url"
 	"strings"
@@ -28,17 +27,13 @@ func NewMavenDatasource(logger *slog.Logger, config *config.RootConfig) IDatasou
 }
 
 func (ds *MavenDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
-	repositoryUrl := "https://repo.maven.apache.org/maven2"
-	if len(dependency.RegistryUrls) > 0 {
-		repositoryUrl = dependency.RegistryUrls[0]
-		ds.logger.Debug(fmt.Sprintf("Using custom registry url: %s", repositoryUrl))
-	}
+	registryUrl := ds.getRegistryUrl("https://repo.maven.apache.org/maven2", dependency.RegistryUrls)
 
 	// Get XML-Metadata
 	packageParts := strings.Split(dependency.Name, ":")
 	group := packageParts[0]
 	pkg := packageParts[1]
-	packageMetadataUrl, err := url.JoinPath(repositoryUrl, strings.ReplaceAll(group, ".", "/"), pkg, "maven-metadata.xml")
+	packageMetadataUrl, err := url.JoinPath(registryUrl, strings.ReplaceAll(group, ".", "/"), pkg, "maven-metadata.xml")
 	if err != nil {
 		return nil, err
 	}

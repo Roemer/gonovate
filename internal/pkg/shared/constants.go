@@ -27,6 +27,8 @@ const (
 	DATASOURCE_TYPE_GITHUB_TAGS     DatasourceType = "github-tags"
 	DATASOURCE_TYPE_GOMOD           DatasourceType = "go-mod"
 	DATASOURCE_TYPE_GOVERSION       DatasourceType = "go-version"
+	DATASOURCE_TYPE_GRADLEVERSION   DatasourceType = "gradle-version"
+	DATASOURCE_TYPE_JAVAVERSION     DatasourceType = "java-version"
 	DATASOURCE_TYPE_MAVEN           DatasourceType = "maven"
 	DATASOURCE_TYPE_NODEJS          DatasourceType = "nodejs"
 	DATASOURCE_TYPE_NPM             DatasourceType = "npm"

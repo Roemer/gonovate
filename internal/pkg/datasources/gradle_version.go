@@ -2,20 +2,19 @@ package datasources
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
-	"strings"
+	"net/url"
 
 	"github.com/roemer/gonovate/internal/pkg/config"
 	"github.com/roemer/gonovate/internal/pkg/shared"
 )
 
-type GoVersionDatasource struct {
+type GradleVersionDatasource struct {
 	datasourceBase
 }
 
-func NewGoVersionDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
-	newDatasource := &GoVersionDatasource{
+func NewGradleVersionDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+	newDatasource := &GradleVersionDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
 			name:   shared.DATASOURCE_TYPE_GOVERSION,
@@ -26,32 +25,30 @@ func NewGoVersionDatasource(logger *slog.Logger, config *config.RootConfig) IDat
 	return newDatasource
 }
 
-func (ds *GoVersionDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
-	registryUrl := ds.getRegistryUrl("https://go.dev", dependency.RegistryUrls)
-	indexFilePath := "dl/?mode=json&include=all"
-	stableOnly := strings.HasSuffix(dependency.Name, "stable")
+func (ds *GradleVersionDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+	registryUrl := ds.getRegistryUrl("https://raw.githubusercontent.com", dependency.RegistryUrls)
+	indexFilePath := "gradle/gradle/master/released-versions.json"
 
 	// Download the index file
-	downloadUrl := fmt.Sprintf("%s/%s", registryUrl, indexFilePath)
+	downloadUrl, err := url.JoinPath(registryUrl, indexFilePath)
+	if err != nil {
+		return nil, err
+	}
 	indexFileBytes, err := shared.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return nil, err
 	}
 
 	// Parse the data as json
-	var jsonData []map[string]interface{}
+	var jsonData map[string]interface{}
 	if err := json.Unmarshal(indexFileBytes, &jsonData); err != nil {
 		return nil, err
 	}
 
 	// Convert all entries to objects
 	releases := []*shared.ReleaseInfo{}
-	for _, entry := range jsonData {
-		versionString := entry["version"].(string)
-		stableValue := entry["stable"]
-		if stableOnly && stableValue != true {
-			continue
-		}
+	for _, entry := range jsonData["finalReleases"].([]interface{}) {
+		versionString := entry.(map[string]interface{})["version"].(string)
 		releases = append(releases, &shared.ReleaseInfo{
 			VersionString: versionString,
 		})
