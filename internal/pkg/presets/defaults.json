@@ -87,7 +87,7 @@
                 ]
             },
             "dependencySettings": {
-                "versioning": "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:\\.(\\d+))?(?:_(\\d+))?(?:\\+(\\d+))?(?:-(?:LTS|b[0-9]+))?$"
+                "versioning": "preset:semver"
             }
         },
         {

@@ -65,7 +65,7 @@ func (ds *JavaVersionDatasource) getReleases(dependency *shared.Dependency) ([]*
 
 		// Convert all entries to objects
 		for _, entry := range jsonData["versions"].([]interface{}) {
-			versionString := entry.(map[string]interface{})["openjdk_version"].(string)
+			versionString := entry.(map[string]interface{})["semver"].(string)
 			releases = append(releases, &shared.ReleaseInfo{
 				VersionString: versionString,
 			})
