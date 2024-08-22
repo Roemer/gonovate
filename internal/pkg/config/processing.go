@@ -72,13 +72,16 @@ func (config *RootConfig) EnrichDependencyFromRules(dependency *shared.Dependenc
 	// Search for matching rules and merge them
 	for _, rule := range config.Rules {
 		if rule.Matches != nil {
-			// ManagerId
-			if len(rule.Matches.Managers) > 0 && !slices.Contains(rule.Matches.Managers, managerConfig.Id) {
-				continue
-			}
-			// ManagerTypes
-			if len(rule.Matches.ManagerTypes) > 0 && !slices.Contains(rule.Matches.ManagerTypes, managerConfig.Type) {
-				continue
+			// Manager related matches
+			if managerConfig != nil {
+				// ManagerId
+				if len(rule.Matches.Managers) > 0 && !slices.Contains(rule.Matches.Managers, managerConfig.Id) {
+					continue
+				}
+				// ManagerTypes
+				if len(rule.Matches.ManagerTypes) > 0 && !slices.Contains(rule.Matches.ManagerTypes, managerConfig.Type) {
+					continue
+				}
 			}
 			// Files
 			ok, _ := shared.FilePathMatchesPattern(dependency.FilePath, rule.Matches.Files...)

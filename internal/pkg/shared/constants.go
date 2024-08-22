@@ -22,7 +22,9 @@ const (
 type DatasourceType string
 
 const (
+	DATASOURCE_TYPE_ANTVERSION      DatasourceType = "ant-version"
 	DATASOURCE_TYPE_ARTIFACTORY     DatasourceType = "artifactory"
+	DATASOURCE_TYPE_BROWSERVERSION  DatasourceType = "browser-version"
 	DATASOURCE_TYPE_DOCKER          DatasourceType = "docker"
 	DATASOURCE_TYPE_GITHUB_RELEASES DatasourceType = "github-releases"
 	DATASOURCE_TYPE_GITHUB_TAGS     DatasourceType = "github-tags"

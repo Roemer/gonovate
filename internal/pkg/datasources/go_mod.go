@@ -17,7 +17,7 @@ func NewGoModDatasource(logger *slog.Logger, config *config.RootConfig) IDatasou
 	newDatasource := &GoModDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
-			name:   shared.DATASOURCE_TYPE_GOVERSION,
+			name:   shared.DATASOURCE_TYPE_GOMOD,
 			Config: config,
 		},
 	}

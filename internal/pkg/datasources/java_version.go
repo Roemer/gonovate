@@ -19,7 +19,7 @@ func NewJavaVersionDatasource(logger *slog.Logger, config *config.RootConfig) ID
 	newDatasource := &JavaVersionDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
-			name:   shared.DATASOURCE_TYPE_GOVERSION,
+			name:   shared.DATASOURCE_TYPE_JAVAVERSION,
 			Config: config,
 		},
 	}
