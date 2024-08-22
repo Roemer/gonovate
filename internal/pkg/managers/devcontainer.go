@@ -35,13 +35,8 @@ func (manager *DevcontainerManager) ExtractDependencies(filePath string) ([]*sha
 	if err != nil {
 		return nil, err
 	}
-
-	// devcontainer.json files are jsonc/json5, so convert it to json first
-	j := jsonc.New()
-	strippedJson := j.Strip(fileContentBytes)
-
 	// Extract the dependencies from the string
-	return manager.extractDependenciesFromString(string(strippedJson))
+	return manager.extractDependenciesFromString(string(fileContentBytes))
 }
 
 func (manager *DevcontainerManager) ApplyDependencyUpdate(dependency *shared.Dependency) error {
@@ -63,10 +58,14 @@ func (manager *DevcontainerManager) ApplyDependencyUpdate(dependency *shared.Dep
 ////////////////////////////////////////////////////////////
 
 func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent string) ([]*shared.Dependency, error) {
+	// devcontainer.json files are jsonc/json5, so convert it to json first
+	j := jsonc.New()
+	strippedJson := j.StripS(jsonContent)
+
 	// Parse the file
 	inlineConfig := &devcontainerData{}
-	if err := json.Unmarshal([]byte(jsonContent), inlineConfig); err != nil {
-		return nil, fmt.Errorf("failed parsing marker config: %w", err)
+	if err := json.Unmarshal([]byte(strippedJson), inlineConfig); err != nil {
+		return nil, fmt.Errorf("failed parsing devcontainer config: %w", err)
 	}
 
 	// A slice to collect all found dependencies
