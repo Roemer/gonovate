@@ -28,7 +28,14 @@ func NewGitHubReleasesDatasource(logger *slog.Logger, config *config.RootConfig)
 
 func (ds *GitHubReleasesDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
 	client := github.NewClient(nil)
-	// TODO: WithAuthToken(token)
+
+	// Get a host rule if any was defined
+	relevantHostRule := ds.Config.FilterHostConfigsForHost("api.github.com")
+	// Add the token to the client
+	if relevantHostRule != nil {
+		token := relevantHostRule.TokendExpanded()
+		client = client.WithAuthToken(token)
+	}
 
 	parts := strings.SplitN(dependency.Name, "/", 2)
 	owner := parts[0]
