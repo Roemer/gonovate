@@ -3,5 +3,8 @@
         "ui.diagnostic.analyses": {
             "shadow": true
         }
-    }
+    },
+    "go.testFlags": [
+        "-v"
+    ]
 }

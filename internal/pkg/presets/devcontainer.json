@@ -2,7 +2,7 @@
     "rules": [
         {
             "matches": {
-                "ManagerTypes": [
+                "managerTypes": [
                     "devcontainer"
                 ]
             },

@@ -17,7 +17,7 @@ func NewGradleVersionDatasource(logger *slog.Logger, config *config.RootConfig) 
 	newDatasource := &GradleVersionDatasource{
 		datasourceBase: datasourceBase{
 			logger: logger,
-			name:   shared.DATASOURCE_TYPE_GOVERSION,
+			name:   shared.DATASOURCE_TYPE_GRADLEVERSION,
 			Config: config,
 		},
 	}

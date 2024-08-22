@@ -27,8 +27,12 @@ type datasourceBase struct {
 
 func GetDatasource(logger *slog.Logger, config *config.RootConfig, datasource shared.DatasourceType) (IDatasource, error) {
 	switch datasource {
+	case shared.DATASOURCE_TYPE_ANTVERSION:
+		return NewAntVersionDatasource(logger, config), nil
 	case shared.DATASOURCE_TYPE_ARTIFACTORY:
 		return NewArtifactoryDatasource(logger, config), nil
+	case shared.DATASOURCE_TYPE_BROWSERVERSION:
+		return NewBrowserVersionDatasource(logger, config), nil
 	case shared.DATASOURCE_TYPE_DOCKER:
 		return NewDockerDatasource(logger, config), nil
 	case shared.DATASOURCE_TYPE_GITHUB_RELEASES:

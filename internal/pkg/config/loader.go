@@ -18,7 +18,7 @@ func Load(configPath string) (*RootConfig, error) {
 	if configPath == "" {
 		configPath = "local:gonovate.json"
 	}
-	if !strings.HasPrefix(configPath, "local:") {
+	if !strings.Contains(configPath, ":") {
 		configPath = fmt.Sprintf("local:%s", configPath)
 	}
 	configInfo, err := newConfigInfo(configPath)
