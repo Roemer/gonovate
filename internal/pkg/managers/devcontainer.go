@@ -105,25 +105,30 @@ func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent st
 		// Search for the feature and property in the settings
 		featureSettings, ok := manager.settings.DevcontainerSettings[name]
 		if !ok {
-			manager.logger.Warn(fmt.Sprintf("Feature '%s' has no settings, skipping dependencies", name))
+			manager.logger.Debug(fmt.Sprintf("Feature '%s' has no settings, skipping dependencies", name))
 			continue
 		}
 
 		// Process the dependencies inside the feature
-		for property, version := range dependenciesInsideFeature {
-			// Search for a setting with the same property name
-			idx := slices.IndexFunc(featureSettings, func(d *config.DevcontainerFeatureDependency) bool { return d.Property == property })
-			if idx < 0 {
-				manager.logger.Warn(fmt.Sprintf("Dependency in feature for property '%s' has no settings", property))
+		for property, propertyValue := range dependenciesInsideFeature {
+			// Filter out properties with values that are not strings
+			if propertyString, ok := propertyValue.(string); !ok {
 				continue
+			} else {
+				// Search for a setting with the same property name
+				idx := slices.IndexFunc(featureSettings, func(d *config.DevcontainerFeatureDependency) bool { return d.Property == property })
+				if idx < 0 {
+					manager.logger.Debug(fmt.Sprintf("Dependency in feature for property '%s' has no settings", property))
+					continue
+				}
+				featureDependency := featureSettings[idx]
+				newDependencyInsideFeature := &shared.Dependency{
+					Name:       featureDependency.DependencyName,
+					Datasource: featureDependency.Datasource,
+					Version:    propertyString,
+				}
+				foundDependencies = append(foundDependencies, newDependencyInsideFeature)
 			}
-			featureDependency := featureSettings[idx]
-			newDependencyInsideFeature := &shared.Dependency{
-				Name:       featureDependency.DependencyName,
-				Datasource: featureDependency.Datasource,
-				Version:    version,
-			}
-			foundDependencies = append(foundDependencies, newDependencyInsideFeature)
 		}
 	}
 
@@ -131,6 +136,6 @@ func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent st
 }
 
 type devcontainerData struct {
-	Image    string                       `json:"image"`
-	Features map[string]map[string]string `json:"features"`
+	Image    string                            `json:"image"`
+	Features map[string]map[string]interface{} `json:"features"`
 }
