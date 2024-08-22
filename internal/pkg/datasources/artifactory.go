@@ -9,6 +9,7 @@ import (
 	"github.com/jfrog/jfrog-client-go/artifactory/auth"
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	artifactory_config "github.com/jfrog/jfrog-client-go/config"
+	"github.com/jfrog/jfrog-client-go/http/httpclient"
 	"github.com/roemer/gonovate/internal/pkg/config"
 	"github.com/roemer/gonovate/internal/pkg/shared"
 )
@@ -39,12 +40,16 @@ func (ds *ArtifactoryDatasource) getReleases(dependency *shared.Dependency) ([]*
 	// Get a host rule if any was defined
 	relevantHostRule := ds.Config.FilterHostConfigsForHost(registryUrl)
 	token := ""
+	user := ""
+	password := ""
 	if relevantHostRule != nil {
 		token = relevantHostRule.TokendExpanded()
+		user = relevantHostRule.Username
+		password = relevantHostRule.Password
 	}
 
 	// Create the client
-	artifactoryManager, err := ds.createManager(registryUrl, token)
+	artifactoryManager, err := ds.createManager(registryUrl, token, user, password)
 	if err != nil {
 		return nil, err
 	}
@@ -95,11 +100,23 @@ type artifactorySearchResultProperty struct {
 	Value string `json:"value"`
 }
 
-func (ds *ArtifactoryDatasource) createManager(baseUrl string, token string) (artifactory.ArtifactoryServicesManager, error) {
+func (ds *ArtifactoryDatasource) createManager(baseUrl string, token string, user string, password string) (artifactory.ArtifactoryServicesManager, error) {
 	artifactoryDetails := auth.NewArtifactoryDetails()
 	artifactoryDetails.SetUrl(baseUrl)
+
+	// Set authentication info
+	if len(user) > 0 {
+		artifactoryDetails.SetUser(user)
+	}
+	if len(password) > 0 {
+		artifactoryDetails.SetPassword(password)
+	}
 	if len(token) > 0 {
-		artifactoryDetails.SetAccessToken(token)
+		if httpclient.IsApiKey(token) {
+			artifactoryDetails.SetApiKey(token)
+		} else {
+			artifactoryDetails.SetAccessToken(token)
+		}
 	}
 
 	configBuilder, err := artifactory_config.NewConfigBuilder().
