@@ -7,15 +7,28 @@ import (
 	"strings"
 
 	"github.com/roemer/gonovate/internal/pkg/shared"
-	"github.com/samber/lo"
 )
 
 // Splits a Docker image into separate name and tag. Uses "latest" if no tag is present.
 func splitDockerDependency(dependencyString string) (string, string) {
 	parts := strings.SplitN(dependencyString, ":", 2)
 	name := parts[0]
-	version := lo.Ternary(len(parts) > 1, parts[1], "latest")
+	var version string
+	if len(parts) > 1 {
+		version = parts[1]
+	} else {
+		version = "latest"
+	}
 	return name, version
+}
+
+func disableDockerIfLatest(dependency *shared.Dependency) {
+	if dependency.Disabled == nil || !*dependency.Disabled {
+		if dependency.Version == "latest" {
+			dependency.Disabled = shared.TruePtr
+			dependency.DisabledReason = "Version is set to 'latest'"
+		}
+	}
 }
 
 func replaceDependencyVersionInFileWithCheck(dependency *shared.Dependency, refetchDependencyFunc func(dependency *shared.Dependency, newFileContent string) (*shared.Dependency, error)) error {
