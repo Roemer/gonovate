@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -35,7 +36,10 @@ func Load(configPath string) (*RootConfig, error) {
 const (
 	infoTypePreset string = "preset"
 	infoTypeLocal  string = "local"
+	infoTypeWeb    string = "web"
 )
+
+var httpSchemeRegex = regexp.MustCompile(`^https?://.+`)
 
 // Holds information about the type and location of a config
 type configInfo struct {
@@ -47,18 +51,26 @@ func newConfigInfo(info string) (*configInfo, error) {
 	if info == "" {
 		return nil, fmt.Errorf("empty config info")
 	}
-	parts := strings.SplitN(info, ":", 2)
+
 	var configType, configLoc string
-	if len(parts) == 1 {
-		configType = infoTypePreset
-		configLoc = parts[0]
+
+	if httpSchemeRegex.MatchString(info) {
+		// The info is an url, so use web
+		configType = infoTypeWeb
+		configLoc = info
 	} else {
-		configType = parts[0]
-		configLoc = parts[1]
-	}
-	// Append the json extension if needed
-	if path.Ext(configLoc) == "" {
-		configLoc += ".json"
+		parts := strings.SplitN(info, ":", 2)
+		if len(parts) == 1 {
+			configType = infoTypePreset
+			configLoc = parts[0]
+		} else {
+			configType = parts[0]
+			configLoc = parts[1]
+		}
+		// Append the json extension if needed
+		if path.Ext(configLoc) == "" {
+			configLoc += ".json"
+		}
 	}
 	// Create the info object
 	return &configInfo{
@@ -71,12 +83,15 @@ func loadConfig(parentInfo, newInfo *configInfo) (*RootConfig, error) {
 	var newConfig *RootConfig
 	var err error
 	// Try load the config according to the type
-	if newInfo.Type == infoTypePreset {
-		newConfig, err = readConfigFromEmbeddedFile(newInfo.Location)
-	} else if newInfo.Type == infoTypeLocal {
+	switch newInfo.Type {
+	case infoTypePreset:
+		newConfig, err = loadConfigFromEmbeddedFile(newInfo.Location)
+	case infoTypeLocal:
 		newConfig, err = loadConfigFromFile(parentInfo, newInfo)
-	} else {
-		return nil, fmt.Errorf("unknown preset type '%s'", newInfo.Type)
+	case infoTypeWeb:
+		newConfig, err = loadConfigFromWeb(newInfo.Location)
+	default:
+		return nil, fmt.Errorf("unknown config type '%s'", newInfo.Type)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed reading config '%s:%s': %w", newInfo.Type, newInfo.Location, err)
@@ -186,7 +201,7 @@ func readConfigFromFile(configPath string) (*RootConfig, error) {
 	return config, nil
 }
 
-func readConfigFromEmbeddedFile(configPath string) (*RootConfig, error) {
+func loadConfigFromEmbeddedFile(configPath string) (*RootConfig, error) {
 	configFile, err := presets.Presets.Open(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed opening embedded file '%s': %w", configPath, err)
@@ -196,6 +211,19 @@ func readConfigFromEmbeddedFile(configPath string) (*RootConfig, error) {
 	config := &RootConfig{}
 	if err = json.NewDecoder(configFile).Decode(config); err != nil {
 		return nil, fmt.Errorf("failed parsing embedded file '%s': %w", configPath, err)
+	}
+	return config, nil
+}
+
+func loadConfigFromWeb(url string) (*RootConfig, error) {
+	content, err := shared.HttpUtil.DownloadToMemory(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed downloading config from '%s': %w", url, err)
+	}
+
+	config := &RootConfig{}
+	if err = json.Unmarshal(content, config); err != nil {
+		return nil, fmt.Errorf("failed parsing config from '%s': %w", url, err)
 	}
 	return config, nil
 }
