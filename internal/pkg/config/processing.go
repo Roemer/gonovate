@@ -107,6 +107,12 @@ func (config *RootConfig) EnrichDependencyFromRules(dependency *shared.Dependenc
 	if dependency.Datasource == "" {
 		dependency.Datasource = mergedDependencySettings.Datasource
 	}
+	if dependency.Disabled == nil {
+		dependency.Disabled = mergedDependencySettings.Disabled
+	}
+	if dependency.DisabledReason == "" {
+		dependency.DisabledReason = mergedDependencySettings.DisabledReason
+	}
 	if dependency.MaxUpdateType == "" {
 		dependency.MaxUpdateType = mergedDependencySettings.MaxUpdateType
 	}

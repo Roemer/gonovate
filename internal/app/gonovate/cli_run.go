@@ -191,6 +191,16 @@ func RunCmd(args []string) error {
 			// Enrich the dependency with settings from the config/rules
 			projectConfig.EnrichDependencyFromRules(dependency)
 
+			// Skip the dependency if it was disabled
+			if dependency.Disabled != nil && *dependency.Disabled {
+				reason := ""
+				if dependency.DisabledReason != "" {
+					reason = " Reason: " + dependency.DisabledReason
+				}
+				logger.Info(fmt.Sprintf("Dependency is disabled, skipping it.%s", reason))
+				continue
+			}
+
 			// Lookup the correct datasource
 			ds, err := datasources.GetDatasource(logger, projectConfig, dependency.Datasource)
 			if err != nil {
