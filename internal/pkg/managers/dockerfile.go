@@ -32,7 +32,7 @@ func NewDockerfileManager(logger *slog.Logger, id string, rootConfig *config.Roo
 
 func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*shared.Dependency, error) {
 	// Setup
-	dockerFromRegex := regexp.MustCompile(`^FROM (.*)$`)
+	dockerFromRegex := regexp.MustCompile(`^FROM(?:\s+--platform=.*?)?\s+(.+?)\s*(?:(?:as|AS)\s*.+\s*)?$`)
 
 	// Read the file
 	fileContentBytes, err := os.ReadFile(filePath)
