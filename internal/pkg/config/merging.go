@@ -172,13 +172,13 @@ func (dependencySettingsA *DependencySettings) MergeWith(dependencySettingsB *De
 	if dependencySettingsB == nil {
 		return
 	}
-	// Disabled
-	if dependencySettingsB.Disabled != nil {
-		dependencySettingsA.Disabled = dependencySettingsB.Disabled
+	// Skip
+	if dependencySettingsB.Skip != nil {
+		dependencySettingsA.Skip = dependencySettingsB.Skip
 	}
-	// DisabledReason
-	if dependencySettingsB.DisabledReason != "" {
-		dependencySettingsA.DisabledReason = dependencySettingsB.DisabledReason
+	// SkipReason
+	if dependencySettingsB.SkipReason != "" {
+		dependencySettingsA.SkipReason = dependencySettingsB.SkipReason
 	}
 	// MaxUpdateType
 	if dependencySettingsB.MaxUpdateType != "" {

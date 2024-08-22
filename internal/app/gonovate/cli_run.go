@@ -192,12 +192,12 @@ func RunCmd(args []string) error {
 			projectConfig.EnrichDependencyFromRules(dependency)
 
 			// Skip the dependency if it was disabled
-			if dependency.Disabled != nil && *dependency.Disabled {
+			if dependency.Skip != nil && *dependency.Skip {
 				reason := ""
-				if dependency.DisabledReason != "" {
-					reason = " Reason: " + dependency.DisabledReason
+				if dependency.SkipReason != "" {
+					reason = " Reason: " + dependency.SkipReason
 				}
-				logger.Info(fmt.Sprintf("Dependency is disabled, skipping it.%s", reason))
+				logger.Info(fmt.Sprintf("Skipping dependency.%s", reason))
 				continue
 			}
 

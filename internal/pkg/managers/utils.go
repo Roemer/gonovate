@@ -23,10 +23,10 @@ func splitDockerDependency(dependencyString string) (string, string) {
 }
 
 func disableDockerIfLatest(dependency *shared.Dependency) {
-	if dependency.Disabled == nil || !*dependency.Disabled {
+	if dependency.Skip == nil || !*dependency.Skip {
 		if dependency.Version == "latest" {
-			dependency.Disabled = shared.TruePtr
-			dependency.DisabledReason = "Version is set to 'latest'"
+			dependency.Skip = shared.TruePtr
+			dependency.SkipReason = "Version is set to 'latest'"
 		}
 	}
 }

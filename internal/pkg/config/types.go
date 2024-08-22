@@ -71,9 +71,9 @@ type ManagerSettings struct {
 
 type DependencySettings struct {
 	// A flag that allows disabling individual dependencies.
-	Disabled *bool `json:"disabled"`
+	Skip *bool `json:"skip"`
 	// An optional text to describe, why a dependency was disabled.
-	DisabledReason string `json:"disabledReason"`
+	SkipReason string `json:"skipReason"`
 	// Defines how much the dependency is allowed to update. Can be "major", "minor", or "patch".
 	MaxUpdateType shared.UpdateType `json:"maxUpdateType"`
 	// This flag defines if unstable releases are allowed. Unstable usually means a version that also has parts with text.
