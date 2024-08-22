@@ -356,5 +356,7 @@ func RunCmd(args []string) error {
 		}
 	}
 
+	logger.Info("Gonovate finished successfully")
+
 	return nil
 }
