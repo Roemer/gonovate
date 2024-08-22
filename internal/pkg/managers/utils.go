@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/roemer/gonovate/internal/pkg/shared"
@@ -22,11 +23,11 @@ func splitDockerDependency(dependencyString string) (string, string) {
 	return name, version
 }
 
-func disableDockerIfLatest(dependency *shared.Dependency) {
+func disableIfVersionMatches(dependency *shared.Dependency, skipValues ...string) {
 	if dependency.Skip == nil || !*dependency.Skip {
-		if dependency.Version == "latest" {
+		if slices.Contains(skipValues, dependency.Version) {
 			dependency.Skip = shared.TruePtr
-			dependency.SkipReason = "Version is set to 'latest'"
+			dependency.SkipReason = fmt.Sprintf("Version is set to '%s'", dependency.Version)
 		}
 	}
 }

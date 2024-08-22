@@ -80,7 +80,7 @@ func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent st
 			Version:    version,
 			Type:       "image",
 		}
-		disableDockerIfLatest(newDepencency)
+		disableIfVersionMatches(newDepencency, "latest")
 		foundDependencies = append(foundDependencies, newDepencency)
 	}
 
@@ -94,7 +94,7 @@ func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent st
 			Version:    version,
 			Type:       "feature",
 		}
-		disableDockerIfLatest(featureDependency)
+		disableIfVersionMatches(featureDependency, "latest")
 		foundDependencies = append(foundDependencies, featureDependency)
 
 		if len(dependenciesInsideFeature) == 0 {
@@ -127,6 +127,7 @@ func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent st
 					Datasource: featureDependency.Datasource,
 					Version:    propertyString,
 				}
+				disableIfVersionMatches(newDependencyInsideFeature, "latest", "none")
 				foundDependencies = append(foundDependencies, newDependencyInsideFeature)
 			}
 		}
