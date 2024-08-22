@@ -56,6 +56,10 @@ func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*share
 				Version:     version,
 				ManagerData: &dockerfileData{lineNumber: lineCount},
 			}
+			if version == "latest" {
+				newDepencency.Disabled = shared.TruePtr
+				newDepencency.DisabledReason = "Version is set to 'latest'"
+			}
 			foundDependencies = append(foundDependencies, newDepencency)
 			break
 		}
