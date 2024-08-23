@@ -1,6 +1,15 @@
+# Rules for dockerfile manager and versioning from docker datasource
 rules:
+  # The dockerfile manager
   - matches:
-      DependencyNames:
+      managerTypes:
+        - dockerfile
+    managerSettings:
+      filePatterns:
+        - "**/Dockerfile"
+  # Docker images versioning
+  - matches:
+      dependencyNames:
         - alpine
     dependencySettings:
       versioning: preset:semver

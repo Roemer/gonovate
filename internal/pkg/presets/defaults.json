@@ -9,27 +9,22 @@
         "**/bower_components",
         "**/.git"
     ],
+    "extends": [
+        "generic",
+        "browser",
+        "devcontainer",
+        "docker",
+        "github",
+        "go",
+        "java",
+        "node"
+    ],
     "matchStringPresets": {
-        "docker-image-in-quotes": {
-            "matchString": "(?m)^\\s*\"(?P<dependencyName>.+):(?P<version>.+)\".*$"
+        "dependency-colon-version": {
+            "matchString": "(?m)^\\s*\"?(?P<dependencyName>[^\":\\s]+)\"?\\s*:\\s*\"?(?P<version>[^\"\\s]+)\"?\\s*$"
         },
-        "docker-image-from": {
-            "matchString": "(?m)^FROM (?P<dependencyName>.+):(?P<version>.+)\\s*$"
-        },
-        "json-version": {
-            "matchString": "(?m)^\\s*\"%s\"\\s*:\\s*\"(?P<version>.+)\".*$",
-            "parameterDefaults": [
-                "version"
-            ]
-        },
-        "key-value": {
-            "matchString": "(?m)^\\s*%s\\s*:\\s*(?P<version>\\S+)\\s*$",
-            "parameterDefaults": [
-                "version"
-            ]
-        },
-        "key-value-in-quotes": {
-            "matchString": "(?m)^\\s*\"%s\"\\s*:\\s*\"(?P<version>.+)\".*$",
+        "key-colon-version": {
+            "matchString": "(?m)^\\s*\"?%s\"?\\s*:\\s*\"?(?P<version>[^\"\\s]+)\"?\\s*$",
             "parameterDefaults": [
                 "version"
             ]
@@ -38,137 +33,5 @@
     "versioningPresets": {
         "semver": "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-([^+]+))?(?:\\+(.*))?$",
         "major-minor-patch": "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$"
-    },
-    "rules": [
-        {
-            "dependencySettings": {
-                "maxUpdateType": "minor",
-                "versioning": "preset:major-minor-patch"
-            }
-        },
-        {
-            "matches": {
-                "datasources": [
-                    "browser-version"
-                ],
-                "dependencyNames": [
-                    "chrome",
-                    "chrome-for-testing"
-                ]
-            },
-            "dependencySettings": {
-                "versioning": "^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$",
-                "maxUpdateType": "major"
-            }
-        },
-        {
-            "matches": {
-                "datasources": [
-                    "browser-version"
-                ],
-                "dependencyNames": [
-                    "firefox"
-                ]
-            },
-            "dependencySettings": {
-                "versioning": "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+))?$",
-                "maxUpdateType": "major"
-            }
-        },
-        {
-            "matches": {
-                "managerTypes": [
-                    "dockerfile"
-                ]
-            },
-            "managerSettings": {
-                "filePatterns": [
-                    "**/Dockerfile"
-                ]
-            }
-        },
-        {
-            "matches": {
-                "managerTypes": [
-                    "go-mod"
-                ]
-            },
-            "managerSettings": {
-                "filePatterns": [
-                    "go.mod"
-                ]
-            }
-        },
-        {
-            "matches": {
-                "datasources": [
-                    "gradle"
-                ]
-            },
-            "dependencySettings": {
-                "versioning": "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?$"
-            }
-        },
-        {
-            "matches": {
-                "datasources": [
-                    "java-version"
-                ]
-            },
-            "dependencySettings": {
-                "versioning": "preset:semver"
-            }
-        },
-        {
-            "matches": {
-                "datasources": [
-                    "maven"
-                ]
-            },
-            "dependencySettings": {
-                "versioning": "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:-([^-]+))?(?:-(\\d+))?$"
-            }
-        },
-        {
-            "matches": {
-                "datasources": [
-                    "nodejs"
-                ]
-            },
-            "dependencySettings": {
-                "extractVersion": "v(.*)"
-            }
-        },
-        {
-            "matches": {
-                "datasources": [
-                    "npm"
-                ]
-            },
-            "dependencySettings": {
-                "versioning": "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-(.+?))?(?:[-\\.](\\d+))?(?:[-\\.](\\d+))?$"
-            }
-        },
-        {
-            "matches": {
-                "datasources": [
-                    "go-version"
-                ]
-            },
-            "dependencySettings": {
-                "extractVersion": "go(.*)",
-                "versioning": "(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+)?)?$"
-            }
-        },
-        {
-            "matches": {
-                "datasources": [
-                    "go-mod"
-                ]
-            },
-            "dependencySettings": {
-                "versioning": "v?(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+)?)?$"
-            }
-        }
-    ]
+    }
 }

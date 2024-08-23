@@ -1,0 +1,18 @@
+rules:
+  - matches:
+      datasources:
+        - browser-version
+      dependencyNames:
+        - chrome
+        - chrome-for-testing
+    dependencySettings:
+      versioning: "^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$"
+      maxUpdateType: major
+  - matches:
+      datasources:
+        - browser-version
+      dependencyNames:
+        - firefox
+    dependencySettings:
+      versioning: "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+))?$"
+      maxUpdateType: major

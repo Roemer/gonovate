@@ -1,0 +1,16 @@
+rules:
+  - matches:
+      datasources:
+        - java-version
+    dependencySettings:
+      versioning: preset:semver
+  - matches:
+      datasources:
+        - maven
+    dependencySettings:
+      versioning: "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:-([^-]+))?(?:-(\\d+))?$"
+  - matches:
+      datasources:
+        - gradle
+    dependencySettings:
+      versioning: "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?$"

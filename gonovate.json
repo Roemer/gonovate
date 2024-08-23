@@ -9,8 +9,7 @@
         ]
     },
     "extends": [
-        "defaults",
-        "devcontainer"
+        "defaults"
     ],
     "ignorePatterns": [
         "examples"
@@ -44,7 +43,7 @@
     "rules": [
         {
             "matches": {
-                "DependencyNames": [
+                "dependencyNames": [
                     "mcr.microsoft.com/devcontainers/base"
                 ]
             },
@@ -55,7 +54,7 @@
         },
         {
             "matches": {
-                "DependencyNames": [
+                "dependencyNames": [
                     "go-stable"
                 ]
             },

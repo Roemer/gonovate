@@ -1,0 +1,13 @@
+rules:
+  - matches:
+      dependencyNames:
+        - ahmetb/kubectx
+        - derailed/k9s
+        - kubernetes/kubernetes
+    dependencySettings:
+      extractVersion: v(.*)
+  - matches:
+      dependencyNames:
+        - kubernetes-sigs/kustomize
+    dependencySettings:
+      extractVersion: (?:kustomize/)?v(.*)
