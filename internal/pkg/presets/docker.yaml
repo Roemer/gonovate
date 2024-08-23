@@ -1,6 +1,6 @@
 rules:
-- matches:
-    DependencyNames:
-    - alpine
-  dependencySettings:
-    versioning: preset:semver
+  - matches:
+      DependencyNames:
+        - alpine
+    dependencySettings:
+      versioning: preset:semver

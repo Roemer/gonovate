@@ -1,26 +1,26 @@
 rules:
-- matches:
-    managerTypes:
-    - devcontainer
-  managerSettings:
-    filePatterns:
-    - "**/devcontainer.json"
-    devcontainerSettings:
-      ghcr.io/devcontainers-contrib/features/devcontainers-cli:
-      - property: version
-        datasource: npm
-        dependencyName: "@devcontainers/cli"
-      ghcr.io/devcontainers/features/go:
-      - property: version
-        datasource: go-version
-        dependencyName: go-stable
-      ghcr.io/devcontainers/features/java:
-      - property: version
-        datasource: java-version
-        dependencyName: java-jdk
-      - property: mavenVersion
-        datasource: maven
-        dependencyName: org.apache.maven:maven
-      - property: gradleVersion
-        datasource: gradle-version
-        dependencyName: gradle
+  - matches:
+      managerTypes:
+        - devcontainer
+    managerSettings:
+      filePatterns:
+        - "**/devcontainer.json"
+      devcontainerSettings:
+        ghcr.io/devcontainers-contrib/features/devcontainers-cli:
+          - property: version
+            datasource: npm
+            dependencyName: "@devcontainers/cli"
+        ghcr.io/devcontainers/features/go:
+          - property: version
+            datasource: go-version
+            dependencyName: go-stable
+        ghcr.io/devcontainers/features/java:
+          - property: version
+            datasource: java-version
+            dependencyName: java-jdk
+          - property: mavenVersion
+            datasource: maven
+            dependencyName: org.apache.maven:maven
+          - property: gradleVersion
+            datasource: gradle-version
+            dependencyName: gradle
