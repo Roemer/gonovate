@@ -26,7 +26,7 @@ func RunCmd(args []string) error {
 	flagSet := flag.NewFlagSet("run", flag.ExitOnError)
 	flagSet.BoolVar(&verbose, "verbose", false, "The flag to set in order to get verbose output")
 	flagSet.BoolVar(&verbose, "v", verbose, "Alias for -verbose")
-	flagSet.StringVar(&configFile, "config", "gonovate.json", "The path to the config file to read")
+	flagSet.StringVar(&configFile, "config", "gonovate", "The path to the config file to read")
 	flagSet.StringVar(&workingDirectory, "workDir", "", "The path to the working directory")
 	flagSet.StringVar(&platformOverride, "platform", "", "Allows overriding the platform. Usefull for testing when setting to 'noop'.")
 	flagSet.Usage = func() { printCmdUsage(flagSet, "run", "") }
@@ -114,10 +114,10 @@ func RunCmd(args []string) error {
 				return err
 			}
 			// If the project has its own config file, merge it
-			if hasProjectConfig, err := config.HasProjectConfig(); err != nil {
+			if foundPath, err := config.HasProjectConfig(); err != nil {
 				return err
-			} else if hasProjectConfig {
-				projectConfigFromFile, err := config.Load("gonovate.json")
+			} else if foundPath != "" {
+				projectConfigFromFile, err := config.Load(foundPath)
 				if err != nil {
 					return err
 				}

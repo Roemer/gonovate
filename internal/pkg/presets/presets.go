@@ -2,5 +2,5 @@ package presets
 
 import "embed"
 
-//go:embed *.json
+//go:embed *.json *.yaml
 var Presets embed.FS

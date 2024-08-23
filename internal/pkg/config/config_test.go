@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/roemer/gonovate/internal/pkg/shared"
@@ -123,4 +125,33 @@ func TestPostLoadProcess(t *testing.T) {
 	assert.NotNil(checkRule.DependencySettings)
 	assert.Equal(checkRule.DependencySettings.DependencyName, "depName")
 	assert.Equal(checkRule.DependencySettings.Versioning, "1.0.0")
+}
+
+func TestFileSearch(t *testing.T) {
+	assert := assert.New(t)
+
+	testFileSearch(assert, "gonovate.json", "gonovate")
+	testFileSearch(assert, "gonovate.yaml", "gonovate")
+	testFileSearch(assert, "gonovate.yml", "gonovate")
+
+	testFileSearch(assert, "folder/gonovate.json", "folder/gonovate")
+	testFileSearch(assert, "folder/gonovate.yaml", "folder/gonovate")
+	testFileSearch(assert, "folder/gonovate.yml", "folder/gonovate")
+
+	os.RemoveAll("folder")
+}
+
+func testFileSearch(assert *assert.Assertions, fileToCreate string, searchPath string) {
+	// Create the file and folder structure
+	err := os.MkdirAll(filepath.Dir(fileToCreate), os.ModePerm)
+	assert.NoError(err)
+	myfile, err := os.Create(fileToCreate)
+	assert.NoError(err)
+	myfile.Close()
+	// Search for the file
+	newPath, err := SearchConfigFileFromPath(searchPath)
+	assert.NoError(err)
+	assert.Equal(fileToCreate, filepath.ToSlash(newPath))
+	// Delete the file
+	os.Remove(fileToCreate)
 }
