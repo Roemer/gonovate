@@ -1,5 +1,27 @@
 # Change Log
 
+## v0.4.0 (2024-08-23)
+
+### Features
+
+* Improved config loader for local files and presets
+* Config loader can now load from an url
+* Support yaml configs
+* Added possibility to skip individual dependencies
+* Implemented api tokens for GitHub releases/tags
+* Added a finished message
+* Improved artifactory authentication (apikey, token, username/password)
+* **manager:** Added Devcontainer manager
+* **datasource:** Added Java-Version datasource
+* **datasource:** Added Gradle-Version datasource
+* **datasource:** Added Browser-Version datasource
+* **datasource:** Added Ant-Version datasource
+
+### Fixes
+
+* Fixed regex to better parse Dockerfile 'FROM' lines
+* Ignore Docker dependencies with 'latest' tag
+
 ## v0.3.0 (2024-08-16)
 
 ### Features
