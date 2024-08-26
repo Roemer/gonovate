@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/roemer/gonovate/internal/pkg/config"
 	"github.com/roemer/gonovate/internal/pkg/shared"
@@ -59,11 +60,14 @@ func (manager *GoModManager) ExtractDependencies(filePath string) ([]*shared.Dep
 		}
 		// Match a module
 		if match := shared.FindNamedMatchesWithIndex(moduleRegex, line, false); match != nil {
+			version := match["version"][0].Value
+			version = strings.TrimSuffix(version, "+incompatible")
+
 			newDepencency := &shared.Dependency{
 				Name:       match["module"][0].Value,
 				Datasource: shared.DATASOURCE_TYPE_GOMOD,
 				Type:       "direct",
-				Version:    match["version"][0].Value,
+				Version:    version,
 			}
 			if v, ok := match["comment"]; ok && v[0].Value == "indirect" {
 				newDepencency.Type = "indirect"
