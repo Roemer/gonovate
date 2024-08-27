@@ -73,12 +73,16 @@ func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent st
 
 	// Search for an image dependency
 	if inlineConfig.Image != "" {
-		name, version := splitDockerDependency(inlineConfig.Image)
+		name, tag, digest := splitDockerDependency(inlineConfig.Image)
 		newDepencency := &shared.Dependency{
-			Name:       name,
-			Datasource: shared.DATASOURCE_TYPE_DOCKER,
-			Version:    version,
-			Type:       "image",
+			Name:           name,
+			Datasource:     shared.DATASOURCE_TYPE_DOCKER,
+			Version:        tag,
+			Type:           "image",
+			AdditionalData: map[string]string{},
+		}
+		if digest != "" {
+			newDepencency.AdditionalData["digest"] = digest
 		}
 		disableIfVersionMatches(newDepencency, "latest")
 		foundDependencies = append(foundDependencies, newDepencency)
@@ -87,12 +91,17 @@ func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent st
 	// Search for features and dependencies inside features
 	for feature, dependenciesInsideFeature := range inlineConfig.Features {
 		// Create the feature dependency
-		name, version := splitDockerDependency(feature)
+		name, tag, digest := splitDockerDependency(feature)
 		featureDependency := &shared.Dependency{
-			Name:       name,
-			Datasource: shared.DATASOURCE_TYPE_DOCKER,
-			Version:    version,
-			Type:       "feature",
+			Name:           name,
+			Datasource:     shared.DATASOURCE_TYPE_DOCKER,
+			Version:        tag,
+			Type:           "feature",
+			AdditionalData: map[string]string{},
+		}
+		if digest != "" {
+			// Features currently cannot contain digests, but might in the future
+			featureDependency.AdditionalData["digest"] = digest
 		}
 		disableIfVersionMatches(featureDependency, "latest")
 		foundDependencies = append(foundDependencies, featureDependency)

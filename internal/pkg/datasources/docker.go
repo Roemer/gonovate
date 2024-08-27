@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/roemer/gonovate/internal/pkg/config"
@@ -77,6 +78,43 @@ func (ds *DockerDatasource) getReleases(dependency *shared.Dependency) ([]*share
 		})
 	}
 	return releases, nil
+}
+
+func (ds *DockerDatasource) getAdditionalData(dependency *shared.Dependency, newRelease *shared.ReleaseInfo, dataType string) (string, error) {
+	if dataType != "digest" {
+		return "", fmt.Errorf("dataType '%s' is not supported", dataType)
+	}
+
+	customRegistryUrl := ds.getRegistryUrl("", dependency.RegistryUrls)
+	registryUrl, imagePath, err := getDockerRegistry(dependency.Name, customRegistryUrl)
+	if err != nil {
+		return "", err
+	}
+
+	// Parse the registry url
+	baseUrl, err := url.Parse(registryUrl)
+	if err != nil {
+		return "", err
+	}
+	// Add the v2 endpoint
+	baseUrl = baseUrl.JoinPath("v2")
+
+	// Get a host rule if any was defined
+	relevantHostRule := ds.Config.FilterHostConfigsForHost(baseUrl.Host)
+
+	// Get an authentication token
+	authToken, err := ds.getAuthToken(baseUrl, imagePath, relevantHostRule)
+	if err != nil {
+		return "", err
+	}
+
+	// Get the digest
+	digest, err := ds.getDigestWithToken(baseUrl, imagePath, newRelease.VersionString, authToken)
+	if err != nil {
+		return "", err
+	}
+
+	return digest, nil
 }
 
 // Processes the package name and registry url and returns the concrete host and image path
@@ -255,4 +293,107 @@ func (ds *DockerDatasource) getTagsWithToken(baseUrl *url.URL, dependencyName st
 	}
 
 	return allTags, nil
+}
+
+// Gets the tags according to the v2 api spec. It uses a bearer (token) if one is given.
+func (ds *DockerDatasource) getDigestWithToken(baseUrl *url.URL, imageName string, tag string, bearerToken string) (string, error) {
+	// Build the initial url
+	manifestUrl := baseUrl.JoinPath(imageName, "manifests", tag)
+
+	ds.logger.Debug(fmt.Sprintf("Fetching Docker manifest from url: %s", manifestUrl))
+
+	// First try with a head request the appropriate header
+	{
+		req, err := ds.getManifestRequest(manifestUrl, bearerToken, http.MethodHead)
+		if err != nil {
+			return "", err
+		}
+		// Perform the request
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return "", err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != 200 {
+			return "", fmt.Errorf("failed getting Docker manifest (HEAD): statuscode %d", resp.StatusCode)
+		}
+
+		// Check if the content type declares the resource as a manifest for an image
+		contentType := resp.Header.Get("Content-Type")
+		imageManifestContentTypes := []string{
+			"application/vnd.docker.distribution.manifest.v2+json",
+		}
+		if contentType != "" && slices.Contains(imageManifestContentTypes, contentType) {
+			// Try get the manifest via the header
+			digest := resp.Header.Get("Docker-Content-Digest")
+			if digest != "" {
+				// Got one, use it
+				return digest, nil
+			}
+		}
+	}
+
+	// Alternatively, get the full manifest, parse it and return the manifest from there
+	{
+		req, err := ds.getManifestRequest(manifestUrl, bearerToken, http.MethodGet)
+		if err != nil {
+			return "", err
+		}
+		// Perform the request
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return "", err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != 200 {
+			return "", fmt.Errorf("failed getting Docker manifest (GET): statuscode %d", resp.StatusCode)
+		}
+
+		// Parse the object
+		var manifest dockerManifest
+		if err := json.NewDecoder(resp.Body).Decode(&manifest); err != nil {
+			return "", fmt.Errorf("failed parsing Docker manifest from response: %w", err)
+		}
+
+		// If there are any manifests, return the first one
+		if len(manifest.Manifests) > 0 {
+			return manifest.Manifests[0].Digest, nil
+		}
+	}
+
+	return "", fmt.Errorf("failed to find Docker manifest for %s", imageName)
+}
+
+func (ds *DockerDatasource) getManifestRequest(manifestUrl *url.URL, bearerToken string, method string) (*http.Request, error) {
+	req, err := http.NewRequest(method, manifestUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	// Add the bearer token
+	if len(bearerToken) > 0 {
+		shared.HttpUtil.AddBearerToRequest(req, bearerToken)
+	}
+	// Add the appropriate headers
+	req.Header.Set("Accept", strings.Join([]string{
+		"application/vnd.docker.distribution.manifest.list.v2+json",
+		"application/vnd.docker.distribution.manifest.v2+json",
+		"application/vnd.oci.image.manifest.v1+json",
+		"application/vnd.oci.image.index.v1+json",
+	}, ", "))
+	return req, nil
+}
+
+type dockerManifest struct {
+	SchemaVersion int    `json:"schemaVersion"`
+	MediaType     string `json:"mediaType"`
+	Manifests     []struct {
+		MediaType string `json:"mediaType"`
+		Digest    string `json:"digest"`
+		Size      int    `json:"size"`
+		Platform  struct {
+			Architecture string `json:"architecture"`
+			Os           string `json:"os"`
+			Variant      string `json:"variant"`
+		} `json:"platform"`
+	} `json:"manifests"`
 }

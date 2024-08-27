@@ -32,7 +32,7 @@ func NewDockerfileManager(logger *slog.Logger, id string, rootConfig *config.Roo
 
 func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*shared.Dependency, error) {
 	// Setup
-	dockerFromRegex := regexp.MustCompile(`^FROM(?:\s+--platform=.*?)?\s+(.+?)(?:\s+(?:as|AS)\s+.+)?\s*$`)
+	dockerFromRegex := regexp.MustCompile(`^FROM(?:\s+--platform=(.*)?)?\s+(.+?)(?:\s+(?:as|AS)\s+.+)?\s*$`)
 
 	// Read the file
 	fileContentBytes, err := os.ReadFile(filePath)
@@ -49,12 +49,21 @@ func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*share
 		line := scanner.Text()
 		// Search for the marker
 		if match := dockerFromRegex.FindStringSubmatch(line); match != nil {
-			name, version := splitDockerDependency(match[1])
+			platform := match[1]
+			image := match[2]
+			name, tag, digest := splitDockerDependency(image)
 			newDepencency := &shared.Dependency{
-				Name:        name,
-				Datasource:  shared.DATASOURCE_TYPE_DOCKER,
-				Version:     version,
-				ManagerData: &dockerfileData{lineNumber: lineCount},
+				Name:           name,
+				Datasource:     shared.DATASOURCE_TYPE_DOCKER,
+				Version:        tag,
+				ManagerData:    &dockerfileData{lineNumber: lineCount},
+				AdditionalData: map[string]string{},
+			}
+			if platform != "" {
+				newDepencency.AdditionalData["platform"] = platform
+			}
+			if digest != "" {
+				newDepencency.AdditionalData["digest"] = digest
 			}
 			disableIfVersionMatches(newDepencency, "latest")
 			foundDependencies = append(foundDependencies, newDepencency)
@@ -74,7 +83,8 @@ func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*share
 
 func (manager *DockerfileManager) ApplyDependencyUpdate(dependency *shared.Dependency) error {
 	data := dependency.ManagerData.(*dockerfileData)
-	return replaceVersionInFileLine(dependency.FilePath, dependency.Version, dependency.NewRelease.VersionString, data.lineNumber)
+	oldFullVersion, newFullVersion := getDockerCurrentAndNewFullVersion(dependency)
+	return replaceVersionInFileLine(dependency.FilePath, oldFullVersion, newFullVersion, data.lineNumber)
 }
 
 ////////////////////////////////////////////////////////////
