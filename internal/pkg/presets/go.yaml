@@ -15,5 +15,5 @@ rules:
       datasources:
         - go-mod
     dependencySettings:
-      extractVersion: ^(.*?)(?:\\+incompatible)?$
+      extractVersion: "^(.*?)(?:\\+incompatible)?$"
       versioning: "^v?(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+)?)?$"
