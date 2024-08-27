@@ -152,6 +152,7 @@ func (ds *datasourceBase) SearchDependencyUpdate(dependency *shared.Dependency) 
 	// Search for an update
 	maxValidRelease := gover.FindMaxGeneric(avaliableReleases, func(x *shared.ReleaseInfo) *gover.Version { return x.Version }, refVersion, !allowUnstable)
 
+	// Early exit if no release was found at all
 	if maxValidRelease == nil {
 		ds.logger.Warn("No valid releases found within the desired limits")
 		return nil, nil, nil

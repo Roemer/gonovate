@@ -51,45 +51,24 @@ func (ds *DockerDatasource) getReleases(dependency *shared.Dependency) ([]*share
 	// Get a host rule if any was defined
 	relevantHostRule := ds.Config.FilterHostConfigsForHost(baseUrl.Host)
 
-	// Different handling for different sites
-	var tags []string
-	if strings.Contains(baseUrl.Host, "index.docker.io") {
-		tags, err = ds.getTagsForDocker(baseUrl, imagePath, relevantHostRule)
-		if err != nil {
-			return nil, err
-		}
-	} else if strings.Contains(baseUrl.Host, "ghcr.io") {
-		tags, err = ds.getTagsForGhcr(baseUrl, imagePath, relevantHostRule)
-		if err != nil {
-			return nil, err
-		}
-	} else if strings.Contains(baseUrl.Host, "gcr.io") {
-		tags, err = ds.getTagsForGcr(baseUrl, imagePath, relevantHostRule)
-		if err != nil {
-			return nil, err
-		}
-	} else if strings.Contains(baseUrl.Host, "quay.io") {
-		// For quay we need a special token
-		tags, err = ds.getTagsForQuay(baseUrl, imagePath, relevantHostRule)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		// For everything else we just use a bearer token (if provided), eg. Artifactory
-		bearerToken := ""
-		if relevantHostRule != nil {
-			bearerToken = relevantHostRule.TokendExpanded()
-		}
-		tags, err = ds.getTagsWithToken(baseUrl, imagePath, bearerToken)
-		if err != nil {
-			return nil, err
-		}
+	// Get an authentication token
+	authToken, err := ds.getAuthToken(baseUrl, imagePath, relevantHostRule)
+	if err != nil {
+		return nil, err
 	}
+
+	// Fetch all tags
+	tags, err := ds.getTagsWithToken(baseUrl, imagePath, authToken)
+	if err != nil {
+		return nil, err
+	}
+
 	// Filter out common tags
 	tags = lo.Filter(tags, func(x string, index int) bool {
 		return x != "latest"
 	})
 	ds.logger.Debug(fmt.Sprintf("Found %d tag(s)", len(tags)))
+
 	// Convert the tags to release infos
 	releases := []*shared.ReleaseInfo{}
 	for _, tag := range tags {
@@ -179,36 +158,24 @@ func ensureTrailingSlash(url string) string {
 	return url + "/"
 }
 
-func (ds *DockerDatasource) getTagsForDocker(baseUrl *url.URL, dependencyName string, hostRule *config.HostRule) ([]string, error) {
-	token, err := ds.getJwtToken("https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull", dependencyName, hostRule)
-	if err != nil {
-		return nil, err
+func (ds *DockerDatasource) getAuthToken(baseUrl *url.URL, dependencyName string, hostRule *config.HostRule) (string, error) {
+	// Different handling for different sites
+	if strings.Contains(baseUrl.Host, "index.docker.io") {
+		return ds.getJwtToken("https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull", dependencyName, hostRule)
+	} else if strings.Contains(baseUrl.Host, "ghcr.io") {
+		return ds.getJwtToken("https://ghcr.io/token?service=ghcr.io&scope=repository:%s:pull", dependencyName, hostRule)
+	} else if strings.Contains(baseUrl.Host, "gcr.io") {
+		return ds.getJwtToken("https://gcr.io/v2/token?service=gcr.io&scope=repository:%s:pull", dependencyName, hostRule)
+	} else if strings.Contains(baseUrl.Host, "quay.io") {
+		return ds.getJwtToken("https://quay.io/v2/auth?service=quay.io&scope=repository:%s:pull", dependencyName, hostRule)
+	} else {
+		// For everything else we just use a bearer token (if provided), eg. Artifactory
+		bearerToken := ""
+		if hostRule != nil {
+			bearerToken = hostRule.TokendExpanded()
+		}
+		return bearerToken, nil
 	}
-	return ds.getTagsWithToken(baseUrl, dependencyName, token)
-}
-
-func (ds *DockerDatasource) getTagsForGhcr(baseUrl *url.URL, dependencyName string, hostRule *config.HostRule) ([]string, error) {
-	token, err := ds.getJwtToken("https://ghcr.io/token?service=ghcr.io&scope=repository:%s:pull", dependencyName, hostRule)
-	if err != nil {
-		return nil, err
-	}
-	return ds.getTagsWithToken(baseUrl, dependencyName, token)
-}
-
-func (ds *DockerDatasource) getTagsForGcr(baseUrl *url.URL, dependencyName string, hostRule *config.HostRule) ([]string, error) {
-	token, err := ds.getJwtToken("https://gcr.io/v2/token?service=gcr.io&scope=repository:%s:pull", dependencyName, hostRule)
-	if err != nil {
-		return nil, err
-	}
-	return ds.getTagsWithToken(baseUrl, dependencyName, token)
-}
-
-func (ds *DockerDatasource) getTagsForQuay(baseUrl *url.URL, dependencyName string, hostRule *config.HostRule) ([]string, error) {
-	token, err := ds.getJwtToken("https://quay.io/v2/auth?service=quay.io&scope=repository:%s:pull", dependencyName, hostRule)
-	if err != nil {
-		return nil, err
-	}
-	return ds.getTagsWithToken(baseUrl, dependencyName, token)
 }
 
 // Creates a request to get a token and returns the token. Uses basic auth uf username/password is provided.
@@ -236,7 +203,7 @@ func (ds *DockerDatasource) getJwtToken(authUrl string, dependencyName string, h
 	return tokenObj.Token, nil
 }
 
-// Gets the tags according to the v2 api spec. It uses a  bearer (token) if one is given.
+// Gets the tags according to the v2 api spec. It uses a bearer (token) if one is given.
 func (ds *DockerDatasource) getTagsWithToken(baseUrl *url.URL, dependencyName string, bearerToken string) ([]string, error) {
 	// Build the initial url
 	tagListUrl := baseUrl.JoinPath(dependencyName, "tags/list")
