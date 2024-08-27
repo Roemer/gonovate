@@ -10,6 +10,11 @@
         {
             "id": "dockerfile",
             "type": "dockerfile",
+            "managerSettings": {
+                "filePatterns": [
+                    "latest.Dockerfile"
+                ]
+            },
             "dependencySettings": {
                 "ignoreNonMatching": true
             }

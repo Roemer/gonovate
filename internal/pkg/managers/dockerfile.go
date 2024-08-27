@@ -64,8 +64,11 @@ func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*share
 			}
 			if digest != "" {
 				newDepencency.AdditionalData["digest"] = digest
+				skipVersionCheckIfVersionMatches(newDepencency, "latest")
+			} else {
+				// Without digest and with latest only, we cannot update
+				skipIfVersionMatches(newDepencency, "latest")
 			}
-			disableIfVersionMatches(newDepencency, "latest")
 			foundDependencies = append(foundDependencies, newDepencency)
 			break
 		}

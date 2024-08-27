@@ -208,7 +208,7 @@ func RunCmd(args []string) error {
 			}
 
 			// Search for a new version
-			newReleaseInfo, _, err := ds.SearchDependencyUpdate(dependency)
+			newReleaseInfo, err := ds.SearchDependencyUpdate(dependency)
 			if err != nil {
 				return err
 			}

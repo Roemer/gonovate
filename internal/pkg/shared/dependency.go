@@ -40,6 +40,8 @@ type Dependency struct {
 	Skip *bool
 	// An optional text to describe, why a dependency was disabled.
 	SkipReason string
+	// Flag to indicate if the version check should be skipped (eg. for versions like latest or jdk8 where there is still a digest)
+	SkipVersionCheck *bool
 
 	// Allows defining regexes that replace further information from dependencies (like hash) after updating.
 	PostUpgradeReplacements []string

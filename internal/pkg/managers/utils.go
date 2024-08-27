@@ -39,12 +39,21 @@ func getDockerCurrentAndNewFullVersion(dependency *shared.Dependency) (string, s
 	return oldVersion, newVersion
 }
 
-// Disables the dependency if the version matches one of the given keywords.
-func disableIfVersionMatches(dependency *shared.Dependency, skipValues ...string) {
+// Skips the dependency if the version matches one of the given keywords.
+func skipIfVersionMatches(dependency *shared.Dependency, skipValues ...string) {
 	if dependency.Skip == nil || !*dependency.Skip {
 		if slices.Contains(skipValues, dependency.Version) {
 			dependency.Skip = shared.TruePtr
 			dependency.SkipReason = fmt.Sprintf("Version is set to '%s'", dependency.Version)
+		}
+	}
+}
+
+// Skips the version check for the given dependency version machtes one of the keywords.
+func skipVersionCheckIfVersionMatches(dependency *shared.Dependency, skipValues ...string) {
+	if dependency.SkipVersionCheck == nil || !*dependency.SkipVersionCheck {
+		if slices.Contains(skipValues, dependency.Version) {
+			dependency.SkipVersionCheck = shared.TruePtr
 		}
 	}
 }
