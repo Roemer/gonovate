@@ -126,6 +126,7 @@ func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent st
 					Name:       featureDependency.DependencyName,
 					Datasource: featureDependency.Datasource,
 					Version:    propertyString,
+					Type:       "dependency",
 				}
 				disableIfVersionMatches(newDependencyInsideFeature, "latest", "none")
 				foundDependencies = append(foundDependencies, newDependencyInsideFeature)

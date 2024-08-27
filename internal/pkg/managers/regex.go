@@ -72,7 +72,7 @@ func (manager *RegexManager) extractDependenciesFromString(fileContent string) (
 		}
 		precompiledRegexList = append(precompiledRegexList, regex)
 	}
-	manager.logger.Debug(fmt.Sprintf("Found %d match pattern(s) to process", len(precompiledRegexList)))
+	manager.logger.Debug(fmt.Sprintf("Found %s to process", shared.GetSingularPluralStringSimple(precompiledRegexList, "match pattern")))
 
 	// Prepare a slice to collect all found dependencies
 	foundDependencies := []*shared.Dependency{}

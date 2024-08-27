@@ -67,7 +67,7 @@ func (ds *DockerDatasource) getReleases(dependency *shared.Dependency) ([]*share
 	tags = lo.Filter(tags, func(x string, index int) bool {
 		return x != "latest"
 	})
-	ds.logger.Debug(fmt.Sprintf("Found %d tag(s)", len(tags)))
+	ds.logger.Debug(fmt.Sprintf("Found %s", shared.GetSingularPluralStringSimple(tags, "tag")))
 
 	// Convert the tags to release infos
 	releases := []*shared.ReleaseInfo{}
