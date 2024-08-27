@@ -14,7 +14,11 @@ import (
 )
 
 type IDatasource interface {
+	// Gets all possible releases for the dependency.
 	getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error)
+	// Gets additional data for the dependency and the new release.
+	getAdditionalData(dependency *shared.Dependency, newRelease *shared.ReleaseInfo, dataType string) (string, error)
+	// Handles the dependency update searching.
 	SearchDependencyUpdate(dependency *shared.Dependency) (*shared.ReleaseInfo, *gover.Version, error)
 }
 
@@ -190,4 +194,11 @@ func (ds *datasourceBase) getRegistryUrl(baseUrl string, customRegistryUrls []st
 	}
 	baseUrl = strings.TrimSuffix(baseUrl, "/")
 	return baseUrl
+}
+
+func (ds *datasourceBase) getAdditionalData(dependency *shared.Dependency, newRelease *shared.ReleaseInfo, dataType string) (string, error) {
+	if value, ok := newRelease.AdditionalData[dataType]; ok {
+		return value, nil
+	}
+	return "", fmt.Errorf("additional data for '%s' not found in dependency '%s'", dataType, dependency.Name)
 }
