@@ -19,6 +19,8 @@ type Dependency struct {
 	ManagerId string
 	// An object that can contain data which is set/read from the manager to process the dependency.
 	ManagerData interface{}
+	// A map that contains additional data about the dependency (for example a digest).
+	AdditionalData map[string]string
 	// The filepath from where this dependency was found.
 	FilePath string
 

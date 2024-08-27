@@ -68,7 +68,7 @@ func (ds *ArtifactoryDatasource) getReleases(dependency *shared.Dependency) ([]*
 		releases = append(releases, &shared.ReleaseInfo{
 			VersionString: item.Name,
 			ReleaseDate:   item.Modified,
-			Hashes: map[string]string{
+			AdditionalData: map[string]string{
 				"md5":    item.Md5,
 				"sha256": item.Sha256,
 			},

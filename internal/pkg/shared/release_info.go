@@ -10,5 +10,6 @@ type ReleaseInfo struct {
 	ReleaseDate   time.Time
 	Version       *gover.Version
 	VersionString string
-	Hashes        map[string]string
+	// Can contain additional data for the release like hashes/digest
+	AdditionalData map[string]string
 }

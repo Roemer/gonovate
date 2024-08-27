@@ -294,10 +294,10 @@ func RunCmd(args []string) error {
 						re := regexp.MustCompile(reStr)
 						fileContent, _ = shared.ReplaceMatchesInRegex(re, fileContent, map[string]string{
 							"version": dependency.NewRelease.Version.Raw,
-							"sha1":    dependency.NewRelease.Hashes["sha1"],
-							"sha256":  dependency.NewRelease.Hashes["sha256"],
-							"sha512":  dependency.NewRelease.Hashes["sha512"],
-							"md5":     dependency.NewRelease.Hashes["md5"],
+							"sha1":    dependency.NewRelease.AdditionalData["sha1"],
+							"sha256":  dependency.NewRelease.AdditionalData["sha256"],
+							"sha512":  dependency.NewRelease.AdditionalData["sha512"],
+							"md5":     dependency.NewRelease.AdditionalData["md5"],
 						})
 					}
 					// Write the file with the changes
