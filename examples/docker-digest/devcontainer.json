@@ -1,0 +1,8 @@
+{
+	"image": "vaultwarden/server:1.32.0@sha256:aaaa",
+	"features": {
+		"ghcr.io/devcontainers/features/go:1.3.1": {
+			"version": "latest"
+		}
+	}
+}

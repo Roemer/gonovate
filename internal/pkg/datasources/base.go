@@ -158,8 +158,29 @@ func (ds *datasourceBase) SearchDependencyUpdate(dependency *shared.Dependency) 
 		return nil, nil, nil
 	}
 
-	// Check if the version is the same
-	if maxValidRelease.Version.Equals(curr) {
+	// Special handling for digest (eg. for Docker)
+	digestDiffers := false
+	// Check if the dependency has a digest set
+	if currentDigest, ok := dependency.AdditionalData["digest"]; ok {
+		// Get the digest for the maximum valid release from the datasource
+		newDigest, err := ds.impl.getAdditionalData(dependency, maxValidRelease, "digest")
+		if err != nil {
+			return nil, nil, err
+		}
+		// Check if the digest differs
+		if currentDigest != newDigest {
+			digestDiffers = true
+		}
+		// Make sure the digest is assigned
+		if maxValidRelease.AdditionalData == nil {
+			maxValidRelease.AdditionalData = map[string]string{}
+		}
+		maxValidRelease.AdditionalData["digest"] = newDigest
+	}
+
+	// Check if the version and digest is the same
+	versionDiffers := !maxValidRelease.Version.Equals(curr)
+	if !versionDiffers && !digestDiffers {
 		ds.logger.Info("No update found")
 		return nil, nil, nil
 	}
@@ -171,7 +192,14 @@ func (ds *datasourceBase) SearchDependencyUpdate(dependency *shared.Dependency) 
 	}
 
 	// It is not the same, return the new version
-	ds.logger.Info(fmt.Sprintf("Update found: %s", maxValidRelease.Version.Raw))
+	changeList := []string{}
+	if versionDiffers {
+		changeList = append(changeList, maxValidRelease.Version.Raw)
+	}
+	if digestDiffers {
+		changeList = append(changeList, "Digest Changed")
+	}
+	ds.logger.Info(fmt.Sprintf("Update found: %s", strings.Join(changeList, " / ")))
 	return maxValidRelease, curr, nil
 }
 

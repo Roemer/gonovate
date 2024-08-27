@@ -1,0 +1,25 @@
+{
+    "platform": "noop",
+    "platformSettings": {
+        "inplace": true
+    },
+    "extends": [
+        "defaults"
+    ],
+    "managers": [
+        {
+            "id": "dockerfile",
+            "type": "dockerfile",
+            "dependencySettings": {
+                "ignoreNonMatching": true
+            }
+        },
+        {
+            "id": "devcontainer",
+            "type": "devcontainer",
+            "dependencySettings": {
+                "ignoreNonMatching": true
+            }
+        }
+    ]
+}
