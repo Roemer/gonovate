@@ -50,8 +50,8 @@ func (ds *NpmDatasource) getReleases(dependency *shared.Dependency) ([]*shared.R
 	releases := []*shared.ReleaseInfo{}
 	for _, entry := range jsonData.Versions {
 		releaseInfo := &shared.ReleaseInfo{
-			VersionString: entry.Version,
-			Hashes:        map[string]string{},
+			VersionString:  entry.Version,
+			AdditionalData: map[string]string{},
 		}
 		// If possible, get a date
 		if date, ok := jsonData.Time[entry.Version]; ok {
@@ -60,7 +60,7 @@ func (ds *NpmDatasource) getReleases(dependency *shared.Dependency) ([]*shared.R
 		// If possible, get checksums
 		if entry.Dist != nil {
 			if entry.Dist.Shasum != "" {
-				releaseInfo.Hashes["sha1"] = entry.Dist.Shasum
+				releaseInfo.AdditionalData["sha1"] = entry.Dist.Shasum
 			}
 			if entry.Dist.Integrity != "" {
 				parts := strings.SplitN(entry.Dist.Integrity, "-", 2)
@@ -70,7 +70,7 @@ func (ds *NpmDatasource) getReleases(dependency *shared.Dependency) ([]*shared.R
 				if err != nil {
 					// TODO: Log warning?
 				} else {
-					releaseInfo.Hashes[algo] = checksumHex
+					releaseInfo.AdditionalData[algo] = checksumHex
 				}
 			}
 		}

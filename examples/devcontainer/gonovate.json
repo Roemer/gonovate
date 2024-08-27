@@ -4,9 +4,7 @@
         "inplace": true
     },
     "extends": [
-        "defaults",
-        "devcontainer",
-        "docker"
+        "defaults"
     ],
     "managers": [
         {
