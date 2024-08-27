@@ -37,10 +37,9 @@ func TestBrowserVersionChrome(t *testing.T) {
 	}
 
 	// Search for an update
-	ri, ver, err := ds.SearchDependencyUpdate(dep)
+	ri, err := ds.SearchDependencyUpdate(dep)
 	assert.NoError(err)
 	assert.NotNil(ri)
-	assert.NotNil(ver)
 	fmt.Println("Update found to version:")
 	fmt.Println(ri.VersionString)
 }

@@ -83,8 +83,11 @@ func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent st
 		}
 		if digest != "" {
 			newDepencency.AdditionalData["digest"] = digest
+			skipVersionCheckIfVersionMatches(newDepencency, "latest")
+		} else {
+			// Without digest and with latest only, we cannot update
+			skipIfVersionMatches(newDepencency, "latest")
 		}
-		disableIfVersionMatches(newDepencency, "latest")
 		foundDependencies = append(foundDependencies, newDepencency)
 	}
 
@@ -102,8 +105,11 @@ func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent st
 		if digest != "" {
 			// Features currently cannot contain digests, but might in the future
 			featureDependency.AdditionalData["digest"] = digest
+			skipVersionCheckIfVersionMatches(featureDependency, "latest")
+		} else {
+			// Without digest and with latest only, we cannot update
+			skipIfVersionMatches(featureDependency, "latest")
 		}
-		disableIfVersionMatches(featureDependency, "latest")
 		foundDependencies = append(foundDependencies, featureDependency)
 
 		if len(dependenciesInsideFeature) == 0 {
@@ -137,7 +143,7 @@ func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent st
 					Version:    propertyString,
 					Type:       "dependency",
 				}
-				disableIfVersionMatches(newDependencyInsideFeature, "latest", "none")
+				skipIfVersionMatches(newDependencyInsideFeature, "latest", "none")
 				foundDependencies = append(foundDependencies, newDependencyInsideFeature)
 			}
 		}
