@@ -38,3 +38,19 @@ func NormalizeString(value string, maxLength int) string {
 	normalizedString = invalidEndingMatcher.ReplaceAllString(normalizedString, "")
 	return normalizedString
 }
+
+func GetDependencyString[T any](list []T) string {
+	return GetSingularPluralString(list, "dependency", "dependencies")
+}
+
+func GetSingularPluralStringSimple[T any](list []T, base string) string {
+	return GetSingularPluralString(list, base, base+"s")
+}
+
+func GetSingularPluralString[T any](list []T, singular string, plural string) string {
+	count := len(list)
+	if count == 1 {
+		return fmt.Sprintf("%d %s", count, singular)
+	}
+	return fmt.Sprintf("%d %s", count, plural)
+}

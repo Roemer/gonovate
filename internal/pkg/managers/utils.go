@@ -23,6 +23,7 @@ func splitDockerDependency(dependencyString string) (string, string) {
 	return name, version
 }
 
+// Disables the dependency if the version matches one of the given keywords.
 func disableIfVersionMatches(dependency *shared.Dependency, skipValues ...string) {
 	if dependency.Skip == nil || !*dependency.Skip {
 		if slices.Contains(skipValues, dependency.Version) {

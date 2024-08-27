@@ -90,7 +90,7 @@ func RunCmd(args []string) error {
 		logger.Warn("No projects found to process")
 		return nil
 	}
-	logger.Info(fmt.Sprintf("Processing %d project(s)", len(projects)))
+	logger.Info(fmt.Sprintf("Processing %s", shared.GetSingularPluralStringSimple(projects, "project")))
 
 	// Process the projects
 	for _, project := range projects {
@@ -134,7 +134,7 @@ func RunCmd(args []string) error {
 
 		// Loop thru the managers and collect the dependencies
 		allDependencies := []*shared.Dependency{}
-		logger.Info(fmt.Sprintf("Searching for dependencies in %d manager(s)", len(projectConfig.Managers)))
+		logger.Info(fmt.Sprintf("Searching for dependencies in %s", shared.GetSingularPluralStringSimple(projectConfig.Managers, "manager")))
 		for _, managerConfig := range projectConfig.Managers {
 			// Get the merged settings for the current manager
 			mergedManagerSettings := projectConfig.GetMergedManagerSettings(managerConfig)
@@ -153,9 +153,9 @@ func RunCmd(args []string) error {
 			}
 
 			// Search for the files relevant for the manager
-			logger.Debug(fmt.Sprintf("Searching files with %d pattern(s)", len(mergedManagerSettings.FilePatterns)))
+			logger.Debug(fmt.Sprintf("Searching files with %s", shared.GetSingularPluralStringSimple(mergedManagerSettings.FilePatterns, "pattern")))
 			matchingFiles, err := shared.SearchFiles(".", mergedManagerSettings.FilePatterns, rootConfig.IgnorePatterns)
-			logger.Debug(fmt.Sprintf("Found %d matching file(s)", len(matchingFiles)))
+			logger.Debug(fmt.Sprintf("Found %s", shared.GetSingularPluralStringSimple(matchingFiles, "matching file")))
 			if err != nil {
 				return err
 			}
@@ -174,14 +174,14 @@ func RunCmd(args []string) error {
 					dependency.ManagerId = manager.Id()
 					dependency.FilePath = matchingFile
 				}
-				logger.Debug(fmt.Sprintf("Found %d dependencies in file", len(currDependencies)))
+				logger.Debug(fmt.Sprintf("Found %s in file", shared.GetDependencyString(currDependencies)))
 				dependenciesInManager = append(dependenciesInManager, currDependencies...)
 			}
 			// Add all dependencies
-			logger.Info(fmt.Sprintf("Found %d dependencies in manager", len(dependenciesInManager)))
+			logger.Info(fmt.Sprintf("Found %s in manager", shared.GetDependencyString(dependenciesInManager)))
 			allDependencies = append(allDependencies, dependenciesInManager...)
 		}
-		logger.Info(fmt.Sprintf("Found %d dependencies in total", len(allDependencies)))
+		logger.Info(fmt.Sprintf("Found %s in total", shared.GetDependencyString(allDependencies)))
 
 		// Search for updates for the dependencies
 		logger.Info("Searching for dependency updates")
@@ -217,7 +217,7 @@ func RunCmd(args []string) error {
 				dependenciesWithUpdates = append(dependenciesWithUpdates, dependency)
 			}
 		}
-		logger.Info(fmt.Sprintf("Found %d dependenc(y/ies) with updates", len(dependenciesWithUpdates)))
+		logger.Info(fmt.Sprintf("Found %s with updates", shared.GetDependencyString(dependenciesWithUpdates)))
 
 		// Group the dependencies which have updates according to group names
 		updateGroups := []*shared.UpdateGroup{}
@@ -252,11 +252,11 @@ func RunCmd(args []string) error {
 				updateGroups = append(updateGroups, newGroup)
 			}
 		}
-		logger.Info(fmt.Sprintf("Created %d group(s) with dependency updates", len(updateGroups)))
+		logger.Info(fmt.Sprintf("Created %s with dependency updates", shared.GetSingularPluralStringSimple(updateGroups, "group")))
 
 		// Loop thru the groups
 		for _, updateGroup := range updateGroups {
-			logger.Info(fmt.Sprintf("Processing group '%s' with %d dependenc(y/ies)", updateGroup.Title, len(updateGroup.Dependencies)))
+			logger.Info(fmt.Sprintf("Processing group '%s' with %s", updateGroup.Title, shared.GetDependencyString(updateGroup.Dependencies)))
 
 			// Prepare the platform for a new changeset
 			logger.Debug("Prepaparing for changes")
