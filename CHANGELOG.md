@@ -1,5 +1,16 @@
 # Change Log
 
+## v0.5.0 (2024-08-28)
+
+### Features
+
+* Added support for Docker digests
+* Added cli exclusive flag
+
+### Fixes
+
+* Fixed +incompatible in go module versions
+
 ## v0.4.0 (2024-08-23)
 
 ### Features
