@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 	"slices"
+	"strings"
 
 	"github.com/roemer/gonovate/internal/pkg/config"
 	"github.com/roemer/gonovate/internal/pkg/datasources"
@@ -23,12 +24,15 @@ func RunCmd(args []string) error {
 	var configFile string
 	var workingDirectory string
 	var platformOverride string
+	var exclusive string
 	flagSet := flag.NewFlagSet("run", flag.ExitOnError)
-	flagSet.BoolVar(&verbose, "verbose", false, "The flag to set in order to get verbose output")
-	flagSet.BoolVar(&verbose, "v", verbose, "Alias for -verbose")
-	flagSet.StringVar(&configFile, "config", "gonovate", "The path to the config file to read")
-	flagSet.StringVar(&workingDirectory, "workDir", "", "The path to the working directory")
+	flagSet.BoolVar(&verbose, "verbose", false, "The flag to set in order to get verbose output.")
+	flagSet.BoolVar(&verbose, "v", verbose, "Alias for -verbose.")
+	flagSet.StringVar(&configFile, "config", "gonovate", "The path to the config file to read.")
+	flagSet.StringVar(&workingDirectory, "workDir", "", "The path to the working directory.")
 	flagSet.StringVar(&platformOverride, "platform", "", "Allows overriding the platform. Usefull for testing when setting to 'noop'.")
+	flagSet.StringVar(&exclusive, "exclusive", "", "Allows defining criterias for exclusive updating. The format is: key1=value1|key2=value2\nValid Keys are: dependency, datasource, file, manager, managerType")
+	flagSet.StringVar(&exclusive, "e", exclusive, "Alias for -exclusive.")
 	flagSet.Usage = func() { printCmdUsage(flagSet, "run", "") }
 	flagSet.Parse(args)
 
@@ -37,6 +41,69 @@ func RunCmd(args []string) error {
 	logger := slog.New(logging.NewReadableTextHandler(os.Stdout, &logging.ReadableTextHandlerOptions{Level: desiredLogLevel}))
 	logger.Debug(fmt.Sprintf("Initialized logger with level: %s", desiredLogLevel))
 	logger.Info("Starting gonovate run")
+
+	// Parse the exclusive flag
+	topPriorityRules := []*config.Rule{}
+	if exclusive != "" {
+		// Rule that disables all managers and skips all dependencies
+		exclusiveRule := &config.Rule{
+			ManagerSettings:    &config.ManagerSettings{},
+			DependencySettings: &config.DependencySettings{},
+		}
+		// Rule that enables the desired manager or dependency
+		inclusiveRule := &config.Rule{
+			Matches:            &config.RuleMatch{},
+			ManagerSettings:    &config.ManagerSettings{Disabled: shared.FalsePtr},
+			DependencySettings: &config.DependencySettings{Skip: shared.FalsePtr},
+		}
+		// Check the given values and assign them appropriate match
+		hasManagerExclusive := false
+		hasDependencyExclusive := false
+		pairs := strings.Split(exclusive, "|")
+		for _, pair := range pairs {
+			values := strings.SplitN(pair, "=", 2)
+			key := values[0]
+			value := strings.TrimSpace(values[1])
+			if value == "" {
+				// Skip empty values
+				continue
+			}
+			switch strings.ToLower(key) {
+			case "dependency":
+				hasDependencyExclusive = true
+				inclusiveRule.Matches.DependencyNames = []string{value}
+			case "datasource":
+				hasDependencyExclusive = true
+				inclusiveRule.Matches.Datasources = []shared.DatasourceType{shared.DatasourceType(value)}
+			case "file":
+				hasDependencyExclusive = true
+				inclusiveRule.Matches.Files = []string{value}
+			case "manager":
+				hasManagerExclusive = true
+				inclusiveRule.Matches.Managers = []string{value}
+			case "managertype":
+				hasManagerExclusive = true
+				inclusiveRule.Matches.ManagerTypes = []shared.ManagerType{shared.ManagerType(value)}
+			}
+
+		}
+		// Make sure at least one value matched
+		if hasManagerExclusive || hasDependencyExclusive {
+			if hasManagerExclusive {
+				// There is a rule that enables a specific manager, so disable all others
+				exclusiveRule.ManagerSettings.Disabled = shared.TruePtr
+			}
+			if hasDependencyExclusive {
+				// There is a rule that enables a specific dependency, so skip all others
+				exclusiveRule.DependencySettings.Skip = shared.TruePtr
+				exclusiveRule.DependencySettings.SkipReason = "Exclusive"
+			}
+			topPriorityRules = append(topPriorityRules, exclusiveRule)
+			topPriorityRules = append(topPriorityRules, inclusiveRule)
+		} else {
+			logger.Warn(fmt.Sprintf("Exclusive flag passed but with incompatible values: %s", exclusive))
+		}
+	}
 
 	// Change the working directory
 	if workingDirectory != "" && workingDirectory != "." {
@@ -98,6 +165,8 @@ func RunCmd(args []string) error {
 		// Prepare the config for the project
 		projectConfig := &config.RootConfig{}
 		projectConfig.MergeWith(rootConfig)
+		// Also add all the top priority rules (from exclusive) at the end
+		projectConfig.Rules = append(projectConfig.Rules, topPriorityRules...)
 		// Fetch the project if needed
 		oldWorkdir := ""
 		if !isInplace {
