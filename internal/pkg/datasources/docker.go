@@ -80,11 +80,7 @@ func (ds *DockerDatasource) getReleases(dependency *shared.Dependency) ([]*share
 	return releases, nil
 }
 
-func (ds *DockerDatasource) getAdditionalData(dependency *shared.Dependency, newRelease *shared.ReleaseInfo, dataType string) (string, error) {
-	if dataType != "digest" {
-		return "", fmt.Errorf("dataType '%s' is not supported", dataType)
-	}
-
+func (ds *DockerDatasource) getDigest(dependency *shared.Dependency, releaseVersion string) (string, error) {
 	customRegistryUrl := ds.getRegistryUrl("", dependency.RegistryUrls)
 	registryUrl, imagePath, err := getDockerRegistry(dependency.Name, customRegistryUrl)
 	if err != nil {
@@ -109,7 +105,7 @@ func (ds *DockerDatasource) getAdditionalData(dependency *shared.Dependency, new
 	}
 
 	// Get the digest
-	digest, err := ds.getDigestWithToken(baseUrl, imagePath, newRelease.VersionString, authToken)
+	digest, err := ds.getDigestWithToken(baseUrl, imagePath, releaseVersion, authToken)
 	if err != nil {
 		return "", err
 	}

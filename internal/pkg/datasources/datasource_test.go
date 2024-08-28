@@ -62,7 +62,7 @@ func TestDockerDigest(t *testing.T) {
 		dep := &shared.Dependency{Name: "vaultwarden/server", Datasource: shared.DATASOURCE_TYPE_DOCKER, Version: "1.30.3", IgnoreNonMatching: shared.TruePtr}
 		cfg.EnrichDependencyFromRules(dep)
 
-		digest, err := ds.(*DockerDatasource).getAdditionalData(dep, &shared.ReleaseInfo{VersionString: "1.30.3"}, "digest")
+		digest, err := ds.(*DockerDatasource).getDigest(dep, "1.30.3")
 		assert.NoError(err)
 		fmt.Println(digest)
 	}
@@ -72,7 +72,7 @@ func TestDockerDigest(t *testing.T) {
 		dep := &shared.Dependency{Name: "roemer/ut99-server", Datasource: shared.DATASOURCE_TYPE_DOCKER, Version: "latest", IgnoreNonMatching: shared.TruePtr}
 		cfg.EnrichDependencyFromRules(dep)
 
-		digest, err := ds.(*DockerDatasource).getAdditionalData(dep, &shared.ReleaseInfo{VersionString: "latest"}, "digest")
+		digest, err := ds.(*DockerDatasource).getDigest(dep, "latest")
 		assert.NoError(err)
 		fmt.Println(digest)
 	}

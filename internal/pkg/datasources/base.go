@@ -16,6 +16,8 @@ import (
 type IDatasource interface {
 	// Gets all possible releases for the dependency.
 	getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error)
+	// Gets the digest for the dependency.
+	getDigest(dependency *shared.Dependency, releaseVersion string) (string, error)
 	// Gets additional data for the dependency and the new release.
 	getAdditionalData(dependency *shared.Dependency, newRelease *shared.ReleaseInfo, dataType string) (string, error)
 	// Handles the dependency update searching.
@@ -68,7 +70,7 @@ func (ds *datasourceBase) SearchDependencyUpdate(dependency *shared.Dependency) 
 	}
 
 	// Check if the dependency has a digest
-	currentDigest, hasDigest := dependency.AdditionalData["digest"]
+	hasDigest := dependency.HasDigest()
 
 	// Prepare some state variables
 	var newRelease *shared.ReleaseInfo
@@ -110,19 +112,16 @@ func (ds *datasourceBase) SearchDependencyUpdate(dependency *shared.Dependency) 
 	// Check if the dependency has a digest set
 	if hasDigest {
 		// Get the digest for the maximum valid release from the datasource
-		newDigest, err := ds.impl.getAdditionalData(dependency, newRelease, "digest")
+		newDigest, err := ds.impl.getDigest(dependency, newRelease.VersionString)
 		if err != nil {
 			return nil, err
 		}
 		// Check if the digest differs
-		if currentDigest != newDigest {
+		if dependency.Digest != newDigest {
 			digestDiffers = true
 		}
 		// Make sure the digest is assigned
-		if newRelease.AdditionalData == nil {
-			newRelease.AdditionalData = map[string]string{}
-		}
-		newRelease.AdditionalData["digest"] = newDigest
+		newRelease.Digest = newDigest
 	}
 
 	// Check if the version and digest is the same
@@ -270,6 +269,10 @@ func (ds *datasourceBase) getRegistryUrl(baseUrl string, customRegistryUrls []st
 	}
 	baseUrl = strings.TrimSuffix(baseUrl, "/")
 	return baseUrl
+}
+
+func (ds *datasourceBase) getDigest(dependency *shared.Dependency, releaseVersion string) (string, error) {
+	return "", fmt.Errorf("datasource does not support digests")
 }
 
 func (ds *datasourceBase) getAdditionalData(dependency *shared.Dependency, newRelease *shared.ReleaseInfo, dataType string) (string, error) {
