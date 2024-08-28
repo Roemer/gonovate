@@ -32,9 +32,9 @@ func getDockerCurrentAndNewFullVersion(dependency *shared.Dependency) (string, s
 	oldVersion := dependency.Version
 	newVersion := dependency.NewRelease.VersionString
 	// Enrich with digest (if any)
-	if currentDigest, ok := dependency.AdditionalData["digest"]; ok {
-		oldVersion += "@" + currentDigest
-		newVersion += "@" + dependency.NewRelease.AdditionalData["digest"]
+	if dependency.HasDigest() {
+		oldVersion += "@" + dependency.Digest
+		newVersion += "@" + dependency.NewRelease.Digest
 	}
 	return oldVersion, newVersion
 }

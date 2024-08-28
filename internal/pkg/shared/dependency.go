@@ -11,6 +11,8 @@ type Dependency struct {
 	Name string
 	// The current version of the dependency (unprocessed).
 	Version string
+	// An optional digest either in addition to the version or instead a version.
+	Digest string
 	// The type of the dependency. Used to allow different handlings per type in the manager. Optional.
 	Type string
 	// The datasource of the dependency.
@@ -67,4 +69,8 @@ func (d *Dependency) String() string {
 		parts = append(parts, fmt.Sprintf("type: %s", d.Type))
 	}
 	return fmt.Sprintf("{%s}", strings.Join(parts, ", "))
+}
+
+func (d *Dependency) HasDigest() bool {
+	return d.Digest != ""
 }
