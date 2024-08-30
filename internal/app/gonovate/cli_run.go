@@ -62,6 +62,9 @@ func RunCmd(args []string) error {
 		pairs := strings.Split(exclusive, "|")
 		for _, pair := range pairs {
 			values := strings.SplitN(pair, "=", 2)
+			if len(values) < 2 {
+				continue
+			}
 			key := values[0]
 			value := strings.TrimSpace(values[1])
 			if value == "" {
