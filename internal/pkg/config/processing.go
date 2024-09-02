@@ -74,8 +74,10 @@ func (config *RootConfig) EnrichDependencyFromRules(dependency *shared.Dependenc
 		if rule.Matches != nil {
 			// Manager related matches
 			if managerConfig != nil {
-				// ManagerId
-				if len(rule.Matches.Managers) > 0 && !slices.Contains(rule.Matches.Managers, managerConfig.Id) {
+				// ManagerIds
+				if len(rule.Matches.Managers) > 0 && slices.IndexFunc(rule.Matches.Managers, func(matchId string) bool {
+					return matchStringMatches(managerConfig.Id, matchId)
+				}) < 0 {
 					continue
 				}
 				// ManagerTypes
@@ -89,7 +91,9 @@ func (config *RootConfig) EnrichDependencyFromRules(dependency *shared.Dependenc
 				continue
 			}
 			// DependencyNames
-			if len(rule.Matches.DependencyNames) > 0 && slices.IndexFunc(rule.Matches.DependencyNames, func(name string) bool { return name == dependency.Name }) < 0 {
+			if len(rule.Matches.DependencyNames) > 0 && slices.IndexFunc(rule.Matches.DependencyNames, func(matchName string) bool {
+				return matchStringMatches(dependency.Name, matchName)
+			}) < 0 {
 				continue
 			}
 			// Datasources
@@ -133,6 +137,14 @@ func (config *RootConfig) EnrichDependencyFromRules(dependency *shared.Dependenc
 	if dependency.GroupName == "" {
 		dependency.GroupName = mergedDependencySettings.GroupName
 	}
+}
+
+func matchStringMatches(input string, matchString string) bool {
+	if strings.HasPrefix(matchString, "re:") {
+		re := regexp.MustCompile(matchString[3:])
+		return re.MatchString(input)
+	}
+	return input == matchString
 }
 
 // Resolves a given match string with a preset (if any).
