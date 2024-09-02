@@ -4,7 +4,19 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 )
+
+type stringSliceFlag []string
+
+func (i *stringSliceFlag) String() string {
+	return strings.Join(*i, "; ")
+}
+
+func (i *stringSliceFlag) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
 
 // Prints the help for a command
 func printCmdUsage(flagSet *flag.FlagSet, commandName, nonFlagArgs string) {

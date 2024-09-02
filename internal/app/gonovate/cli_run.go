@@ -21,14 +21,14 @@ import (
 func RunCmd(args []string) error {
 	// Flags and help for the command
 	var verbose bool
-	var configFile string
+	var configFiles stringSliceFlag
 	var workingDirectory string
 	var platformOverride string
 	var exclusive string
 	flagSet := flag.NewFlagSet("run", flag.ExitOnError)
 	flagSet.BoolVar(&verbose, "verbose", false, "The flag to set in order to get verbose output.")
 	flagSet.BoolVar(&verbose, "v", verbose, "Alias for -verbose.")
-	flagSet.StringVar(&configFile, "config", "gonovate", "The path to the config file to read.")
+	flagSet.Var(&configFiles, "config", "The path to the config file to read. Can be passed multiple times.")
 	flagSet.StringVar(&workingDirectory, "workDir", "", "The path to the working directory.")
 	flagSet.StringVar(&platformOverride, "platform", "", "Allows overriding the platform. Usefull for testing when setting to 'noop'.")
 	flagSet.StringVar(&exclusive, "exclusive", "", "Allows defining criterias for exclusive updating. The format is: key1=value1|key2=value2\nValid Keys are: dependency, datasource, file, manager, managerType")
@@ -116,10 +116,25 @@ func RunCmd(args []string) error {
 		}
 	}
 
-	// Read the configuration
-	rootConfig, err := config.Load(configFile)
+	// Read the main configuration
+	mainConfig := ""
+	if len(configFiles) > 0 {
+		mainConfig = configFiles[0]
+	}
+	rootConfig, err := config.Load(mainConfig)
 	if err != nil {
 		return err
+	}
+
+	// Merge additional config files
+	if len(configFiles) > 1 {
+		for _, configFile := range configFiles[1:] {
+			additionalConfig, err := config.Load(configFile)
+			if err != nil {
+				return err
+			}
+			rootConfig.MergeWith(additionalConfig)
+		}
 	}
 
 	// Process overrides
