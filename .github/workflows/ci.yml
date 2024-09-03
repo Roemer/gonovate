@@ -60,24 +60,28 @@ jobs:
         with:
           name: binary-windows
           path: .build-output/*windows*.zip
+          include-hidden-files: true
 
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v4
         with:
           name: binary-linux
           path: .build-output/*linux*.zip
+          include-hidden-files: true
 
       - name: Upload Darwin Intel Artifact
         uses: actions/upload-artifact@v4
         with:
           name: binary-darwin-intel
           path: .build-output/*darwin*amd*.zip
+          include-hidden-files: true
 
       - name: Upload Darwin ARM Artifact
         uses: actions/upload-artifact@v4
         with:
           name: binary-darwin-arm
           path: .build-output/*darwin*arm*.zip
+          include-hidden-files: true
 
   # Release Job
   release:
