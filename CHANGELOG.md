@@ -1,5 +1,16 @@
 # Change Log
 
+## v0.5.1 (2024-09-03)
+
+### Features
+
+* Allow 're:' as prefix for regexes for matching manager ids or depdendency names
+* Allow passing the --config parameter multiple times to load multiple configs
+
+### Fixes
+
+* Small check for errors in the cli exclusive flag
+
 ## v0.5.0 (2024-08-28)
 
 ### Features
