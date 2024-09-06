@@ -1,0 +1,11 @@
+rules:
+  - matches:
+      datasources:
+        - nodejs
+    dependencyConfig:
+      extractVersion: v(.*)
+  - matches:
+      datasources:
+        - npm
+    dependencyConfig:
+      versioning: "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-(.+?))?(?:[-\\.](\\d+))?(?:[-\\.](\\d+))?$"

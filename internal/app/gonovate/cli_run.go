@@ -9,12 +9,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/datasources"
-	"github.com/roemer/gonovate/internal/pkg/managers"
-	"github.com/roemer/gonovate/internal/pkg/platforms"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
+	"github.com/roemer/gonovate/pkg/config"
+	"github.com/roemer/gonovate/pkg/datasources"
 	"github.com/roemer/gonovate/pkg/logging"
+	"github.com/roemer/gonovate/pkg/managers"
+	"github.com/roemer/gonovate/pkg/platforms"
 	"github.com/samber/lo"
 )
 
@@ -47,14 +47,14 @@ func RunCmd(args []string) error {
 	if exclusive != "" {
 		// Rule that disables all managers and skips all dependencies
 		exclusiveRule := &config.Rule{
-			ManagerSettings:    &config.ManagerSettings{},
-			DependencySettings: &config.DependencySettings{},
+			ManagerConfig:    &config.ManagerConfig{},
+			DependencyConfig: &config.DependencyConfig{},
 		}
 		// Rule that enables the desired manager or dependency
 		inclusiveRule := &config.Rule{
-			Matches:            &config.RuleMatch{},
-			ManagerSettings:    &config.ManagerSettings{Disabled: shared.FalsePtr},
-			DependencySettings: &config.DependencySettings{Skip: shared.FalsePtr},
+			Matches:          &config.RuleMatch{},
+			ManagerConfig:    &config.ManagerConfig{Disabled: common.FalsePtr},
+			DependencyConfig: &config.DependencyConfig{Skip: common.FalsePtr},
 		}
 		// Check the given values and assign them appropriate match
 		hasManagerExclusive := false
@@ -77,7 +77,7 @@ func RunCmd(args []string) error {
 				inclusiveRule.Matches.DependencyNames = []string{value}
 			case "datasource":
 				hasDependencyExclusive = true
-				inclusiveRule.Matches.Datasources = []shared.DatasourceType{shared.DatasourceType(value)}
+				inclusiveRule.Matches.Datasources = []common.DatasourceType{common.DatasourceType(value)}
 			case "file":
 				hasDependencyExclusive = true
 				inclusiveRule.Matches.Files = []string{value}
@@ -86,7 +86,7 @@ func RunCmd(args []string) error {
 				inclusiveRule.Matches.Managers = []string{value}
 			case "managertype":
 				hasManagerExclusive = true
-				inclusiveRule.Matches.ManagerTypes = []shared.ManagerType{shared.ManagerType(value)}
+				inclusiveRule.Matches.ManagerTypes = []common.ManagerType{common.ManagerType(value)}
 			}
 
 		}
@@ -94,12 +94,12 @@ func RunCmd(args []string) error {
 		if hasManagerExclusive || hasDependencyExclusive {
 			if hasManagerExclusive {
 				// There is a rule that enables a specific manager, so disable all others
-				exclusiveRule.ManagerSettings.Disabled = shared.TruePtr
+				exclusiveRule.ManagerConfig.Disabled = common.TruePtr
 			}
 			if hasDependencyExclusive {
 				// There is a rule that enables a specific dependency, so skip all others
-				exclusiveRule.DependencySettings.Skip = shared.TruePtr
-				exclusiveRule.DependencySettings.SkipReason = "Exclusive"
+				exclusiveRule.DependencyConfig.Skip = common.TruePtr
+				exclusiveRule.DependencyConfig.SkipReason = "Exclusive"
 			}
 			topPriorityRules = append(topPriorityRules, exclusiveRule)
 			topPriorityRules = append(topPriorityRules, inclusiveRule)
@@ -121,7 +121,7 @@ func RunCmd(args []string) error {
 	if len(configFiles) > 0 {
 		mainConfig = configFiles[0]
 	}
-	rootConfig, err := config.Load(mainConfig)
+	gonovateConfig, err := config.Load(mainConfig)
 	if err != nil {
 		return err
 	}
@@ -133,56 +133,57 @@ func RunCmd(args []string) error {
 			if err != nil {
 				return err
 			}
-			rootConfig.MergeWith(additionalConfig)
+			gonovateConfig.MergeWith(additionalConfig)
 		}
 	}
 
 	// Process overrides
 	if platformOverride != "" {
-		rootConfig.Platform = shared.PlatformType(platformOverride)
+		gonovateConfig.Platform = common.PlatformType(platformOverride)
 	}
 
 	// Prepare the platform
-	platform, err := platforms.GetPlatform(logger, rootConfig)
+	platformSettings := gonovateConfig.ToCommonPlatformSettings(logger)
+	platform, err := platforms.GetPlatform(platformSettings)
 	if err != nil {
 		return err
 	}
 	logger.Info(fmt.Sprintf("Prepared platform: %s", platform.Type()))
 
 	// Get the projects
-	projects := []*shared.Project{}
+	projects := []*common.Project{}
 	isInplace := false
 	hasProject := true
-	if rootConfig.PlatformSettings.Inplace != nil {
-		isInplace = *rootConfig.PlatformSettings.Inplace
+	if gonovateConfig.PlatformConfig.Inplace != nil {
+		isInplace = *gonovateConfig.PlatformConfig.Inplace
 	}
 	if isInplace {
 		// If no project is passed, use a fake project
-		if len(rootConfig.PlatformSettings.Projects) == 0 {
+		if len(gonovateConfig.PlatformConfig.Projects) == 0 {
 			hasProject = false
-			projects = append(projects, &shared.Project{Path: "local/local"})
+			projects = append(projects, &common.Project{Path: "local/local"})
 		} else {
 			// Use the first passed project
-			projects = append(projects, &shared.Project{Path: rootConfig.PlatformSettings.Projects[0]})
+			projects = append(projects, &common.Project{Path: gonovateConfig.PlatformConfig.Projects[0]})
 		}
 	} else {
 		// Add all projects
-		for _, p := range rootConfig.PlatformSettings.Projects {
-			projects = append(projects, &shared.Project{Path: p})
+		for _, p := range gonovateConfig.PlatformConfig.Projects {
+			projects = append(projects, &common.Project{Path: p})
 		}
 	}
 	if len(projects) == 0 {
 		logger.Warn("No projects found to process")
 		return nil
 	}
-	logger.Info(fmt.Sprintf("Processing %s", shared.GetSingularPluralStringSimple(projects, "project")))
+	logger.Info(fmt.Sprintf("Processing %d project(s)", len(projects)))
 
 	// Process the projects
 	for _, project := range projects {
 		logger.Info(fmt.Sprintf("Processing project '%s'", project.Path))
 		// Prepare the config for the project
-		projectConfig := &config.RootConfig{}
-		projectConfig.MergeWith(rootConfig)
+		projectConfig := &config.GonovateConfig{}
+		projectConfig.MergeWith(gonovateConfig)
 		// Also add all the top priority rules (from exclusive) at the end
 		projectConfig.Rules = append(projectConfig.Rules, topPriorityRules...)
 		// Fetch the project if needed
@@ -220,63 +221,70 @@ func RunCmd(args []string) error {
 		}
 
 		// Loop thru the managers and collect the dependencies
-		allDependencies := []*shared.Dependency{}
-		logger.Info(fmt.Sprintf("Searching for dependencies in %s", shared.GetSingularPluralStringSimple(projectConfig.Managers, "manager")))
-		for _, managerConfig := range projectConfig.Managers {
-			// Get the merged settings for the current manager
-			mergedManagerSettings := projectConfig.GetMergedManagerSettings(managerConfig)
+		allDependencies := []*common.Dependency{}
+		logger.Info(fmt.Sprintf("Searching for dependencies in %d manager(s)", len(projectConfig.Managers)))
+		for _, manager := range projectConfig.Managers {
+			// Get the merged configs for the current manager
+			mergedManagerConfig := projectConfig.GetMergedManagerConfig(manager)
 
 			// Skip the manager if it is disabled
-			if mergedManagerSettings.Disabled != nil && *mergedManagerSettings.Disabled {
-				logger.Info(fmt.Sprintf("Manager '%s': Skip as it is disabled", managerConfig.Id))
+			if mergedManagerConfig.Disabled != nil && *mergedManagerConfig.Disabled {
+				logger.Info(fmt.Sprintf("Manager '%s': Skip as it is disabled", manager.Id))
 				continue
 			}
-			logger.Info(fmt.Sprintf("Processing Manager '%s' (%s)", managerConfig.Id, managerConfig.Type))
+			logger.Info(fmt.Sprintf("Processing Manager '%s' (%s)", manager.Id, manager.Type))
 
 			// Get the manager
-			manager, err := managers.GetManager(logger, projectConfig, managerConfig, mergedManagerSettings)
+			managerSettings := &common.ManagerSettings{
+				Logger:      logger,
+				Id:          manager.Id,
+				ManagerType: manager.Type,
+				RegexManagerSettings: &common.RegexManagerSettings{
+					MatchStringPresets: projectConfig.MatchStringPresetsToPresets(),
+					MatchStrings:       mergedManagerConfig.MatchStrings,
+				},
+				DevcontainerManagerSettings: mergedManagerConfig.ToCommonDevcontainerManagerSettings(),
+			}
+			managerInstance, err := managers.GetManager(managerSettings)
 			if err != nil {
 				return err
 			}
 
 			// Search for the files relevant for the manager
-			logger.Debug(fmt.Sprintf("Searching files with %s", shared.GetSingularPluralStringSimple(mergedManagerSettings.FilePatterns, "pattern")))
-			matchingFiles, err := shared.SearchFiles(".", mergedManagerSettings.FilePatterns, rootConfig.IgnorePatterns)
-			logger.Debug(fmt.Sprintf("Found %s", shared.GetSingularPluralStringSimple(matchingFiles, "matching file")))
+			logger.Debug(fmt.Sprintf("Searching files with %d pattern(s)", len(mergedManagerConfig.FilePatterns)))
+			matchingFiles, err := common.SearchFiles(".", mergedManagerConfig.FilePatterns, gonovateConfig.IgnorePatterns)
+			logger.Debug(fmt.Sprintf("Found %d matching file(s)", len(matchingFiles)))
 			if err != nil {
 				return err
 			}
 
 			// Loop thru the files and collect the dependencies
-			dependenciesInManager := []*shared.Dependency{}
+			dependenciesInManager := []*common.Dependency{}
 			for _, matchingFile := range matchingFiles {
 				logger.Debug(fmt.Sprintf("Processing file '%s'", matchingFile))
 				// Extract the dependencies for this file
-				currDependencies, err := manager.ExtractDependencies(matchingFile)
+				currDependencies, err := managerInstance.ExtractDependencies(matchingFile)
 				if err != nil {
 					return err
 				}
-				// Set some generic fields for all just found dependencies
-				for _, dependency := range currDependencies {
-					dependency.ManagerId = manager.Id()
-					dependency.FilePath = matchingFile
-				}
-				logger.Debug(fmt.Sprintf("Found %s in file", shared.GetDependencyString(currDependencies)))
+				logger.Debug(fmt.Sprintf("Found %d dependencies in file", len(currDependencies)))
 				dependenciesInManager = append(dependenciesInManager, currDependencies...)
 			}
 			// Add all dependencies
-			logger.Info(fmt.Sprintf("Found %s in manager", shared.GetDependencyString(dependenciesInManager)))
+			logger.Info(fmt.Sprintf("Found %d dependencies in manager", len(dependenciesInManager)))
 			allDependencies = append(allDependencies, dependenciesInManager...)
 		}
-		logger.Info(fmt.Sprintf("Found %s in total", shared.GetDependencyString(allDependencies)))
+		logger.Info(fmt.Sprintf("Found %d dependencies in total", len(allDependencies)))
 
 		// Search for updates for the dependencies
 		logger.Info("Searching for dependency updates")
-		dependenciesWithUpdates := []*shared.Dependency{}
+		dependenciesWithUpdates := []*common.Dependency{}
 		for _, dependency := range allDependencies {
-			logger.Info(fmt.Sprintf("Processing dependency '%s' (%s) from %s with version %s", dependency.Name, dependency.Datasource, dependency.ManagerId, dependency.Version))
-			// Enrich the dependency with settings from the config/rules
-			projectConfig.EnrichDependencyFromRules(dependency)
+			logger.Info(fmt.Sprintf("Processing dependency '%s' (%s) from %s with version %s", dependency.Name, dependency.Datasource, dependency.ManagerInfo.ManagerId, dependency.Version))
+			// Apply the config to the dependency
+			if err := projectConfig.ApplyToDependency(dependency); err != nil {
+				return err
+			}
 
 			// Skip the dependency if it was disabled
 			if dependency.Skip != nil && *dependency.Skip {
@@ -289,7 +297,12 @@ func RunCmd(args []string) error {
 			}
 
 			// Lookup the correct datasource
-			ds, err := datasources.GetDatasource(logger, projectConfig, dependency.Datasource)
+			datasourceSettings := &common.DatasourceSettings{
+				Logger:         logger,
+				DatasourceType: dependency.Datasource,
+				HostRules:      projectConfig.HostRulesToCommon(),
+			}
+			ds, err := datasources.GetDatasource(datasourceSettings)
 			if err != nil {
 				return err
 			}
@@ -304,46 +317,46 @@ func RunCmd(args []string) error {
 				dependenciesWithUpdates = append(dependenciesWithUpdates, dependency)
 			}
 		}
-		logger.Info(fmt.Sprintf("Found %s with updates", shared.GetDependencyString(dependenciesWithUpdates)))
+		logger.Info(fmt.Sprintf("Found %d dependencies with updates", len(dependenciesWithUpdates)))
 
 		// Group the dependencies which have updates according to group names
-		updateGroups := []*shared.UpdateGroup{}
+		updateGroups := []*common.UpdateGroup{}
 		for _, dependency := range dependenciesWithUpdates {
 			var title, branchName string
 			if dependency.GroupName != "" {
 				title = fmt.Sprintf("Update group '%s'", dependency.GroupName)
 				branchName = fmt.Sprintf("%s%s",
-					projectConfig.PlatformSettings.BranchPrefix,
+					projectConfig.PlatformConfig.BranchPrefix,
 					dependency.GroupName)
 			} else {
 				title = fmt.Sprintf("Update '%s' to '%s'", dependency.Name, dependency.NewRelease.VersionString)
 				branchName = fmt.Sprintf("%s%s-%s-%s",
-					projectConfig.PlatformSettings.BranchPrefix,
-					shared.NormalizeString(projectConfig.PlatformSettings.BaseBranch, 20),
-					shared.NormalizeString(dependency.Name, 40),
-					shared.NormalizeString(dependency.NewRelease.VersionString, 0))
+					projectConfig.PlatformConfig.BranchPrefix,
+					common.NormalizeString(projectConfig.PlatformConfig.BaseBranch, 20),
+					common.NormalizeString(dependency.Name, 40),
+					common.NormalizeString(dependency.NewRelease.VersionString, 0))
 			}
 
 			// Check if such a group already exists
-			idx := slices.IndexFunc(updateGroups, func(g *shared.UpdateGroup) bool { return g.BranchName == branchName })
+			idx := slices.IndexFunc(updateGroups, func(g *common.UpdateGroup) bool { return g.BranchName == branchName })
 			if idx >= 0 {
 				// It does, so just add the dependency to the existing group
 				updateGroups[idx].Dependencies = append(updateGroups[idx].Dependencies, dependency)
 			} else {
 				// Create the group
-				newGroup := &shared.UpdateGroup{
+				newGroup := &common.UpdateGroup{
 					Title:        title,
 					BranchName:   branchName,
-					Dependencies: []*shared.Dependency{dependency},
+					Dependencies: []*common.Dependency{dependency},
 				}
 				updateGroups = append(updateGroups, newGroup)
 			}
 		}
-		logger.Info(fmt.Sprintf("Created %s with dependency updates", shared.GetSingularPluralStringSimple(updateGroups, "group")))
+		logger.Info(fmt.Sprintf("Created %d group(s) with dependency updates", len(updateGroups)))
 
 		// Loop thru the groups
 		for _, updateGroup := range updateGroups {
-			logger.Info(fmt.Sprintf("Processing group '%s' with %s", updateGroup.Title, shared.GetDependencyString(updateGroup.Dependencies)))
+			logger.Info(fmt.Sprintf("Processing group '%s' with %d dependencies", updateGroup.Title, len(updateGroup.Dependencies)))
 
 			// Prepare the platform for a new changeset
 			logger.Debug("Prepaparing for changes")
@@ -354,16 +367,26 @@ func RunCmd(args []string) error {
 			// Apply the changes
 			for _, dependency := range updateGroup.Dependencies {
 				logger.Info(fmt.Sprintf("Updating '%s' from '%s' to '%s'", dependency.Name, dependency.Version, dependency.NewRelease.VersionString))
-				managerConfig := projectConfig.GetManagerConfigById(dependency.ManagerId)
-				// Get the merged settings for the current manager
-				mergedManagerSettings := projectConfig.GetMergedManagerSettings(managerConfig)
+				manager := projectConfig.GetManagerById(dependency.ManagerInfo.ManagerId)
+				// Get the merged configs for the current manager
+				mergedManagerConfig := projectConfig.GetMergedManagerConfig(manager)
 
 				// Get the manager
-				manager, err := managers.GetManager(logger, projectConfig, managerConfig, mergedManagerSettings)
+				managerSettings := &common.ManagerSettings{
+					Logger:      logger,
+					Id:          manager.Id,
+					ManagerType: manager.Type,
+					RegexManagerSettings: &common.RegexManagerSettings{
+						MatchStringPresets: projectConfig.MatchStringPresetsToPresets(),
+						MatchStrings:       mergedManagerConfig.MatchStrings,
+					},
+					DevcontainerManagerSettings: mergedManagerConfig.ToCommonDevcontainerManagerSettings(),
+				}
+				managerInstance, err := managers.GetManager(managerSettings)
 				if err != nil {
 					return err
 				}
-				if err := manager.ApplyDependencyUpdate(dependency); err != nil {
+				if err := managerInstance.ApplyDependencyUpdate(dependency); err != nil {
 					return err
 				}
 
@@ -379,7 +402,7 @@ func RunCmd(args []string) error {
 					// Apply the replacements
 					for _, reStr := range dependency.PostUpgradeReplacements {
 						re := regexp.MustCompile(reStr)
-						fileContent, _ = shared.ReplaceMatchesInRegex(re, fileContent, map[string]string{
+						fileContent, _ = common.ReplaceMatchesInRegex(re, fileContent, map[string]string{
 							"version": dependency.NewRelease.Version.Raw,
 							"sha1":    dependency.NewRelease.AdditionalData["sha1"],
 							"sha256":  dependency.NewRelease.AdditionalData["sha256"],
@@ -426,8 +449,8 @@ func RunCmd(args []string) error {
 		if err := platform.Cleanup(&platforms.PlatformCleanupSettings{
 			Project:      project,
 			UpdateGroups: updateGroups,
-			BaseBranch:   projectConfig.PlatformSettings.BaseBranch,
-			BranchPrefix: projectConfig.PlatformSettings.BranchPrefix,
+			BaseBranch:   projectConfig.PlatformConfig.BaseBranch,
+			BranchPrefix: projectConfig.PlatformConfig.BranchPrefix,
 		}); err != nil {
 			return err
 		}

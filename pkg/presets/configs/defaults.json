@@ -1,0 +1,37 @@
+{
+    "platformConfig": {
+        "baseBranch": "main",
+        "branchPrefix": "gonovate/",
+        "gitAuthor": "gonovate-bot <bot@gonovate.org>"
+    },
+    "ignorePatterns": [
+        "**/node_modules",
+        "**/bower_components",
+        "**/.git"
+    ],
+    "extends": [
+        "generic",
+        "browser",
+        "devcontainer",
+        "docker",
+        "github",
+        "go",
+        "java",
+        "node"
+    ],
+    "matchStringPresets": {
+        "dependency-colon-version": {
+            "matchString": "(?m)^\\s*\"?(?P<dependencyName>[^\":\\s]+)\"?\\s*:\\s*\"?(?P<version>[^\"\\s]+)\"?\\s*$"
+        },
+        "key-colon-version": {
+            "matchString": "(?m)^\\s*\"?%s\"?\\s*:\\s*\"?(?P<version>[^\"\\s]+)\"?\\s*$",
+            "parameterDefaults": [
+                "version"
+            ]
+        }
+    },
+    "versioningPresets": {
+        "semver": "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-([^+]+))?(?:\\+(.*))?$",
+        "major-minor-patch": "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$"
+    }
+}

@@ -1,0 +1,19 @@
+rules:
+  - matches:
+      managerTypes:
+      - go-mod
+    managerConfig:
+      filePatterns:
+      - go.mod
+  - matches:
+      datasources:
+        - go-version
+    dependencyConfig:
+      extractVersion: go(.*)
+      versioning: "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+)?)?$"
+  - matches:
+      datasources:
+        - go-mod
+    dependencyConfig:
+      extractVersion: "^(.*?)(?:\\+incompatible)?$"
+      versioning: "^v?(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+)?)?$"

@@ -1,6 +1,6 @@
 {
     "platform": "noop",
-    "platformSettings": {
+    "platformConfig": {
         "inplace": true
     },
     "extends": [
@@ -10,19 +10,19 @@
         {
             "id": "dockerfile",
             "type": "dockerfile",
-            "managerSettings": {
+            "managerConfig": {
                 "filePatterns": [
                     "latest.Dockerfile"
                 ]
             },
-            "dependencySettings": {
+            "dependencyConfig": {
                 "ignoreNonMatching": true
             }
         },
         {
             "id": "devcontainer",
             "type": "devcontainer",
-            "dependencySettings": {
+            "dependencyConfig": {
                 "ignoreNonMatching": true
             }
         }
