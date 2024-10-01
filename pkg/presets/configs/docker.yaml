@@ -4,12 +4,12 @@ rules:
   - matches:
       managerTypes:
         - dockerfile
-    managerSettings:
+    managerConfig:
       filePatterns:
         - "**/Dockerfile"
   # Docker images versioning
   - matches:
       dependencyNames:
         - alpine
-    dependencySettings:
+    dependencyConfig:
       versioning: preset:semver

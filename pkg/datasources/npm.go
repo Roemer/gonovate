@@ -2,32 +2,26 @@ package datasources
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type NpmDatasource struct {
-	datasourceBase
+	*datasourceBase
 }
 
-func NewNpmDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+func NewNpmDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &NpmDatasource{
-		datasourceBase: datasourceBase{
-			logger: logger,
-			name:   shared.DATASOURCE_TYPE_NPM,
-			Config: config,
-		},
+		datasourceBase: newDatasourceBase(settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *NpmDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *NpmDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	registryUrl := ds.getRegistryUrl("https://registry.npmjs.org", dependency.RegistryUrls)
 
 	// Download the index file
@@ -35,7 +29,7 @@ func (ds *NpmDatasource) getReleases(dependency *shared.Dependency) ([]*shared.R
 	if err != nil {
 		return nil, err
 	}
-	indexFileBytes, err := shared.HttpUtil.DownloadToMemory(downloadUrl)
+	indexFileBytes, err := common.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -47,9 +41,9 @@ func (ds *NpmDatasource) getReleases(dependency *shared.Dependency) ([]*shared.R
 	}
 
 	// Convert all entries to objects
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for _, entry := range jsonData.Versions {
-		releaseInfo := &shared.ReleaseInfo{
+		releaseInfo := &common.ReleaseInfo{
 			VersionString:  entry.Version,
 			AdditionalData: map[string]string{},
 		}
@@ -66,7 +60,7 @@ func (ds *NpmDatasource) getReleases(dependency *shared.Dependency) ([]*shared.R
 				parts := strings.SplitN(entry.Dist.Integrity, "-", 2)
 				algo := parts[0]
 				checksumBase64 := parts[1]
-				checksumHex, err := shared.Base64ToHex(checksumBase64)
+				checksumHex, err := common.Base64ToHex(checksumBase64)
 				if err != nil {
 					// TODO: Log warning?
 				} else {

@@ -4,31 +4,25 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"log/slog"
 	"net/url"
 	"regexp"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type AntVersionDatasource struct {
-	datasourceBase
+	*datasourceBase
 }
 
-func NewAntVersionDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+func NewAntVersionDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &AntVersionDatasource{
-		datasourceBase: datasourceBase{
-			logger: logger,
-			name:   shared.DATASOURCE_TYPE_ANTVERSION,
-			Config: config,
-		},
+		datasourceBase: newDatasourceBase(settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *AntVersionDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *AntVersionDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	registryUrl := ds.getRegistryUrl("https://archive.apache.org", dependency.RegistryUrls)
 	indexFilePath := "dist/ant/binaries"
 
@@ -37,20 +31,20 @@ func (ds *AntVersionDatasource) getReleases(dependency *shared.Dependency) ([]*s
 	if err != nil {
 		return nil, err
 	}
-	indexFileBytes, err := shared.HttpUtil.DownloadToMemory(downloadUrl)
+	indexFileBytes, err := common.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return nil, err
 	}
 
 	// Convert all entries to objects
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	lineRegex := regexp.MustCompile(`^.*<a href="apache-ant-([0-9\.]+)-bin.tar.gz">.*$`)
 	scanner := bufio.NewScanner(bytes.NewReader(indexFileBytes))
 	for scanner.Scan() {
 		line := scanner.Text()
 		if match := lineRegex.FindStringSubmatch(line); match != nil {
 			versionString := match[1]
-			releases = append(releases, &shared.ReleaseInfo{
+			releases = append(releases, &common.ReleaseInfo{
 				VersionString: versionString,
 			})
 		}

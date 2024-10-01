@@ -3,32 +3,30 @@ package platforms
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/url"
 	"slices"
 
 	"github.com/google/go-github/v63/github"
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 	"github.com/samber/lo"
 )
 
 type GitHubPlatform struct {
-	GitPlatform
+	*GitPlatform
 }
 
-func NewGitHubPlatform(logger *slog.Logger, config *config.RootConfig) *GitHubPlatform {
+func NewGitHubPlatform(settings *common.PlatformSettings) *GitHubPlatform {
 	platform := &GitHubPlatform{
-		GitPlatform: *NewGitPlatform(logger, config),
+		GitPlatform: NewGitPlatform(settings),
 	}
 	return platform
 }
 
-func (p *GitHubPlatform) Type() shared.PlatformType {
-	return shared.PLATFORM_TYPE_GITHUB
+func (p *GitHubPlatform) Type() common.PlatformType {
+	return common.PLATFORM_TYPE_GITHUB
 }
 
-func (p *GitHubPlatform) FetchProject(project *shared.Project) error {
+func (p *GitHubPlatform) FetchProject(project *common.Project) error {
 	// Prepare the data for the API
 	owner, repository := project.SplitPath()
 	// Create the client
@@ -49,12 +47,12 @@ func (p *GitHubPlatform) FetchProject(project *shared.Project) error {
 	if err != nil {
 		return err
 	}
-	cloneUrlWithCredentials.User = url.UserPassword("oauth2", p.Config.PlatformSettings.TokendExpanded())
-	_, _, err = shared.Git.Run("clone", cloneUrlWithCredentials.String(), ".gonovate-clone")
+	cloneUrlWithCredentials.User = url.UserPassword("oauth2", p.settings.TokendExpanded())
+	_, _, err = common.Git.Run("clone", cloneUrlWithCredentials.String(), ".gonovate-clone")
 	return err
 }
 
-func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *shared.UpdateGroup) error {
+func (p *GitHubPlatform) NotifyChanges(project *common.Project, updateGroup *common.UpdateGroup) error {
 	// Prepare the data for the API
 	owner, repository := project.SplitPath()
 
@@ -73,7 +71,7 @@ func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 	// Search for an existing PR
 	existingRequest, _, err := client.PullRequests.List(context.Background(), owner, repository, &github.PullRequestListOptions{
 		Head:  updateGroup.BranchName,
-		Base:  p.Config.PlatformSettings.BaseBranch,
+		Base:  p.settings.BaseBranch,
 		State: "open",
 	})
 	if err != nil {
@@ -101,7 +99,7 @@ func (p *GitHubPlatform) NotifyChanges(project *shared.Project, updateGroup *sha
 			Title: github.String(updateGroup.Title),
 			Body:  github.String(content),
 			Head:  github.String(updateGroup.BranchName),
-			Base:  github.String(p.Config.PlatformSettings.BaseBranch),
+			Base:  github.String(p.settings.BaseBranch),
 		})
 		if err != nil {
 			return err
@@ -121,7 +119,7 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 	}
 
 	// Get the branches that were used in this gonovate run
-	usedBranches := lo.FlatMap(cleanupSettings.UpdateGroups, func(x *shared.UpdateGroup, _ int) []string {
+	usedBranches := lo.FlatMap(cleanupSettings.UpdateGroups, func(x *common.UpdateGroup, _ int) []string {
 		return []string{x.BranchName}
 	})
 
@@ -169,7 +167,7 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 
 		// Delete the unused branch
 		p.logger.Debug("Deleting the branch")
-		if _, _, err := shared.Git.Run("push", remoteName, "--delete", potentialStaleBranch); err != nil {
+		if _, _, err := common.Git.Run("push", remoteName, "--delete", potentialStaleBranch); err != nil {
 			return fmt.Errorf("failed to delete the remote branch '%s'", potentialStaleBranch)
 		}
 		obsoleteBranchCount++
@@ -185,8 +183,8 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 ////////////////////////////////////////////////////////////
 
 func (p *GitHubPlatform) createClient() (*github.Client, error) {
-	if p.Config.PlatformSettings == nil || p.Config.PlatformSettings.Token == "" {
+	if p.settings == nil || p.settings.Token == "" {
 		return nil, fmt.Errorf("no platform token defined")
 	}
-	return github.NewClient(nil).WithAuthToken(p.Config.PlatformSettings.TokendExpanded()), nil
+	return github.NewClient(nil).WithAuthToken(p.settings.TokendExpanded()), nil
 }

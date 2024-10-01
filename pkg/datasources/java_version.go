@@ -3,31 +3,25 @@ package datasources
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strings"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type JavaVersionDatasource struct {
-	datasourceBase
+	*datasourceBase
 }
 
-func NewJavaVersionDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+func NewJavaVersionDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &JavaVersionDatasource{
-		datasourceBase: datasourceBase{
-			logger: logger,
-			name:   shared.DATASOURCE_TYPE_JAVAVERSION,
-			Config: config,
-		},
+		datasourceBase: newDatasourceBase(settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *JavaVersionDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *JavaVersionDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	registryUrl := ds.getRegistryUrl("https://api.adoptium.net", dependency.RegistryUrls)
 
 	// Get the type of java that is requested
@@ -40,7 +34,7 @@ func (ds *JavaVersionDatasource) getReleases(dependency *shared.Dependency) ([]*
 	downloadUrl := fmt.Sprintf("%s/v3/info/release_versions", registryUrl)
 	downloadUrl += fmt.Sprintf("?page_size=50&image_type=%s&project=jdk&release_type=ga&sort_method=DATE&sort_order=DESC", javaType)
 
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for {
 		// Prepare the request
 		req, err := http.NewRequest(http.MethodGet, downloadUrl, nil)
@@ -66,13 +60,13 @@ func (ds *JavaVersionDatasource) getReleases(dependency *shared.Dependency) ([]*
 		// Convert all entries to objects
 		for _, entry := range jsonData["versions"].([]interface{}) {
 			versionString := entry.(map[string]interface{})["semver"].(string)
-			releases = append(releases, &shared.ReleaseInfo{
+			releases = append(releases, &common.ReleaseInfo{
 				VersionString: versionString,
 			})
 		}
 
 		// Check for the next page link
-		if nextPageUrl, err := shared.HttpUtil.GetNextPageURL(resp); err != nil {
+		if nextPageUrl, err := common.HttpUtil.GetNextPageURL(resp); err != nil {
 			return nil, err
 		} else if nextPageUrl == nil {
 			// No next page

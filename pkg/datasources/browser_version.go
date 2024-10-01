@@ -3,31 +3,25 @@ package datasources
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/url"
 	"time"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type BrowserVersionDatasource struct {
-	datasourceBase
+	*datasourceBase
 }
 
-func NewBrowserVersionDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+func NewBrowserVersionDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &BrowserVersionDatasource{
-		datasourceBase: datasourceBase{
-			logger: logger,
-			name:   shared.DATASOURCE_TYPE_BROWSERVERSION,
-			Config: config,
-		},
+		datasourceBase: newDatasourceBase(settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *BrowserVersionDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *BrowserVersionDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	switch dependency.Name {
 	case "chrome":
 		return ds.chrome(dependency)
@@ -44,7 +38,7 @@ func (ds *BrowserVersionDatasource) getReleases(dependency *shared.Dependency) (
 // Internal
 ////////////////////////////////////////////////////////////
 
-func (ds *BrowserVersionDatasource) chrome(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *BrowserVersionDatasource) chrome(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	registryUrl := ds.getRegistryUrl("https://versionhistory.googleapis.com", dependency.RegistryUrls)
 	indexFilePath := "v1/chrome/platforms/linux/channels/stable/versions"
 
@@ -53,7 +47,7 @@ func (ds *BrowserVersionDatasource) chrome(dependency *shared.Dependency) ([]*sh
 	if err != nil {
 		return nil, err
 	}
-	indexFileBytes, err := shared.HttpUtil.DownloadToMemory(downloadUrl)
+	indexFileBytes, err := common.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -65,10 +59,10 @@ func (ds *BrowserVersionDatasource) chrome(dependency *shared.Dependency) ([]*sh
 	}
 
 	// Convert all entries to objects
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for _, entry := range jsonData.Versions {
 		versionString := entry.Version
-		releases = append(releases, &shared.ReleaseInfo{
+		releases = append(releases, &common.ReleaseInfo{
 			VersionString: versionString,
 		})
 	}
@@ -76,7 +70,7 @@ func (ds *BrowserVersionDatasource) chrome(dependency *shared.Dependency) ([]*sh
 	return releases, nil
 }
 
-func (ds *BrowserVersionDatasource) chromeForTesting(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *BrowserVersionDatasource) chromeForTesting(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	registryUrl := ds.getRegistryUrl("https://googlechromelabs.github.io", dependency.RegistryUrls)
 	indexFilePath := "chrome-for-testing/known-good-versions.json"
 
@@ -85,7 +79,7 @@ func (ds *BrowserVersionDatasource) chromeForTesting(dependency *shared.Dependen
 	if err != nil {
 		return nil, err
 	}
-	indexFileBytes, err := shared.HttpUtil.DownloadToMemory(downloadUrl)
+	indexFileBytes, err := common.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -97,10 +91,10 @@ func (ds *BrowserVersionDatasource) chromeForTesting(dependency *shared.Dependen
 	}
 
 	// Convert all entries to objects
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for _, entry := range jsonData.Versions {
 		versionString := entry.Version
-		releases = append(releases, &shared.ReleaseInfo{
+		releases = append(releases, &common.ReleaseInfo{
 			VersionString: versionString,
 		})
 	}
@@ -108,7 +102,7 @@ func (ds *BrowserVersionDatasource) chromeForTesting(dependency *shared.Dependen
 	return releases, nil
 }
 
-func (ds *BrowserVersionDatasource) firefox(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *BrowserVersionDatasource) firefox(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	registryUrl := ds.getRegistryUrl("https://product-details.mozilla.org", dependency.RegistryUrls)
 	indexFilePath := "1.0/firefox.json"
 
@@ -117,7 +111,7 @@ func (ds *BrowserVersionDatasource) firefox(dependency *shared.Dependency) ([]*s
 	if err != nil {
 		return nil, err
 	}
-	indexFileBytes, err := shared.HttpUtil.DownloadToMemory(downloadUrl)
+	indexFileBytes, err := common.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -129,10 +123,10 @@ func (ds *BrowserVersionDatasource) firefox(dependency *shared.Dependency) ([]*s
 	}
 
 	// Convert all entries to objects
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for _, entry := range jsonData["releases"].(map[string]interface{}) {
 		versionString := entry.(map[string]interface{})["version"].(string)
-		releases = append(releases, &shared.ReleaseInfo{
+		releases = append(releases, &common.ReleaseInfo{
 			VersionString: versionString,
 		})
 	}

@@ -2,31 +2,25 @@ package datasources
 
 import (
 	"encoding/xml"
-	"log/slog"
 	"net/url"
 	"strings"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type MavenDatasource struct {
-	datasourceBase
+	*datasourceBase
 }
 
-func NewMavenDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+func NewMavenDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &MavenDatasource{
-		datasourceBase: datasourceBase{
-			logger: logger,
-			name:   shared.DATASOURCE_TYPE_MAVEN,
-			Config: config,
-		},
+		datasourceBase: newDatasourceBase(settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *MavenDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *MavenDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	registryUrl := ds.getRegistryUrl("https://repo.maven.apache.org/maven2", dependency.RegistryUrls)
 
 	// Get XML-Metadata
@@ -39,7 +33,7 @@ func (ds *MavenDatasource) getReleases(dependency *shared.Dependency) ([]*shared
 	}
 
 	// Download the file
-	metadataFileBytes, err := shared.HttpUtil.DownloadToMemory(packageMetadataUrl)
+	metadataFileBytes, err := common.HttpUtil.DownloadToMemory(packageMetadataUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -51,10 +45,10 @@ func (ds *MavenDatasource) getReleases(dependency *shared.Dependency) ([]*shared
 	}
 
 	// Convert all entries to objects
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for _, entry := range mavenReleases.Versioning.Versions {
 		versionString := entry
-		releases = append(releases, &shared.ReleaseInfo{
+		releases = append(releases, &common.ReleaseInfo{
 			VersionString: versionString,
 		})
 	}

@@ -23,7 +23,7 @@ There is usually a `gonovate.json` file which contains your configuration. The b
 ```json
 {
     "platform": "noop",
-    "platformSettings": {
+    "platformConfig": {
         ...
     },
     "extends": [
@@ -65,15 +65,15 @@ The following managers are available:
 | regex | This manager uses regular expressions to search for dependencies. |
 
 ### Manager Configuration
-A manager needs an `id` and a `type` and contains `managerSettings` which configure which files should be handled by the manager and how.
-Additionally, it can contain `dependencySettings` that define some behavior for all dependencies that are handled by this manager.
+A manager needs an `id` and a `type` and contains `managerConfig` which configure which files should be handled by the manager and how.
+Additionally, it can contain `dependencyConfig` that define some behavior for all dependencies that are handled by this manager.
 
 Example:
 ```json
 {
     "id": "dockerfile-versions",
     "type": "regex",
-    "managerSettings": {
+    "managerConfig": {
         "filePatterns": [
             "**/[Dd]ockerfile"
         ],
@@ -81,7 +81,7 @@ Example:
             "^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<dependencyName>.*?)[[:blank:]]*$"
         ]
     },
-    "dependencySettings": {
+    "dependencyConfig": {
         "maxUpdateType": "major"
     }
 }
@@ -110,7 +110,7 @@ The following datasources are available:
 Rules allow customizing managers and the handling of dependencies in a flexible way.
 
 ### Rules Configuration
-The rules contain a `matches` section which describe the criteria when this rule should match and `managerSettings` and/or `dependencySettings` that should be applied when this rule matches.
+The rules contain a `matches` section which describe the criteria when this rule should match and `managerConfig` and/or `dependencyConfig` that should be applied when this rule matches.
 
 Example:
 ```json
@@ -120,7 +120,7 @@ Example:
             "dockerfile-versions"
         ]
     },
-    "managerSettings": {
+    "managerConfig": {
         "filePatterns": [
             "**/my.[Dd]ockerfile"
         ]

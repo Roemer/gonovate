@@ -3,32 +3,26 @@ package managers
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"os"
 	"regexp"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
+	"github.com/roemer/gonovate/pkg/presets"
 )
 
 type InlineManager struct {
-	managerBase
+	*managerBase
 }
 
-func NewInlineManager(logger *slog.Logger, id string, rootConfig *config.RootConfig, managerSettings *config.ManagerSettings) IManager {
+func NewInlineManager(settings *common.ManagerSettings) common.IManager {
 	manager := &InlineManager{
-		managerBase: managerBase{
-			logger:     logger.With(slog.String("handlerId", id)),
-			id:         id,
-			rootConfig: rootConfig,
-			settings:   managerSettings,
-		},
+		managerBase: newManagerBase(settings),
 	}
 	manager.impl = manager
 	return manager
 }
 
-func (manager *InlineManager) ExtractDependencies(filePath string) ([]*shared.Dependency, error) {
+func (manager *InlineManager) ExtractDependencies(filePath string) ([]*common.Dependency, error) {
 	// Read the entire file
 	fileContentBytes, err := os.ReadFile(filePath)
 	if err != nil {
@@ -37,12 +31,12 @@ func (manager *InlineManager) ExtractDependencies(filePath string) ([]*shared.De
 	fileContent := string(fileContentBytes)
 
 	// Extract the dependencies from the string
-	return manager.extractDependenciesFromString(fileContent)
+	return manager.extractDependenciesFromString(fileContent, filePath)
 }
 
-func (manager *InlineManager) ApplyDependencyUpdate(dependency *shared.Dependency) error {
-	return replaceDependencyVersionInFileWithCheck(dependency, func(dependency *shared.Dependency, newFileContent string) (*shared.Dependency, error) {
-		newDeps, err := manager.extractDependenciesFromString(newFileContent)
+func (manager *InlineManager) ApplyDependencyUpdate(dependency *common.Dependency) error {
+	return replaceDependencyVersionInFileWithCheck(dependency, func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error) {
+		newDeps, err := manager.extractDependenciesFromString(newFileContent, dependency.FilePath)
 		if err != nil {
 			return nil, err
 		}
@@ -59,12 +53,12 @@ func (manager *InlineManager) ApplyDependencyUpdate(dependency *shared.Dependenc
 ////////////////////////////////////////////////////////////
 
 // Extract dependencies from a given string by searching for markers
-func (manager *InlineManager) extractDependenciesFromString(fileContent string) ([]*shared.Dependency, error) {
+func (manager *InlineManager) extractDependenciesFromString(fileContent string, filePath string) ([]*common.Dependency, error) {
 	// Prepare the marker regex which searches the file for the inline markers
 	markerRegex := regexp.MustCompile("(?m)^[[:blank:]]*[/#*`'<!-{]+ gonovate: (.+)\\s*$")
 
 	// Prepare a slice to collect all found dependencies
-	foundDependencies := []*shared.Dependency{}
+	foundDependencies := []*common.Dependency{}
 
 	// Search for the markers
 	markerMatches := markerRegex.FindAllStringSubmatchIndex(fileContent, -1)
@@ -81,14 +75,14 @@ func (manager *InlineManager) extractDependenciesFromString(fileContent string) 
 		}
 
 		// Build the regex that was defined in the marker
-		resolvedMatchString, err := manager.rootConfig.ResolveMatchString(inlineConfig.MatchString)
+		resolvedMatchString, err := presets.ResolveMatchString(inlineConfig.MatchString, manager.settings.RegexManagerSettings.MatchStringPresets)
 		if err != nil {
 			return nil, err
 		}
 		newReg := regexp.MustCompile(resolvedMatchString)
 		// Search the remaining file content with this new regex and process the first match only
 		contentSearchStart := markerEnd + 1
-		matchList := shared.FindAllNamedMatchesWithIndex(newReg, fileContent[contentSearchStart:], false, 1)
+		matchList := common.FindAllNamedMatchesWithIndex(newReg, fileContent[contentSearchStart:], false, 1)
 		if matchList == nil || len(matchList) < 1 {
 			return nil, fmt.Errorf("regex defined in marker at position %d did not match anything", markerStart)
 		}
@@ -108,37 +102,35 @@ func (manager *InlineManager) extractDependenciesFromString(fileContent string) 
 		extractVersionObject, extractVersionOk := match["extractVersion"]
 
 		// Build the dependency object
-		newDepencency := &shared.Dependency{
-			Version: versionObject[0].Value,
-		}
+		newDependency := manager.newDependency("", "", versionObject[0].Value, filePath)
 		if datasourceOk {
-			newDepencency.Datasource = shared.DatasourceType(datasourceObject[0].Value)
+			newDependency.Datasource = common.DatasourceType(datasourceObject[0].Value)
 		} else if inlineConfig.Datasource != "" {
-			newDepencency.Datasource = inlineConfig.Datasource
+			newDependency.Datasource = inlineConfig.Datasource
 		}
 		if dependencyOk {
-			newDepencency.Name = dependencyObject[0].Value
+			newDependency.Name = dependencyObject[0].Value
 		} else if inlineConfig.DependencyName != "" {
-			newDepencency.Name = inlineConfig.DependencyName
+			newDependency.Name = inlineConfig.DependencyName
 		}
 		if versioningOk {
-			newDepencency.Versioning = versioningObject[0].Value
+			newDependency.Versioning = versioningObject[0].Value
 		} else if inlineConfig.Versioning != "" {
-			newDepencency.Versioning = inlineConfig.Versioning
+			newDependency.Versioning = inlineConfig.Versioning
 		}
 		if maxUpdateTypeOk {
-			newDepencency.MaxUpdateType = shared.UpdateType(maxUpdateTypeObject[0].Value)
+			newDependency.MaxUpdateType = common.UpdateType(maxUpdateTypeObject[0].Value)
 		} else if inlineConfig.MaxUpdateType != "" {
-			newDepencency.MaxUpdateType = inlineConfig.MaxUpdateType
+			newDependency.MaxUpdateType = inlineConfig.MaxUpdateType
 		}
 		if extractVersionOk {
-			newDepencency.ExtractVersion = extractVersionObject[0].Value
+			newDependency.ExtractVersion = extractVersionObject[0].Value
 		} else if inlineConfig.ExtractVersion != "" {
-			newDepencency.ExtractVersion = inlineConfig.ExtractVersion
+			newDependency.ExtractVersion = inlineConfig.ExtractVersion
 		}
 
 		// Add the dependency
-		foundDependencies = append(foundDependencies, newDepencency)
+		foundDependencies = append(foundDependencies, newDependency)
 	}
 
 	// Return the found dependencies
@@ -147,9 +139,9 @@ func (manager *InlineManager) extractDependenciesFromString(fileContent string) 
 
 type inlineManagerConfig struct {
 	DependencyName string                `json:"dependencyName"`
-	Datasource     shared.DatasourceType `json:"datasource"`
+	Datasource     common.DatasourceType `json:"datasource"`
 	MatchString    string                `json:"matchString"`
 	Versioning     string                `json:"versioning"`
-	MaxUpdateType  shared.UpdateType     `json:"maxUpdateType"`
+	MaxUpdateType  common.UpdateType     `json:"maxUpdateType"`
 	ExtractVersion string                `json:"extractVersion"`
 }

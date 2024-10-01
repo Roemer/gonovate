@@ -2,15 +2,15 @@ rules:
   - matches:
       datasources:
         - java-version
-    dependencySettings:
+    dependencyConfig:
       versioning: preset:semver
   - matches:
       datasources:
         - maven
-    dependencySettings:
+    dependencyConfig:
       versioning: "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:-([^-]+))?(?:-(\\d+))?$"
   - matches:
       datasources:
         - gradle
-    dependencySettings:
+    dependencyConfig:
       versioning: "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?$"

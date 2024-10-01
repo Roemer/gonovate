@@ -1,31 +1,25 @@
 package datasources
 
 import (
-	"log/slog"
 	"net/url"
 	"strings"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type GoModDatasource struct {
-	datasourceBase
+	*datasourceBase
 }
 
-func NewGoModDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+func NewGoModDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &GoModDatasource{
-		datasourceBase: datasourceBase{
-			logger: logger,
-			name:   shared.DATASOURCE_TYPE_GOMOD,
-			Config: config,
-		},
+		datasourceBase: newDatasourceBase(settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *GoModDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *GoModDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	registryUrl := ds.getRegistryUrl("https://proxy.golang.org", dependency.RegistryUrls)
 
 	// Download the list of versions
@@ -33,7 +27,7 @@ func (ds *GoModDatasource) getReleases(dependency *shared.Dependency) ([]*shared
 	if err != nil {
 		return nil, err
 	}
-	data, err := shared.HttpUtil.DownloadToMemory(downloadUrl)
+	data, err := common.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -42,13 +36,13 @@ func (ds *GoModDatasource) getReleases(dependency *shared.Dependency) ([]*shared
 	versions := strings.Split(strings.ReplaceAll(string(data), "\r\n", "\n"), "\n")
 
 	// Convert all entries to objects
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for _, version := range versions {
 		version = strings.TrimSpace(version)
 		if version == "" {
 			continue
 		}
-		releases = append(releases, &shared.ReleaseInfo{
+		releases = append(releases, &common.ReleaseInfo{
 			VersionString: version,
 		})
 	}

@@ -2,7 +2,6 @@ package datasources
 
 import (
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/jfrog/jfrog-client-go/artifactory"
@@ -10,27 +9,22 @@ import (
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	artifactory_config "github.com/jfrog/jfrog-client-go/config"
 	"github.com/jfrog/jfrog-client-go/http/httpclient"
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type ArtifactoryDatasource struct {
-	datasourceBase
+	*datasourceBase
 }
 
-func NewArtifactoryDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+func NewArtifactoryDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &ArtifactoryDatasource{
-		datasourceBase: datasourceBase{
-			logger: logger,
-			name:   shared.DATASOURCE_TYPE_ARTIFACTORY,
-			Config: config,
-		},
+		datasourceBase: newDatasourceBase(settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *ArtifactoryDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *ArtifactoryDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	// Get the base url for artifactory
 	if len(dependency.RegistryUrls) == 0 {
 		return nil, fmt.Errorf("no registry url for Artifactory for dependencyName '%s'", dependency.Name)
@@ -38,7 +32,7 @@ func (ds *ArtifactoryDatasource) getReleases(dependency *shared.Dependency) ([]*
 	registryUrl := dependency.RegistryUrls[0]
 
 	// Get a host rule if any was defined
-	relevantHostRule := ds.Config.FilterHostConfigsForHost(registryUrl)
+	relevantHostRule := ds.getHostRuleForHost(registryUrl)
 	token := ""
 	user := ""
 	password := ""
@@ -63,9 +57,9 @@ func (ds *ArtifactoryDatasource) getReleases(dependency *shared.Dependency) ([]*
 	}
 
 	// Build the list of releases
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for _, item := range items {
-		releases = append(releases, &shared.ReleaseInfo{
+		releases = append(releases, &common.ReleaseInfo{
 			VersionString: item.Name,
 			ReleaseDate:   item.Modified,
 			AdditionalData: map[string]string{

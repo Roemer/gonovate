@@ -4,23 +4,22 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type IPlatform interface {
 	// Returns the type of the platform
-	Type() shared.PlatformType
+	Type() common.PlatformType
 	// Fetches the project from the platform in it's initial state.
-	FetchProject(project *shared.Project) error
+	FetchProject(project *common.Project) error
 	// Prepares the project to accept changes.
-	PrepareForChanges(updateGroup *shared.UpdateGroup) error
+	PrepareForChanges(updateGroup *common.UpdateGroup) error
 	// Submit the changes to the project locally.
-	SubmitChanges(updateGroup *shared.UpdateGroup) error
+	SubmitChanges(updateGroup *common.UpdateGroup) error
 	// Publishes the changes to the remote location.
-	PublishChanges(updateGroup *shared.UpdateGroup) error
+	PublishChanges(updateGroup *common.UpdateGroup) error
 	// Notifies the remote about the changes with eg. MRs/PRs.
-	NotifyChanges(project *shared.Project, updateGroup *shared.UpdateGroup) error
+	NotifyChanges(project *common.Project, updateGroup *common.UpdateGroup) error
 	// Resets the project to the initial state for other changes.
 	ResetToBase() error
 	// Cleans the platform after a gonovate run.
@@ -28,27 +27,34 @@ type IPlatform interface {
 }
 
 type PlatformCleanupSettings struct {
-	Project      *shared.Project
-	UpdateGroups []*shared.UpdateGroup
+	Project      *common.Project
+	UpdateGroups []*common.UpdateGroup
 	BaseBranch   string
 	BranchPrefix string
 }
 
 type platformBase struct {
-	logger *slog.Logger
-	Config *config.RootConfig
+	logger   *slog.Logger
+	settings *common.PlatformSettings
 }
 
-func GetPlatform(logger *slog.Logger, config *config.RootConfig) (IPlatform, error) {
-	switch config.Platform {
-	case shared.PLATFORM_TYPE_GIT:
-		return NewGitPlatform(logger, config), nil
-	case shared.PLATFORM_TYPE_GITHUB:
-		return NewGitHubPlatform(logger, config), nil
-	case shared.PLATFORM_TYPE_GITLAB:
-		return NewGitlabPlatform(logger, config), nil
-	case shared.PLATFORM_TYPE_NOOP:
-		return NewNoopPlatform(logger, config), nil
+func newPlatformBase(settings *common.PlatformSettings) *platformBase {
+	return &platformBase{
+		logger:   settings.Logger.With(slog.String("platform", string(settings.Platform))),
+		settings: settings,
 	}
-	return nil, fmt.Errorf("no platform defined for '%s'", config.Platform)
+}
+
+func GetPlatform(settings *common.PlatformSettings) (IPlatform, error) {
+	switch settings.Platform {
+	case common.PLATFORM_TYPE_GIT:
+		return NewGitPlatform(settings), nil
+	case common.PLATFORM_TYPE_GITHUB:
+		return NewGitHubPlatform(settings), nil
+	case common.PLATFORM_TYPE_GITLAB:
+		return NewGitlabPlatform(settings), nil
+	case common.PLATFORM_TYPE_NOOP:
+		return NewNoopPlatform(settings), nil
+	}
+	return nil, fmt.Errorf("no platform defined for '%s'", settings.Platform)
 }

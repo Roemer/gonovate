@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"slices"
 
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 // Splits a Docker image into separate name, tag and digest. Uses "latest" if no tag is present.
@@ -28,7 +28,7 @@ func splitDockerDependency(dependencyString string) (string, string, string) {
 }
 
 // This method returns the full Docker version, including a digest if any is given
-func getDockerCurrentAndNewFullVersion(dependency *shared.Dependency) (string, string) {
+func getDockerCurrentAndNewFullVersion(dependency *common.Dependency) (string, string) {
 	oldVersion := dependency.Version
 	newVersion := dependency.NewRelease.VersionString
 	// Enrich with digest (if any)
@@ -40,25 +40,26 @@ func getDockerCurrentAndNewFullVersion(dependency *shared.Dependency) (string, s
 }
 
 // Skips the dependency if the version matches one of the given keywords.
-func skipIfVersionMatches(dependency *shared.Dependency, skipValues ...string) {
+func setSkipIfVersionMatchesKeyword(dependency *common.Dependency, skipValues ...string) {
 	if dependency.Skip == nil || !*dependency.Skip {
 		if slices.Contains(skipValues, dependency.Version) {
-			dependency.Skip = shared.TruePtr
+			dependency.Skip = common.TruePtr
 			dependency.SkipReason = fmt.Sprintf("Version is set to '%s'", dependency.Version)
 		}
 	}
 }
 
 // Skips the version check for the given dependency version machtes one of the keywords.
-func skipVersionCheckIfVersionMatches(dependency *shared.Dependency, skipValues ...string) {
+func setSkipVersionCheckIfVersionMatchesKeyword(dependency *common.Dependency, skipValues ...string) {
 	if dependency.SkipVersionCheck == nil || !*dependency.SkipVersionCheck {
 		if slices.Contains(skipValues, dependency.Version) {
-			dependency.SkipVersionCheck = shared.TruePtr
+			dependency.SkipVersionCheck = common.TruePtr
 		}
 	}
 }
 
-func replaceDependencyVersionInFileWithCheck(dependency *shared.Dependency, refetchDependencyFunc func(dependency *shared.Dependency, newFileContent string) (*shared.Dependency, error)) error {
+// Replaces a dependency version in a file and checks, if the right version was updated and if not, continues replacing the next occurence.
+func replaceDependencyVersionInFileWithCheck(dependency *common.Dependency, refetchDependencyFunc func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error)) error {
 	// Read the file
 	fileContentBytes, err := os.ReadFile(dependency.FilePath)
 	if err != nil {
@@ -71,7 +72,7 @@ func replaceDependencyVersionInFileWithCheck(dependency *shared.Dependency, refe
 	newString := dependency.NewRelease.VersionString
 
 	// Handle docker dependency which can have a digest
-	if dependency.Datasource == shared.DATASOURCE_TYPE_DOCKER {
+	if dependency.Datasource == common.DATASOURCE_TYPE_DOCKER {
 		oldFullVersion, newFullVersion := getDockerCurrentAndNewFullVersion(dependency)
 		oldString = oldFullVersion
 		newString = newFullVersion

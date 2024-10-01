@@ -2,18 +2,18 @@ rules:
   - matches:
       managerTypes:
       - go-mod
-    managerSettings:
+    managerConfig:
       filePatterns:
       - go.mod
   - matches:
       datasources:
         - go-version
-    dependencySettings:
+    dependencyConfig:
       extractVersion: go(.*)
       versioning: "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+)?)?$"
   - matches:
       datasources:
         - go-mod
-    dependencySettings:
+    dependencyConfig:
       extractVersion: "^(.*?)(?:\\+incompatible)?$"
       versioning: "^v?(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+)?)?$"

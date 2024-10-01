@@ -3,37 +3,31 @@ package datasources
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"strings"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type GoVersionDatasource struct {
-	datasourceBase
+	*datasourceBase
 }
 
-func NewGoVersionDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+func NewGoVersionDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &GoVersionDatasource{
-		datasourceBase: datasourceBase{
-			logger: logger,
-			name:   shared.DATASOURCE_TYPE_GOVERSION,
-			Config: config,
-		},
+		datasourceBase: newDatasourceBase(settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *GoVersionDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *GoVersionDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	registryUrl := ds.getRegistryUrl("https://go.dev", dependency.RegistryUrls)
 	indexFilePath := "dl/?mode=json&include=all"
 	stableOnly := strings.HasSuffix(dependency.Name, "stable")
 
 	// Download the index file
 	downloadUrl := fmt.Sprintf("%s/%s", registryUrl, indexFilePath)
-	indexFileBytes, err := shared.HttpUtil.DownloadToMemory(downloadUrl)
+	indexFileBytes, err := common.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -45,14 +39,14 @@ func (ds *GoVersionDatasource) getReleases(dependency *shared.Dependency) ([]*sh
 	}
 
 	// Convert all entries to objects
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for _, entry := range jsonData {
 		versionString := entry["version"].(string)
 		stableValue := entry["stable"]
 		if stableOnly && stableValue != true {
 			continue
 		}
-		releases = append(releases, &shared.ReleaseInfo{
+		releases = append(releases, &common.ReleaseInfo{
 			VersionString: versionString,
 		})
 	}

@@ -4,33 +4,26 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"log/slog"
 	"os"
 	"regexp"
 	"strings"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type GoModManager struct {
-	managerBase
+	*managerBase
 }
 
-func NewGoModManager(logger *slog.Logger, id string, rootConfig *config.RootConfig, managerSettings *config.ManagerSettings) IManager {
+func NewGoModManager(settings *common.ManagerSettings) common.IManager {
 	manager := &GoModManager{
-		managerBase: managerBase{
-			logger:     logger.With(slog.String("handlerId", id)),
-			id:         id,
-			rootConfig: rootConfig,
-			settings:   managerSettings,
-		},
+		managerBase: newManagerBase(settings),
 	}
 	manager.impl = manager
 	return manager
 }
 
-func (manager *GoModManager) ExtractDependencies(filePath string) ([]*shared.Dependency, error) {
+func (manager *GoModManager) ExtractDependencies(filePath string) ([]*common.Dependency, error) {
 	// Setup
 	goVersionRegex := regexp.MustCompile(`^\s*go\s+([^s]+)\s*$`)
 	moduleRegex := regexp.MustCompile(`^(?:require)?\s+(?P<module>[^\s]+\/[^\s]+)\s+(?P<version>[^\s]+)(?:\s*\/\/\s*(?P<comment>[^\s]+)\s*)?$`)
@@ -42,39 +35,31 @@ func (manager *GoModManager) ExtractDependencies(filePath string) ([]*shared.Dep
 	}
 
 	// A slice to collect all found dependencies
-	foundDependencies := []*shared.Dependency{}
+	foundDependencies := []*common.Dependency{}
 	// Scan the content line by line
 	scanner := bufio.NewScanner(bytes.NewReader(fileContentBytes))
 	for scanner.Scan() {
 		line := scanner.Text()
 		// Match the golang version
 		if match := goVersionRegex.FindStringSubmatch(line); match != nil {
-			newDepencency := &shared.Dependency{
-				Name:       "go-stable",
-				Datasource: shared.DATASOURCE_TYPE_GOVERSION,
-				Type:       "golang",
-				Version:    match[1],
-			}
-			foundDependencies = append(foundDependencies, newDepencency)
+			newDependency := manager.newDependency("go-stable", common.DATASOURCE_TYPE_GOVERSION, match[1], filePath)
+			newDependency.Type = "golang"
+			foundDependencies = append(foundDependencies, newDependency)
 			continue
 		}
 		// Match a module
-		if match := shared.FindNamedMatchesWithIndex(moduleRegex, line, false); match != nil {
+		if match := common.FindNamedMatchesWithIndex(moduleRegex, line, false); match != nil {
 			version := match["version"][0].Value
 			version = strings.TrimSuffix(version, "+incompatible")
 
-			newDepencency := &shared.Dependency{
-				Name:       match["module"][0].Value,
-				Datasource: shared.DATASOURCE_TYPE_GOMOD,
-				Type:       "direct",
-				Version:    version,
-			}
+			newDependency := manager.newDependency(match["module"][0].Value, common.DATASOURCE_TYPE_GOMOD, version, filePath)
+			newDependency.Type = "direct"
 			if v, ok := match["comment"]; ok && v[0].Value == "indirect" {
-				newDepencency.Type = "indirect"
+				newDependency.Type = "indirect"
 				// Indirect dependencies are skipped
 				continue
 			}
-			foundDependencies = append(foundDependencies, newDepencency)
+			foundDependencies = append(foundDependencies, newDependency)
 		}
 	}
 
@@ -87,16 +72,16 @@ func (manager *GoModManager) ExtractDependencies(filePath string) ([]*shared.Dep
 	return foundDependencies, nil
 }
 
-func (manager *GoModManager) ApplyDependencyUpdate(dependency *shared.Dependency) error {
+func (manager *GoModManager) ApplyDependencyUpdate(dependency *common.Dependency) error {
 	dependencyName := dependency.Name
 	if dependency.Type == "golang" {
 		dependencyName = "go"
 	}
-	outStr, errStr, err := shared.Execute.RunGetOutput(false, "go", "get", fmt.Sprintf("%s@%s", dependencyName, dependency.NewRelease.VersionString))
+	outStr, errStr, err := common.Execute.RunGetOutput(false, "go", "get", fmt.Sprintf("%s@%s", dependencyName, dependency.NewRelease.VersionString))
 	if err != nil {
 		return fmt.Errorf("go command failed: error: %w, stdout: %s, stderr: %s", err, outStr, errStr)
 	}
-	outStr, errStr, err = shared.Execute.RunGetOutput(false, "go", "mod", "tidy")
+	outStr, errStr, err = common.Execute.RunGetOutput(false, "go", "mod", "tidy")
 	if err != nil {
 		return fmt.Errorf("go command failed: error: %w, stdout: %s, stderr: %s", err, outStr, errStr)
 	}

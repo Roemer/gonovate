@@ -2,46 +2,41 @@ package platforms
 
 import (
 	"fmt"
-	"log/slog"
 	"regexp"
 	"strings"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 	"github.com/samber/lo"
 )
 
 type GitPlatform struct {
-	platformBase
+	*platformBase
 }
 
-func NewGitPlatform(logger *slog.Logger, config *config.RootConfig) *GitPlatform {
+func NewGitPlatform(settings *common.PlatformSettings) *GitPlatform {
 	platform := &GitPlatform{
-		platformBase: platformBase{
-			logger: logger,
-			Config: config,
-		},
+		platformBase: newPlatformBase(settings),
 	}
 	return platform
 }
 
-func (p *GitPlatform) Type() shared.PlatformType {
-	return shared.PLATFORM_TYPE_GIT
+func (p *GitPlatform) Type() common.PlatformType {
+	return common.PLATFORM_TYPE_GIT
 }
 
-func (p *GitPlatform) FetchProject(project *shared.Project) error {
+func (p *GitPlatform) FetchProject(project *common.Project) error {
 	// Not available
 	return nil
 }
 
-func (p *GitPlatform) PrepareForChanges(updateGroup *shared.UpdateGroup) error {
+func (p *GitPlatform) PrepareForChanges(updateGroup *common.UpdateGroup) error {
 	p.logger.Debug(fmt.Sprintf("Creating branch '%s'", updateGroup.BranchName))
-	_, _, err := shared.Git.Run("checkout", "-B", updateGroup.BranchName)
+	_, _, err := common.Git.Run("checkout", "-B", updateGroup.BranchName)
 	return err
 }
 
-func (p *GitPlatform) SubmitChanges(updateGroup *shared.UpdateGroup) error {
-	if _, _, err := shared.Git.Run("add", "--all"); err != nil {
+func (p *GitPlatform) SubmitChanges(updateGroup *common.UpdateGroup) error {
+	if _, _, err := common.Git.Run("add", "--all"); err != nil {
 		return err
 	}
 
@@ -51,27 +46,27 @@ func (p *GitPlatform) SubmitChanges(updateGroup *shared.UpdateGroup) error {
 		"--message=" + updateGroup.Title,
 	}
 	// Optionally add the author if it is set
-	if p.Config.PlatformSettings != nil && p.Config.PlatformSettings.GitAuthor != "" {
-		args = append(args, "--author="+p.Config.PlatformSettings.GitAuthor)
+	if p.settings != nil && p.settings.GitAuthor != "" {
+		args = append(args, "--author="+p.settings.GitAuthor)
 	}
 
 	// Execute the command
-	_, _, err := shared.Git.Run(args...)
+	_, _, err := common.Git.Run(args...)
 	return err
 }
 
-func (p *GitPlatform) PublishChanges(updateGroup *shared.UpdateGroup) error {
-	_, _, err := shared.Git.Run("push", "-u", "origin", "HEAD", "--force")
+func (p *GitPlatform) PublishChanges(updateGroup *common.UpdateGroup) error {
+	_, _, err := common.Git.Run("push", "-u", "origin", "HEAD", "--force")
 	return err
 }
 
-func (p *GitPlatform) NotifyChanges(project *shared.Project, updateGroup *shared.UpdateGroup) error {
+func (p *GitPlatform) NotifyChanges(project *common.Project, updateGroup *common.UpdateGroup) error {
 	// Not available
 	return nil
 }
 
 func (p *GitPlatform) ResetToBase() error {
-	_, _, err := shared.Git.Run("checkout", p.Config.PlatformSettings.BaseBranch)
+	_, _, err := common.Git.Run("checkout", p.settings.BaseBranch)
 	return err
 }
 
@@ -91,7 +86,7 @@ func (p *GitPlatform) getRemoteName() string {
 
 func (p *GitPlatform) getRemoteGonovateBranches(remoteName string, branchPrefix string) ([]string, error) {
 	// Get the remote branches
-	stdout, _, err := shared.Git.Run("ls-remote", "--heads", remoteName)
+	stdout, _, err := common.Git.Run("ls-remote", "--heads", remoteName)
 	if err != nil {
 		return nil, err
 	}
