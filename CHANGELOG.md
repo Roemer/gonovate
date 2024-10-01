@@ -1,10 +1,10 @@
 # Change Log
 
-## v0.6.0 (2024-09-xx)
+## v0.6.0 (2024-10-01)
 
 ### Features
 
-* Restructured the whole project so that parts of gonovate can be used as go module
+* Restructured the project so that parts of gonovate can be used as go modules by 3rd parties
 
 ## v0.5.1 (2024-09-03)
 
