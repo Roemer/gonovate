@@ -3,29 +3,23 @@ package datasources
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"regexp"
 	"slices"
 	"strings"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 	"github.com/samber/lo"
 )
 
 type DockerDatasource struct {
-	datasourceBase
+	*datasourceBase
 }
 
-func NewDockerDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+func NewDockerDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &DockerDatasource{
-		datasourceBase: datasourceBase{
-			logger: logger,
-			name:   shared.DATASOURCE_TYPE_DOCKER,
-			Config: config,
-		},
+		datasourceBase: newDatasourceBase(settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
@@ -34,7 +28,7 @@ func NewDockerDatasource(logger *slog.Logger, config *config.RootConfig) IDataso
 var dockerIoRegex = regexp.MustCompile(`^(https?://)?([a-zA-Z-_0-9\.]*docker\.io)($|/)`)
 var httpSchemeRegex = regexp.MustCompile(`^https?://(.*)`)
 
-func (ds *DockerDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *DockerDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	customRegistryUrl := ds.getRegistryUrl("", dependency.RegistryUrls)
 	registryUrl, imagePath, err := getDockerRegistry(dependency.Name, customRegistryUrl)
 	if err != nil {
@@ -50,7 +44,7 @@ func (ds *DockerDatasource) getReleases(dependency *shared.Dependency) ([]*share
 	baseUrl = baseUrl.JoinPath("v2")
 
 	// Get a host rule if any was defined
-	relevantHostRule := ds.Config.FilterHostConfigsForHost(baseUrl.Host)
+	relevantHostRule := ds.getHostRuleForHost(baseUrl.Host)
 
 	// Get an authentication token
 	authToken, err := ds.getAuthToken(baseUrl, imagePath, relevantHostRule)
@@ -68,19 +62,19 @@ func (ds *DockerDatasource) getReleases(dependency *shared.Dependency) ([]*share
 	tags = lo.Filter(tags, func(x string, index int) bool {
 		return x != "latest"
 	})
-	ds.logger.Debug(fmt.Sprintf("Found %s", shared.GetSingularPluralStringSimple(tags, "tag")))
+	ds.logger.Debug(fmt.Sprintf("Found %d tag(s)", len(tags)))
 
 	// Convert the tags to release infos
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for _, tag := range tags {
-		releases = append(releases, &shared.ReleaseInfo{
+		releases = append(releases, &common.ReleaseInfo{
 			VersionString: tag,
 		})
 	}
 	return releases, nil
 }
 
-func (ds *DockerDatasource) getDigest(dependency *shared.Dependency, releaseVersion string) (string, error) {
+func (ds *DockerDatasource) GetDigest(dependency *common.Dependency, releaseVersion string) (string, error) {
 	customRegistryUrl := ds.getRegistryUrl("", dependency.RegistryUrls)
 	registryUrl, imagePath, err := getDockerRegistry(dependency.Name, customRegistryUrl)
 	if err != nil {
@@ -96,7 +90,7 @@ func (ds *DockerDatasource) getDigest(dependency *shared.Dependency, releaseVers
 	baseUrl = baseUrl.JoinPath("v2")
 
 	// Get a host rule if any was defined
-	relevantHostRule := ds.Config.FilterHostConfigsForHost(baseUrl.Host)
+	relevantHostRule := ds.getHostRuleForHost(baseUrl.Host)
 
 	// Get an authentication token
 	authToken, err := ds.getAuthToken(baseUrl, imagePath, relevantHostRule)
@@ -192,7 +186,7 @@ func ensureTrailingSlash(url string) string {
 	return url + "/"
 }
 
-func (ds *DockerDatasource) getAuthToken(baseUrl *url.URL, dependencyName string, hostRule *config.HostRule) (string, error) {
+func (ds *DockerDatasource) getAuthToken(baseUrl *url.URL, dependencyName string, hostRule *common.HostRule) (string, error) {
 	// Different handling for different sites
 	if strings.Contains(baseUrl.Host, "index.docker.io") {
 		return ds.getJwtToken("https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull", dependencyName, hostRule)
@@ -213,7 +207,7 @@ func (ds *DockerDatasource) getAuthToken(baseUrl *url.URL, dependencyName string
 }
 
 // Creates a request to get a token and returns the token. Uses basic auth uf username/password is provided.
-func (ds *DockerDatasource) getJwtToken(authUrl string, dependencyName string, hostRule *config.HostRule) (string, error) {
+func (ds *DockerDatasource) getJwtToken(authUrl string, dependencyName string, hostRule *common.HostRule) (string, error) {
 	// Get a token
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(authUrl, dependencyName), nil)
 	if err != nil {
@@ -221,7 +215,7 @@ func (ds *DockerDatasource) getJwtToken(authUrl string, dependencyName string, h
 	}
 	if hostRule != nil && len(hostRule.Username) > 0 && len(hostRule.Password) > 0 {
 		// Add basic authentication for eg. private images
-		shared.HttpUtil.AddBasicAuth(req, hostRule.UsernameExpanded(), hostRule.PasswordExpanded())
+		common.HttpUtil.AddBasicAuth(req, hostRule.UsernameExpanded(), hostRule.PasswordExpanded())
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -256,7 +250,7 @@ func (ds *DockerDatasource) getTagsWithToken(baseUrl *url.URL, dependencyName st
 			return nil, err
 		}
 		if len(bearerToken) > 0 {
-			shared.HttpUtil.AddBearerToRequest(req, bearerToken)
+			common.HttpUtil.AddBearerToRequest(req, bearerToken)
 		}
 		// Perform the request
 		resp, err := http.DefaultClient.Do(req)
@@ -277,7 +271,7 @@ func (ds *DockerDatasource) getTagsWithToken(baseUrl *url.URL, dependencyName st
 		}
 		allTags = append(allTags, tagsObj.Tags...)
 		// Check for the next page link
-		if nextPageUrl, err := shared.HttpUtil.GetNextPageURL(resp); err != nil {
+		if nextPageUrl, err := common.HttpUtil.GetNextPageURL(resp); err != nil {
 			return nil, err
 		} else if nextPageUrl == nil {
 			// No next page
@@ -367,7 +361,7 @@ func (ds *DockerDatasource) getManifestRequest(manifestUrl *url.URL, bearerToken
 	}
 	// Add the bearer token
 	if len(bearerToken) > 0 {
-		shared.HttpUtil.AddBearerToRequest(req, bearerToken)
+		common.HttpUtil.AddBearerToRequest(req, bearerToken)
 	}
 	// Add the appropriate headers
 	req.Header.Set("Accept", strings.Join([]string{

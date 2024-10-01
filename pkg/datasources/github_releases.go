@@ -2,35 +2,29 @@ package datasources
 
 import (
 	"context"
-	"log/slog"
 	"strings"
 
 	"github.com/google/go-github/v63/github"
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type GitHubReleasesDatasource struct {
-	datasourceBase
+	*datasourceBase
 }
 
-func NewGitHubReleasesDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+func NewGitHubReleasesDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &GitHubReleasesDatasource{
-		datasourceBase: datasourceBase{
-			logger: logger,
-			name:   shared.DATASOURCE_TYPE_GITHUB_RELEASES,
-			Config: config,
-		},
+		datasourceBase: newDatasourceBase(settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *GitHubReleasesDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *GitHubReleasesDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	client := github.NewClient(nil)
 
 	// Get a host rule if any was defined
-	relevantHostRule := ds.Config.FilterHostConfigsForHost("api.github.com")
+	relevantHostRule := ds.getHostRuleForHost("api.github.com")
 	// Add the token to the client
 	if relevantHostRule != nil {
 		token := relevantHostRule.TokendExpanded()
@@ -56,10 +50,10 @@ func (ds *GitHubReleasesDatasource) getReleases(dependency *shared.Dependency) (
 	}
 
 	// Convert all entries to objects
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for _, entry := range allReleases {
 		versionString := *entry.Name
-		releases = append(releases, &shared.ReleaseInfo{
+		releases = append(releases, &common.ReleaseInfo{
 			VersionString: versionString,
 			ReleaseDate:   entry.PublishedAt.Time,
 		})

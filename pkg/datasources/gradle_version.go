@@ -2,30 +2,24 @@ package datasources
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/url"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type GradleVersionDatasource struct {
-	datasourceBase
+	*datasourceBase
 }
 
-func NewGradleVersionDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+func NewGradleVersionDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &GradleVersionDatasource{
-		datasourceBase: datasourceBase{
-			logger: logger,
-			name:   shared.DATASOURCE_TYPE_GRADLEVERSION,
-			Config: config,
-		},
+		datasourceBase: newDatasourceBase(settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *GradleVersionDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *GradleVersionDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	registryUrl := ds.getRegistryUrl("https://raw.githubusercontent.com", dependency.RegistryUrls)
 	indexFilePath := "gradle/gradle/master/released-versions.json"
 
@@ -34,7 +28,7 @@ func (ds *GradleVersionDatasource) getReleases(dependency *shared.Dependency) ([
 	if err != nil {
 		return nil, err
 	}
-	indexFileBytes, err := shared.HttpUtil.DownloadToMemory(downloadUrl)
+	indexFileBytes, err := common.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -46,10 +40,10 @@ func (ds *GradleVersionDatasource) getReleases(dependency *shared.Dependency) ([
 	}
 
 	// Convert all entries to objects
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for _, entry := range jsonData["finalReleases"].([]interface{}) {
 		versionString := entry.(map[string]interface{})["version"].(string)
-		releases = append(releases, &shared.ReleaseInfo{
+		releases = append(releases, &common.ReleaseInfo{
 			VersionString: versionString,
 		})
 	}

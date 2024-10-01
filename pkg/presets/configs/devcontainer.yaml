@@ -2,10 +2,10 @@ rules:
   - matches:
       managerTypes:
         - devcontainer
-    managerSettings:
+    managerConfig:
       filePatterns:
         - "**/devcontainer.json"
-      devcontainerSettings:
+      devcontainerConfig:
         ghcr.io/devcontainers-contrib/features/devcontainers-cli:
           - property: version
             datasource: npm

@@ -1,5 +1,5 @@
 {
-    "platformSettings": {
+    "platformConfig": {
         "baseBranch": "main",
         "branchPrefix": "gonovate/",
         "gitAuthor": "gonovate-bot <bot@gonovate.org>"

@@ -1,47 +1,41 @@
 package platforms
 
 import (
-	"log/slog"
-
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type NoopPlatform struct {
-	platformBase
+	*platformBase
 }
 
-func NewNoopPlatform(logger *slog.Logger, config *config.RootConfig) IPlatform {
+func NewNoopPlatform(settings *common.PlatformSettings) IPlatform {
 	platform := &NoopPlatform{
-		platformBase: platformBase{
-			logger: logger,
-			Config: config,
-		},
+		platformBase: newPlatformBase(settings),
 	}
 	return platform
 }
 
-func (p *NoopPlatform) Type() shared.PlatformType {
-	return shared.PLATFORM_TYPE_NOOP
+func (p *NoopPlatform) Type() common.PlatformType {
+	return common.PLATFORM_TYPE_NOOP
 }
 
-func (p *NoopPlatform) FetchProject(project *shared.Project) error {
+func (p *NoopPlatform) FetchProject(project *common.Project) error {
 	return nil
 }
 
-func (p *NoopPlatform) PrepareForChanges(updateGroup *shared.UpdateGroup) error {
+func (p *NoopPlatform) PrepareForChanges(updateGroup *common.UpdateGroup) error {
 	return nil
 }
 
-func (p *NoopPlatform) SubmitChanges(updateGroup *shared.UpdateGroup) error {
+func (p *NoopPlatform) SubmitChanges(updateGroup *common.UpdateGroup) error {
 	return nil
 }
 
-func (p *NoopPlatform) PublishChanges(updateGroup *shared.UpdateGroup) error {
+func (p *NoopPlatform) PublishChanges(updateGroup *common.UpdateGroup) error {
 	return nil
 }
 
-func (p *NoopPlatform) NotifyChanges(project *shared.Project, updateGroup *shared.UpdateGroup) error {
+func (p *NoopPlatform) NotifyChanges(project *common.Project, updateGroup *common.UpdateGroup) error {
 	return nil
 }
 

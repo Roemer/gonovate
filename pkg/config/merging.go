@@ -7,14 +7,14 @@ import (
 	"github.com/samber/lo"
 )
 
-func (configA *RootConfig) MergeWithAsCopy(configB *RootConfig) *RootConfig {
-	merged := &RootConfig{}
+func (configA *GonovateConfig) MergeWithAsCopy(configB *GonovateConfig) *GonovateConfig {
+	merged := &GonovateConfig{}
 	merged.MergeWith(configA)
 	merged.MergeWith(configB)
 	return merged
 }
 
-func (configA *RootConfig) MergeWith(configB *RootConfig) {
+func (configA *GonovateConfig) MergeWith(configB *GonovateConfig) {
 	if configB == nil {
 		return
 	}
@@ -22,11 +22,11 @@ func (configA *RootConfig) MergeWith(configB *RootConfig) {
 	if configB.Platform != "" {
 		configA.Platform = configB.Platform
 	}
-	// PlatformSettings
-	if configA.PlatformSettings == nil {
-		configA.PlatformSettings = &PlatformSettings{}
+	// PlatformConfig
+	if configA.PlatformConfig == nil {
+		configA.PlatformConfig = &PlatformConfig{}
 	}
-	configA.PlatformSettings.MergeWith(configB.PlatformSettings)
+	configA.PlatformConfig.MergeWith(configB.PlatformConfig)
 	// MatchStringPresets
 	if configA.MatchStringPresets == nil {
 		configA.MatchStringPresets = map[string]*MatchStringPreset{}
@@ -49,17 +49,17 @@ func (configA *RootConfig) MergeWith(configB *RootConfig) {
 	configA.IgnorePatterns = lo.Union(configA.IgnorePatterns, configB.IgnorePatterns)
 	// Managers
 	if configA.Managers == nil {
-		configA.Managers = []*ManagerConfig{}
+		configA.Managers = []*Manager{}
 	}
 	for _, managerB := range configB.Managers {
 		// Search for an existing manager with the same id
-		managerAIndex := slices.IndexFunc(configA.Managers, func(m *ManagerConfig) bool { return m.Id == managerB.Id })
+		managerAIndex := slices.IndexFunc(configA.Managers, func(m *Manager) bool { return m.Id == managerB.Id })
 		if managerAIndex >= 0 {
 			// Found one so merge it
 			configA.Managers[managerAIndex].MergeWith(managerB)
 		} else {
 			// Not found, so add it
-			newManager := &ManagerConfig{}
+			newManager := &Manager{}
 			newManager.MergeWith(managerB)
 			configA.Managers = append(configA.Managers, newManager)
 		}
@@ -70,39 +70,39 @@ func (configA *RootConfig) MergeWith(configB *RootConfig) {
 	configA.HostRules = append(configA.HostRules, configB.HostRules...)
 }
 
-func (platformSettingsA *PlatformSettings) MergeWith(platformSettingsB *PlatformSettings) {
-	if platformSettingsB == nil {
+func (PlatformConfigA *PlatformConfig) MergeWith(PlatformConfigB *PlatformConfig) {
+	if PlatformConfigB == nil {
 		return
 	}
 	// Token
-	if platformSettingsB.Token != "" {
-		platformSettingsA.Token = platformSettingsB.Token
+	if PlatformConfigB.Token != "" {
+		PlatformConfigA.Token = PlatformConfigB.Token
 	}
 	// GitAuthor
-	if platformSettingsB.GitAuthor != "" {
-		platformSettingsA.GitAuthor = platformSettingsB.GitAuthor
+	if PlatformConfigB.GitAuthor != "" {
+		PlatformConfigA.GitAuthor = PlatformConfigB.GitAuthor
 	}
 	// Endpoint
-	if platformSettingsB.Endpoint != "" {
-		platformSettingsA.Endpoint = platformSettingsB.Endpoint
+	if PlatformConfigB.Endpoint != "" {
+		PlatformConfigA.Endpoint = PlatformConfigB.Endpoint
 	}
 	// Direct
-	if platformSettingsB.Inplace != nil {
-		platformSettingsA.Inplace = platformSettingsB.Inplace
+	if PlatformConfigB.Inplace != nil {
+		PlatformConfigA.Inplace = PlatformConfigB.Inplace
 	}
 	// Projects
-	platformSettingsA.Projects = lo.Union(platformSettingsA.Projects, platformSettingsB.Projects)
+	PlatformConfigA.Projects = lo.Union(PlatformConfigA.Projects, PlatformConfigB.Projects)
 	// BaseBranch
-	if platformSettingsB.BaseBranch != "" {
-		platformSettingsA.BaseBranch = platformSettingsB.BaseBranch
+	if PlatformConfigB.BaseBranch != "" {
+		PlatformConfigA.BaseBranch = PlatformConfigB.BaseBranch
 	}
 	// BranchPrefix
-	if platformSettingsB.BranchPrefix != "" {
-		platformSettingsA.BranchPrefix = platformSettingsB.BranchPrefix
+	if PlatformConfigB.BranchPrefix != "" {
+		PlatformConfigA.BranchPrefix = PlatformConfigB.BranchPrefix
 	}
 }
 
-func (managerA *ManagerConfig) MergeWith(managerB *ManagerConfig) {
+func (managerA *Manager) MergeWith(managerB *Manager) {
 	if managerB == nil {
 		return
 	}
@@ -111,110 +111,110 @@ func (managerA *ManagerConfig) MergeWith(managerB *ManagerConfig) {
 	// Type
 	managerA.Type = managerB.Type
 	// Manager Settings
-	if managerA.ManagerSettings == nil {
-		managerA.ManagerSettings = &ManagerSettings{}
+	if managerA.ManagerConfig == nil {
+		managerA.ManagerConfig = &ManagerConfig{}
 	}
-	managerA.ManagerSettings.MergeWith(managerB.ManagerSettings)
+	managerA.ManagerConfig.MergeWith(managerB.ManagerConfig)
 
 	// Dependency Settings
-	if managerA.DependencySettings == nil {
-		managerA.DependencySettings = &DependencySettings{}
+	if managerA.DependencyConfig == nil {
+		managerA.DependencyConfig = &DependencyConfig{}
 	}
-	managerA.DependencySettings.MergeWith(managerB.DependencySettings)
+	managerA.DependencyConfig.MergeWith(managerB.DependencyConfig)
 }
 
-func (managerSettingsA *ManagerSettings) MergeWith(managerSettingsB *ManagerSettings) {
-	if managerSettingsB == nil {
+func (ManagerConfigA *ManagerConfig) MergeWith(ManagerConfigB *ManagerConfig) {
+	if ManagerConfigB == nil {
 		return
 	}
 	// Disabled
-	if managerSettingsB.Disabled != nil {
-		managerSettingsA.Disabled = managerSettingsB.Disabled
+	if ManagerConfigB.Disabled != nil {
+		ManagerConfigA.Disabled = ManagerConfigB.Disabled
 	}
 	// FilePatterns
-	managerSettingsA.FilePatterns = lo.Union(managerSettingsA.FilePatterns, managerSettingsB.FilePatterns)
+	ManagerConfigA.FilePatterns = lo.Union(ManagerConfigA.FilePatterns, ManagerConfigB.FilePatterns)
 	// MatchStrings
-	managerSettingsA.MatchStrings = lo.Union(managerSettingsA.MatchStrings, managerSettingsB.MatchStrings)
-	// DevcontainerSettings
-	if len(managerSettingsB.DevcontainerSettings) > 0 {
+	ManagerConfigA.MatchStrings = lo.Union(ManagerConfigA.MatchStrings, ManagerConfigB.MatchStrings)
+	// DevcontainerConfig
+	if len(ManagerConfigB.DevcontainerConfig) > 0 {
 		// Make sure the settings object exiss in A
-		if managerSettingsA.DevcontainerSettings == nil {
-			managerSettingsA.DevcontainerSettings = map[string][]*DevcontainerFeatureDependency{}
+		if ManagerConfigA.DevcontainerConfig == nil {
+			ManagerConfigA.DevcontainerConfig = map[string][]*DevcontainerFeatureDependency{}
 		}
 
 		// Loop thru the features
-		for featureName, featureDependencies := range managerSettingsB.DevcontainerSettings {
+		for featureName, featureDependencies := range ManagerConfigB.DevcontainerConfig {
 			// Make sure the feature exist in A
-			if _, ok := managerSettingsA.DevcontainerSettings[featureName]; !ok {
-				managerSettingsA.DevcontainerSettings[featureName] = []*DevcontainerFeatureDependency{}
+			if _, ok := ManagerConfigA.DevcontainerConfig[featureName]; !ok {
+				ManagerConfigA.DevcontainerConfig[featureName] = []*DevcontainerFeatureDependency{}
 			}
 			// Merge the individual feature dependencies
 			for _, featureDependency := range featureDependencies {
 				// Search for an existing featureDependency in A with the same property
-				idx := slices.IndexFunc(managerSettingsA.DevcontainerSettings[featureName], func(m *DevcontainerFeatureDependency) bool {
+				idx := slices.IndexFunc(ManagerConfigA.DevcontainerConfig[featureName], func(m *DevcontainerFeatureDependency) bool {
 					return m.Property == featureDependency.Property
 				})
 				if idx >= 0 {
 					// Found one so merge it
-					managerSettingsA.DevcontainerSettings[featureName][idx].MergeWith(featureDependency)
+					ManagerConfigA.DevcontainerConfig[featureName][idx].MergeWith(featureDependency)
 				} else {
 					// Not found, so add it
 					newFeature := &DevcontainerFeatureDependency{}
 					newFeature.MergeWith(featureDependency)
-					managerSettingsA.DevcontainerSettings[featureName] = append(managerSettingsA.DevcontainerSettings[featureName], newFeature)
+					ManagerConfigA.DevcontainerConfig[featureName] = append(ManagerConfigA.DevcontainerConfig[featureName], newFeature)
 				}
 			}
 		}
 	}
 }
 
-func (dependencySettingsA *DependencySettings) MergeWith(dependencySettingsB *DependencySettings) {
-	if dependencySettingsB == nil {
+func (DependencyConfigA *DependencyConfig) MergeWith(DependencyConfigB *DependencyConfig) {
+	if DependencyConfigB == nil {
 		return
 	}
 	// Skip
-	if dependencySettingsB.Skip != nil {
-		dependencySettingsA.Skip = dependencySettingsB.Skip
+	if DependencyConfigB.Skip != nil {
+		DependencyConfigA.Skip = DependencyConfigB.Skip
 	}
 	// SkipReason
-	if dependencySettingsB.SkipReason != "" {
-		dependencySettingsA.SkipReason = dependencySettingsB.SkipReason
+	if DependencyConfigB.SkipReason != "" {
+		DependencyConfigA.SkipReason = DependencyConfigB.SkipReason
 	}
 	// MaxUpdateType
-	if dependencySettingsB.MaxUpdateType != "" {
-		dependencySettingsA.MaxUpdateType = dependencySettingsB.MaxUpdateType
+	if DependencyConfigB.MaxUpdateType != "" {
+		DependencyConfigA.MaxUpdateType = DependencyConfigB.MaxUpdateType
 	}
 	// AllowUnstable
-	if dependencySettingsB.AllowUnstable != nil {
-		dependencySettingsA.AllowUnstable = dependencySettingsB.AllowUnstable
+	if DependencyConfigB.AllowUnstable != nil {
+		DependencyConfigA.AllowUnstable = DependencyConfigB.AllowUnstable
 	}
 	// RegistryUrls
-	dependencySettingsA.RegistryUrls = lo.Union(dependencySettingsA.RegistryUrls, dependencySettingsB.RegistryUrls)
+	DependencyConfigA.RegistryUrls = lo.Union(DependencyConfigA.RegistryUrls, DependencyConfigB.RegistryUrls)
 	// Versioning
-	if dependencySettingsB.Versioning != "" {
-		dependencySettingsA.Versioning = dependencySettingsB.Versioning
+	if DependencyConfigB.Versioning != "" {
+		DependencyConfigA.Versioning = DependencyConfigB.Versioning
 	}
 	// ExtractVersion
-	if dependencySettingsB.ExtractVersion != "" {
-		dependencySettingsA.ExtractVersion = dependencySettingsB.ExtractVersion
+	if DependencyConfigB.ExtractVersion != "" {
+		DependencyConfigA.ExtractVersion = DependencyConfigB.ExtractVersion
 	}
 	// IgnoreNonMatching
-	if dependencySettingsB.IgnoreNonMatching != nil {
-		dependencySettingsA.IgnoreNonMatching = dependencySettingsB.IgnoreNonMatching
+	if DependencyConfigB.IgnoreNonMatching != nil {
+		DependencyConfigA.IgnoreNonMatching = DependencyConfigB.IgnoreNonMatching
 	}
 	// DependencyName
-	if dependencySettingsB.DependencyName != "" {
-		dependencySettingsA.DependencyName = dependencySettingsB.DependencyName
+	if DependencyConfigB.DependencyName != "" {
+		DependencyConfigA.DependencyName = DependencyConfigB.DependencyName
 	}
 	// Datasource
-	if dependencySettingsB.Datasource != "" {
-		dependencySettingsA.Datasource = dependencySettingsB.Datasource
+	if DependencyConfigB.Datasource != "" {
+		DependencyConfigA.Datasource = DependencyConfigB.Datasource
 	}
 	// PostUpgradeReplacements
-	dependencySettingsA.PostUpgradeReplacements = lo.Union(dependencySettingsA.PostUpgradeReplacements, dependencySettingsB.PostUpgradeReplacements)
+	DependencyConfigA.PostUpgradeReplacements = lo.Union(DependencyConfigA.PostUpgradeReplacements, DependencyConfigB.PostUpgradeReplacements)
 	// GroupName
-	if dependencySettingsB.GroupName != "" {
-		dependencySettingsA.GroupName = dependencySettingsB.GroupName
+	if DependencyConfigB.GroupName != "" {
+		DependencyConfigA.GroupName = DependencyConfigB.GroupName
 	}
 }
 

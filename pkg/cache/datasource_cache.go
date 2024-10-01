@@ -1,14 +1,14 @@
 package cache
 
-import "github.com/roemer/gonovate/internal/pkg/shared"
+import "github.com/roemer/gonovate/pkg/common"
 
-var DatasourceCache *datasourceCache = &datasourceCache{entries: map[shared.DatasourceType]map[string][]*shared.ReleaseInfo{}}
+var DatasourceCache *datasourceCache = &datasourceCache{entries: map[common.DatasourceType]map[string][]*common.ReleaseInfo{}}
 
 type datasourceCache struct {
-	entries map[shared.DatasourceType]map[string][]*shared.ReleaseInfo
+	entries map[common.DatasourceType]map[string][]*common.ReleaseInfo
 }
 
-func (cache *datasourceCache) GetCache(datasourceType shared.DatasourceType, identifier string) []*shared.ReleaseInfo {
+func (cache *datasourceCache) GetCache(datasourceType common.DatasourceType, identifier string) []*common.ReleaseInfo {
 	entriesForDatasource, ok := cache.entries[datasourceType]
 	if !ok {
 		return nil
@@ -20,9 +20,9 @@ func (cache *datasourceCache) GetCache(datasourceType shared.DatasourceType, ide
 	return entriesForId
 }
 
-func (cache *datasourceCache) SetCache(datasourceType shared.DatasourceType, identifier string, versions []*shared.ReleaseInfo) {
+func (cache *datasourceCache) SetCache(datasourceType common.DatasourceType, identifier string, versions []*common.ReleaseInfo) {
 	if _, ok := cache.entries[datasourceType]; !ok {
-		cache.entries[datasourceType] = map[string][]*shared.ReleaseInfo{}
+		cache.entries[datasourceType] = map[string][]*common.ReleaseInfo{}
 	}
 	cache.entries[datasourceType][identifier] = versions
 }

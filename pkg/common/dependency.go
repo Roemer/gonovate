@@ -1,11 +1,11 @@
-package shared
+package common
 
 import (
 	"fmt"
 	"strings"
 )
 
-// This type represents a concrete dependency which was found by a manager.
+// This type represents a concrete dependency.
 type Dependency struct {
 	// The name of the dependency.
 	Name string
@@ -17,10 +17,6 @@ type Dependency struct {
 	Type string
 	// The datasource of the dependency.
 	Datasource DatasourceType
-	// The id of the manager from which this dependency was found.
-	ManagerId string
-	// An object that can contain data which is set/read from the manager to process the dependency.
-	ManagerData interface{}
 	// A map that contains additional data about the dependency (for example a digest).
 	AdditionalData map[string]string
 	// The filepath from where this dependency was found.
@@ -52,6 +48,17 @@ type Dependency struct {
 
 	// Contains the information about the new release if any is found.
 	NewRelease *ReleaseInfo
+
+	// Contains information about the manager from which this dependnecy was found from. Is "nil" if the dependency is not from a manager.
+	ManagerInfo *ManagerInfo
+}
+
+// Object with information about a manager.
+type ManagerInfo struct {
+	// The id of the manager from which this dependency was found.
+	ManagerId string
+	// An object that can contain data which is set/read from the manager to process the dependency.
+	ManagerData interface{}
 }
 
 func (d *Dependency) String() string {

@@ -2,32 +2,26 @@ package managers
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"regexp"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
+	"github.com/roemer/gonovate/pkg/presets"
 )
 
 type RegexManager struct {
-	managerBase
+	*managerBase
 }
 
-func NewRegexManager(logger *slog.Logger, id string, rootConfig *config.RootConfig, managerSettings *config.ManagerSettings) IManager {
+func NewRegexManager(settings *common.ManagerSettings) common.IManager {
 	manager := &RegexManager{
-		managerBase: managerBase{
-			logger:     logger.With(slog.String("handlerId", id)),
-			id:         id,
-			rootConfig: rootConfig,
-			settings:   managerSettings,
-		},
+		managerBase: newManagerBase(settings),
 	}
 	manager.impl = manager
 	return manager
 }
 
-func (manager *RegexManager) ExtractDependencies(filePath string) ([]*shared.Dependency, error) {
+func (manager *RegexManager) ExtractDependencies(filePath string) ([]*common.Dependency, error) {
 	// Read the entire file
 	fileContentBytes, err := os.ReadFile(filePath)
 	if err != nil {
@@ -36,12 +30,12 @@ func (manager *RegexManager) ExtractDependencies(filePath string) ([]*shared.Dep
 	fileContent := string(fileContentBytes)
 
 	// Extract the dependencies from the string
-	return manager.extractDependenciesFromString(fileContent)
+	return manager.extractDependenciesFromString(fileContent, filePath)
 }
 
-func (manager *RegexManager) ApplyDependencyUpdate(dependency *shared.Dependency) error {
-	return replaceDependencyVersionInFileWithCheck(dependency, func(dependency *shared.Dependency, newFileContent string) (*shared.Dependency, error) {
-		newDeps, err := manager.extractDependenciesFromString(newFileContent)
+func (manager *RegexManager) ApplyDependencyUpdate(dependency *common.Dependency) error {
+	return replaceDependencyVersionInFileWithCheck(dependency, func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error) {
+		newDeps, err := manager.extractDependenciesFromString(newFileContent, dependency.FilePath)
 		if err != nil {
 			return nil, err
 		}
@@ -58,11 +52,11 @@ func (manager *RegexManager) ApplyDependencyUpdate(dependency *shared.Dependency
 ////////////////////////////////////////////////////////////
 
 // Extract dependencies from a given string by searching for the regexes.
-func (manager *RegexManager) extractDependenciesFromString(fileContent string) ([]*shared.Dependency, error) {
+func (manager *RegexManager) extractDependenciesFromString(fileContent string, filePath string) ([]*common.Dependency, error) {
 	// Precompile the regexes from the manager settings
 	precompiledRegexList := []*regexp.Regexp{}
-	for _, regStr := range manager.settings.MatchStrings {
-		resolvedMatchString, err := manager.rootConfig.ResolveMatchString(regStr)
+	for _, regStr := range manager.settings.RegexManagerSettings.MatchStrings {
+		resolvedMatchString, err := presets.ResolveMatchString(regStr, manager.settings.RegexManagerSettings.MatchStringPresets)
 		if err != nil {
 			return nil, err
 		}
@@ -72,14 +66,14 @@ func (manager *RegexManager) extractDependenciesFromString(fileContent string) (
 		}
 		precompiledRegexList = append(precompiledRegexList, regex)
 	}
-	manager.logger.Debug(fmt.Sprintf("Found %s to process", shared.GetSingularPluralStringSimple(precompiledRegexList, "match pattern")))
+	manager.logger.Debug(fmt.Sprintf("Found %d match pattern(s) to process", len(precompiledRegexList)))
 
 	// Prepare a slice to collect all found dependencies
-	foundDependencies := []*shared.Dependency{}
+	foundDependencies := []*common.Dependency{}
 
 	// Loop thru all regex patterns
 	for _, regex := range precompiledRegexList {
-		matchList := shared.FindAllNamedMatchesWithIndex(regex, fileContent, false, -1)
+		matchList := common.FindAllNamedMatchesWithIndex(regex, fileContent, false, -1)
 		if matchList == nil {
 			// The regex was not matched, go to the next
 			continue
@@ -99,27 +93,25 @@ func (manager *RegexManager) extractDependenciesFromString(fileContent string) (
 			extractVersionObject, extractVersionOk := match["extractVersion"]
 
 			// Build the dependency object
-			newDepencency := &shared.Dependency{
-				Version: versionObject[0].Value,
-			}
+			newDependency := manager.newDependency("", "", versionObject[0].Value, filePath)
 			if datasourceOk {
-				newDepencency.Datasource = shared.DatasourceType(datasourceObject[0].Value)
+				newDependency.Datasource = common.DatasourceType(datasourceObject[0].Value)
 			}
 			if dependencyOk {
-				newDepencency.Name = dependencyObject[0].Value
+				newDependency.Name = dependencyObject[0].Value
 			}
 			if versioningOk {
-				newDepencency.Versioning = versioningObject[0].Value
+				newDependency.Versioning = versioningObject[0].Value
 			}
 			if maxUpdateTypeOk {
-				newDepencency.MaxUpdateType = shared.UpdateType(maxUpdateTypeObject[0].Value)
+				newDependency.MaxUpdateType = common.UpdateType(maxUpdateTypeObject[0].Value)
 			}
 			if extractVersionOk {
-				newDepencency.ExtractVersion = extractVersionObject[0].Value
+				newDependency.ExtractVersion = extractVersionObject[0].Value
 			}
 
 			// Add the dependency
-			foundDependencies = append(foundDependencies, newDepencency)
+			foundDependencies = append(foundDependencies, newDependency)
 		}
 	}
 

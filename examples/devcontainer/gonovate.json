@@ -1,6 +1,6 @@
 {
     "platform": "noop",
-    "platformSettings": {
+    "platformConfig": {
         "inplace": true
     },
     "extends": [
@@ -10,7 +10,7 @@
         {
             "id": "devcontainer",
             "type": "devcontainer",
-            "dependencySettings": {
+            "dependencyConfig": {
                 "maxUpdateType": "major",
                 "ignoreNonMatching": true
             }

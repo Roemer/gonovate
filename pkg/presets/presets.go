@@ -1,6 +1,13 @@
 package presets
 
-import "embed"
+import (
+	"embed"
+)
 
-//go:embed *.json *.yaml
+//go:embed configs/*.json configs/*.yaml
 var Presets embed.FS
+
+type MatchStringPreset struct {
+	MatchString       string
+	ParameterDefaults []string
+}

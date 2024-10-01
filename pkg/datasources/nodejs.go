@@ -3,32 +3,26 @@ package datasources
 import (
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type NodeJsDatasource struct {
-	datasourceBase
+	*datasourceBase
 }
 
-func NewNodeJsDatasource(logger *slog.Logger, config *config.RootConfig) IDatasource {
+func NewNodeJsDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &NodeJsDatasource{
-		datasourceBase: datasourceBase{
-			logger: logger,
-			name:   shared.DATASOURCE_TYPE_NODEJS,
-			Config: config,
-		},
+		datasourceBase: newDatasourceBase(settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource
 }
 
-func (ds *NodeJsDatasource) getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error) {
+func (ds *NodeJsDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	registryUrl := ds.getRegistryUrl("https://nodejs.org/dist", dependency.RegistryUrls)
 	indexFilePath := "index.json"
 	ltsOnly := strings.HasSuffix(dependency.Name, "lts")
@@ -38,7 +32,7 @@ func (ds *NodeJsDatasource) getReleases(dependency *shared.Dependency) ([]*share
 	if err != nil {
 		return nil, err
 	}
-	indexFileBytes, err := shared.HttpUtil.DownloadToMemory(downloadUrl)
+	indexFileBytes, err := common.HttpUtil.DownloadToMemory(downloadUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +44,7 @@ func (ds *NodeJsDatasource) getReleases(dependency *shared.Dependency) ([]*share
 	}
 
 	// Convert all entries to objects
-	releases := []*shared.ReleaseInfo{}
+	releases := []*common.ReleaseInfo{}
 	for _, entry := range jsonData {
 		versionString := entry["version"].(string)
 		ltsValue := entry["lts"]
@@ -62,7 +56,7 @@ func (ds *NodeJsDatasource) getReleases(dependency *shared.Dependency) ([]*share
 		if err != nil {
 			return nil, fmt.Errorf("failed parsing date '%s': %w", dateString, err)
 		}
-		releases = append(releases, &shared.ReleaseInfo{
+		releases = append(releases, &common.ReleaseInfo{
 			ReleaseDate:   releaseDate,
 			VersionString: versionString,
 		})

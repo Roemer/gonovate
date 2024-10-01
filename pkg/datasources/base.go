@@ -7,63 +7,57 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/roemer/gonovate/internal/pkg/cache"
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/cache"
+	"github.com/roemer/gonovate/pkg/common"
 	"github.com/roemer/gover"
 )
 
-type IDatasource interface {
-	// Gets all possible releases for the dependency.
-	getReleases(dependency *shared.Dependency) ([]*shared.ReleaseInfo, error)
-	// Gets the digest for the dependency.
-	getDigest(dependency *shared.Dependency, releaseVersion string) (string, error)
-	// Gets additional data for the dependency and the new release.
-	getAdditionalData(dependency *shared.Dependency, newRelease *shared.ReleaseInfo, dataType string) (string, error)
-	// Handles the dependency update searching.
-	SearchDependencyUpdate(dependency *shared.Dependency) (*shared.ReleaseInfo, error)
-}
-
 type datasourceBase struct {
-	logger *slog.Logger
-	name   shared.DatasourceType
-	impl   IDatasource
-	Config *config.RootConfig
+	logger   *slog.Logger
+	impl     common.IDatasource
+	settings *common.DatasourceSettings
 }
 
-func GetDatasource(logger *slog.Logger, config *config.RootConfig, datasource shared.DatasourceType) (IDatasource, error) {
-	switch datasource {
-	case shared.DATASOURCE_TYPE_ANTVERSION:
-		return NewAntVersionDatasource(logger, config), nil
-	case shared.DATASOURCE_TYPE_ARTIFACTORY:
-		return NewArtifactoryDatasource(logger, config), nil
-	case shared.DATASOURCE_TYPE_BROWSERVERSION:
-		return NewBrowserVersionDatasource(logger, config), nil
-	case shared.DATASOURCE_TYPE_DOCKER:
-		return NewDockerDatasource(logger, config), nil
-	case shared.DATASOURCE_TYPE_GITHUB_RELEASES:
-		return NewGitHubReleasesDatasource(logger, config), nil
-	case shared.DATASOURCE_TYPE_GITHUB_TAGS:
-		return NewGitHubTagsDatasource(logger, config), nil
-	case shared.DATASOURCE_TYPE_GOMOD:
-		return NewGoModDatasource(logger, config), nil
-	case shared.DATASOURCE_TYPE_GOVERSION:
-		return NewGoVersionDatasource(logger, config), nil
-	case shared.DATASOURCE_TYPE_GRADLEVERSION:
-		return NewGradleVersionDatasource(logger, config), nil
-	case shared.DATASOURCE_TYPE_JAVAVERSION:
-		return NewJavaVersionDatasource(logger, config), nil
-	case shared.DATASOURCE_TYPE_MAVEN:
-		return NewMavenDatasource(logger, config), nil
-	case shared.DATASOURCE_TYPE_NODEJS:
-		return NewNodeJsDatasource(logger, config), nil
-	case shared.DATASOURCE_TYPE_NPM:
-		return NewNpmDatasource(logger, config), nil
+func newDatasourceBase(settings *common.DatasourceSettings) *datasourceBase {
+	return &datasourceBase{
+		logger:   settings.Logger.With(slog.String("datasource", string(settings.DatasourceType))),
+		settings: settings,
 	}
-	return nil, fmt.Errorf("no datasource defined for '%s'", datasource)
 }
 
-func (ds *datasourceBase) SearchDependencyUpdate(dependency *shared.Dependency) (*shared.ReleaseInfo, error) {
+func GetDatasource(settings *common.DatasourceSettings) (common.IDatasource, error) {
+	switch settings.DatasourceType {
+	case common.DATASOURCE_TYPE_ANTVERSION:
+		return NewAntVersionDatasource(settings), nil
+	case common.DATASOURCE_TYPE_ARTIFACTORY:
+		return NewArtifactoryDatasource(settings), nil
+	case common.DATASOURCE_TYPE_BROWSERVERSION:
+		return NewBrowserVersionDatasource(settings), nil
+	case common.DATASOURCE_TYPE_DOCKER:
+		return NewDockerDatasource(settings), nil
+	case common.DATASOURCE_TYPE_GITHUB_RELEASES:
+		return NewGitHubReleasesDatasource(settings), nil
+	case common.DATASOURCE_TYPE_GITHUB_TAGS:
+		return NewGitHubTagsDatasource(settings), nil
+	case common.DATASOURCE_TYPE_GOMOD:
+		return NewGoModDatasource(settings), nil
+	case common.DATASOURCE_TYPE_GOVERSION:
+		return NewGoVersionDatasource(settings), nil
+	case common.DATASOURCE_TYPE_GRADLEVERSION:
+		return NewGradleVersionDatasource(settings), nil
+	case common.DATASOURCE_TYPE_JAVAVERSION:
+		return NewJavaVersionDatasource(settings), nil
+	case common.DATASOURCE_TYPE_MAVEN:
+		return NewMavenDatasource(settings), nil
+	case common.DATASOURCE_TYPE_NODEJS:
+		return NewNodeJsDatasource(settings), nil
+	case common.DATASOURCE_TYPE_NPM:
+		return NewNpmDatasource(settings), nil
+	}
+	return nil, fmt.Errorf("no datasource defined for '%s'", settings.DatasourceType)
+}
+
+func (ds *datasourceBase) SearchDependencyUpdate(dependency *common.Dependency) (*common.ReleaseInfo, error) {
 	skipVersionCheck := false
 	if dependency.SkipVersionCheck != nil {
 		skipVersionCheck = *dependency.SkipVersionCheck
@@ -73,7 +67,7 @@ func (ds *datasourceBase) SearchDependencyUpdate(dependency *shared.Dependency) 
 	hasDigest := dependency.HasDigest()
 
 	// Prepare some state variables
-	var newRelease *shared.ReleaseInfo
+	var newRelease *common.ReleaseInfo
 	var versionDiffers bool
 
 	// Special condition for when the update version check should be skipped (eg. Docker latest)
@@ -84,7 +78,7 @@ func (ds *datasourceBase) SearchDependencyUpdate(dependency *shared.Dependency) 
 			return nil, nil
 		}
 		// The new release keeps the current version
-		newRelease = &shared.ReleaseInfo{
+		newRelease = &common.ReleaseInfo{
 			VersionString: dependency.Version,
 		}
 		versionDiffers = false
@@ -100,7 +94,7 @@ func (ds *datasourceBase) SearchDependencyUpdate(dependency *shared.Dependency) 
 			newRelease = updatedRelease
 		} else {
 			// Use the current version, there is still possibly a digest that can change
-			newRelease = &shared.ReleaseInfo{
+			newRelease = &common.ReleaseInfo{
 				VersionString: dependency.Version,
 			}
 			versionDiffers = false
@@ -112,7 +106,7 @@ func (ds *datasourceBase) SearchDependencyUpdate(dependency *shared.Dependency) 
 	// Check if the dependency has a digest set
 	if hasDigest {
 		// Get the digest for the maximum valid release from the datasource
-		newDigest, err := ds.impl.getDigest(dependency, newRelease.VersionString)
+		newDigest, err := ds.impl.GetDigest(dependency, newRelease.VersionString)
 		if err != nil {
 			return nil, err
 		}
@@ -142,10 +136,21 @@ func (ds *datasourceBase) SearchDependencyUpdate(dependency *shared.Dependency) 
 	return newRelease, nil
 }
 
+func (ds *datasourceBase) GetDigest(dependency *common.Dependency, releaseVersion string) (string, error) {
+	return "", fmt.Errorf("datasource does not support digests")
+}
+
+func (ds *datasourceBase) GetAdditionalData(dependency *common.Dependency, newRelease *common.ReleaseInfo, dataType string) (string, error) {
+	if value, ok := newRelease.AdditionalData[dataType]; ok {
+		return value, nil
+	}
+	return "", fmt.Errorf("additional data for '%s' not found in dependency '%s'", dataType, dependency.Name)
+}
+
 // Searches for a new version update for the given dependency
-func (ds *datasourceBase) searchUpdatedVersion(dependency *shared.Dependency) (*shared.ReleaseInfo, *gover.Version, error) {
+func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*common.ReleaseInfo, *gover.Version, error) {
 	// Setup everything for the releases lookup
-	cacheIdentifier := fmt.Sprintf("%s|%s", ds.name, dependency.Name)
+	cacheIdentifier := fmt.Sprintf("%s|%s", ds.settings.DatasourceType, dependency.Name)
 	allowUnstable := false
 	if dependency.AllowUnstable != nil {
 		allowUnstable = *dependency.AllowUnstable
@@ -157,11 +162,7 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *shared.Dependency) (*
 	if dependency.Versioning == "" {
 		return nil, nil, fmt.Errorf("empty 'versioning' regexp")
 	}
-	resolvedVersioning, err := ds.Config.ResolveVersioning(dependency.Versioning)
-	if err != nil {
-		return nil, nil, err
-	}
-	versionRegex, err := regexp.Compile(resolvedVersioning)
+	versionRegex, err := regexp.Compile(dependency.Versioning)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed parsing the 'versioning' regexp '%s': %w", dependency.Versioning, err)
 	}
@@ -174,16 +175,16 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *shared.Dependency) (*
 	}
 
 	// Try get releases from the cache
-	avaliableReleases := cache.DatasourceCache.GetCache(ds.name, cacheIdentifier)
+	avaliableReleases := cache.DatasourceCache.GetCache(ds.settings.DatasourceType, cacheIdentifier)
 	if avaliableReleases == nil {
 		// No data in cache, fetch new data
 		ds.logger.Debug("Lookup releases from remote")
-		releases, err := ds.impl.getReleases(dependency)
+		releases, err := ds.impl.GetReleases(dependency)
 		if err != nil {
 			return nil, nil, err
 		}
 		// Convert the raw strings to versions
-		avaliableReleases = []*shared.ReleaseInfo{}
+		avaliableReleases = []*common.ReleaseInfo{}
 		for _, release := range releases {
 			// Extract the version number from the raw string if needed
 			if extractVersionRegex != nil {
@@ -210,7 +211,7 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *shared.Dependency) (*
 			avaliableReleases = append(avaliableReleases, release)
 		}
 		// Store in cache
-		cache.DatasourceCache.SetCache(ds.name, cacheIdentifier, avaliableReleases)
+		cache.DatasourceCache.SetCache(ds.settings.DatasourceType, cacheIdentifier, avaliableReleases)
 	} else {
 		ds.logger.Debug("Returned releases from cache")
 	}
@@ -232,7 +233,7 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *shared.Dependency) (*
 	}
 
 	// Search for an update
-	newRelease := gover.FindMaxGeneric(avaliableReleases, func(x *shared.ReleaseInfo) *gover.Version { return x.Version }, refVersion, !allowUnstable)
+	newRelease := gover.FindMaxGeneric(avaliableReleases, func(x *common.ReleaseInfo) *gover.Version { return x.Version }, refVersion, !allowUnstable)
 
 	// Early exit if no release was found at all
 	if newRelease == nil {
@@ -249,19 +250,6 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *shared.Dependency) (*
 	return newRelease, currentVersion, nil
 }
 
-func getReferenceVersionForUpdateType(updateType shared.UpdateType, currentVersion *gover.Version) (*gover.Version, error) {
-	if updateType == shared.UPDATE_TYPE_MAJOR {
-		return gover.EmptyVersion, nil
-	}
-	if updateType == shared.UPDATE_TYPE_MINOR {
-		return gover.ParseSimple(currentVersion.Major()), nil
-	}
-	if updateType == shared.UPDATE_TYPE_PATCH {
-		return gover.ParseSimple(currentVersion.Major(), currentVersion.Minor()), nil
-	}
-	return nil, fmt.Errorf("missing updateType")
-}
-
 func (ds *datasourceBase) getRegistryUrl(baseUrl string, customRegistryUrls []string) string {
 	if len(customRegistryUrls) > 0 {
 		baseUrl = customRegistryUrls[0]
@@ -271,13 +259,26 @@ func (ds *datasourceBase) getRegistryUrl(baseUrl string, customRegistryUrls []st
 	return baseUrl
 }
 
-func (ds *datasourceBase) getDigest(dependency *shared.Dependency, releaseVersion string) (string, error) {
-	return "", fmt.Errorf("datasource does not support digests")
+func (ds *datasourceBase) getHostRuleForHost(host string) *common.HostRule {
+	if ds.settings != nil {
+		for _, hostRule := range ds.settings.HostRules {
+			if strings.Contains(host, hostRule.MatchHost) {
+				return hostRule
+			}
+		}
+	}
+	return nil
 }
 
-func (ds *datasourceBase) getAdditionalData(dependency *shared.Dependency, newRelease *shared.ReleaseInfo, dataType string) (string, error) {
-	if value, ok := newRelease.AdditionalData[dataType]; ok {
-		return value, nil
+func getReferenceVersionForUpdateType(updateType common.UpdateType, currentVersion *gover.Version) (*gover.Version, error) {
+	if updateType == common.UPDATE_TYPE_MAJOR {
+		return gover.EmptyVersion, nil
 	}
-	return "", fmt.Errorf("additional data for '%s' not found in dependency '%s'", dataType, dependency.Name)
+	if updateType == common.UPDATE_TYPE_MINOR {
+		return gover.ParseSimple(currentVersion.Major()), nil
+	}
+	if updateType == common.UPDATE_TYPE_PATCH {
+		return gover.ParseSimple(currentVersion.Major(), currentVersion.Minor()), nil
+	}
+	return nil, fmt.Errorf("missing updateType")
 }

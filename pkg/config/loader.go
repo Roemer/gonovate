@@ -11,14 +11,14 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/roemer/gonovate/internal/pkg/presets"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
+	"github.com/roemer/gonovate/pkg/presets"
 
 	"github.com/goccy/go-yaml"
 )
 
 // Loads the given configuration
-func Load(configPath string) (*RootConfig, error) {
+func Load(configPath string) (*GonovateConfig, error) {
 	if configPath == "" {
 		configPath = "local:gonovate"
 	}
@@ -78,8 +78,8 @@ func newConfigInfo(info string) (*configInfo, error) {
 	}, nil
 }
 
-func loadConfig(parentInfo, newInfo *configInfo) (*RootConfig, error) {
-	var newConfig *RootConfig
+func loadConfig(parentInfo, newInfo *configInfo) (*GonovateConfig, error) {
+	var newConfig *GonovateConfig
 	var err error
 	// Try load the config according to the type
 	switch newInfo.Type {
@@ -100,7 +100,7 @@ func loadConfig(parentInfo, newInfo *configInfo) (*RootConfig, error) {
 	newConfig.PostLoadProcess()
 
 	// Create a new object for the merged config with the presets
-	mergedConfig := &RootConfig{}
+	mergedConfig := &GonovateConfig{}
 	// Process the "Extends" presets first
 	for _, presetLookupInfo := range newConfig.Extends {
 		presetInfo, err := newConfigInfo(presetLookupInfo)
@@ -122,7 +122,7 @@ func loadConfig(parentInfo, newInfo *configInfo) (*RootConfig, error) {
 	return mergedConfig, nil
 }
 
-func loadConfigFromFile(parentInfo, newInfo *configInfo) (*RootConfig, error) {
+func loadConfigFromFile(parentInfo, newInfo *configInfo) (*GonovateConfig, error) {
 	// Build a list of paths that should be searched
 	searchPaths := []string{}
 	if filepath.IsAbs(newInfo.Location) {
@@ -158,7 +158,7 @@ func loadConfigFromFile(parentInfo, newInfo *configInfo) (*RootConfig, error) {
 	for _, searchPath := range searchPaths {
 		if hasExt {
 			// We have an extension, directly search in the given path
-			if exists, err := shared.FileExists(searchPath); err != nil {
+			if exists, err := common.FileExists(searchPath); err != nil {
 				return nil, err
 			} else if exists {
 				finalValidConfigPath = searchPath
@@ -185,7 +185,7 @@ func loadConfigFromFile(parentInfo, newInfo *configInfo) (*RootConfig, error) {
 		defer configFile.Close()
 
 		// Decode the file
-		config := &RootConfig{}
+		config := &GonovateConfig{}
 		if filepath.Ext(finalValidConfigPath) == ".json" {
 			if err = json.NewDecoder(configFile).Decode(config); err != nil {
 				return nil, fmt.Errorf("failed parsing file '%s': %w", finalValidConfigPath, err)
@@ -202,10 +202,15 @@ func loadConfigFromFile(parentInfo, newInfo *configInfo) (*RootConfig, error) {
 	return nil, fmt.Errorf("file not found for '%s'", newInfo.Location)
 }
 
-func loadConfigFromEmbeddedFile(configPath string) (*RootConfig, error) {
+func loadConfigFromEmbeddedFile(configPath string) (*GonovateConfig, error) {
+	// Adjust the path to the config as they are all in a subfolder
+	basePath := "configs"
+	configPath = path.Join(basePath, configPath)
+
+	// Get the extension
 	ext := path.Ext(configPath)
+	// If there is no extension, search for a yaml or json file
 	if ext == "" {
-		// Search for a file
 		dirEntries, err := presets.Presets.ReadDir(path.Dir(configPath))
 		if err != nil {
 			return nil, err
@@ -223,7 +228,7 @@ func loadConfigFromEmbeddedFile(configPath string) (*RootConfig, error) {
 	}
 	defer configFile.Close()
 
-	config := &RootConfig{}
+	config := &GonovateConfig{}
 	if path.Ext(configPath) == ".json" {
 		if err = json.NewDecoder(configFile).Decode(config); err != nil {
 			return nil, fmt.Errorf("failed parsing embedded file '%s': %w", configPath, err)
@@ -236,7 +241,7 @@ func loadConfigFromEmbeddedFile(configPath string) (*RootConfig, error) {
 	return config, nil
 }
 
-func loadConfigFromWeb(urlString string) (*RootConfig, error) {
+func loadConfigFromWeb(urlString string) (*GonovateConfig, error) {
 	// Check if the url is valid
 	parsedUrl, err := url.Parse(urlString)
 	if err != nil {
@@ -244,13 +249,13 @@ func loadConfigFromWeb(urlString string) (*RootConfig, error) {
 	}
 
 	// Download it
-	content, err := shared.HttpUtil.DownloadToMemory(urlString)
+	content, err := common.HttpUtil.DownloadToMemory(urlString)
 	if err != nil {
 		return nil, fmt.Errorf("failed downloading config from '%s': %w", urlString, err)
 	}
 
 	// Unmarshal it
-	config := &RootConfig{}
+	config := &GonovateConfig{}
 	if path.Ext(parsedUrl.Path) == ".json" {
 		if err = json.Unmarshal(content, config); err != nil {
 			return nil, fmt.Errorf("failed parsing config from '%s': %w", urlString, err)

@@ -1,9 +1,9 @@
-package shared
-
-type PlatformType string
+package common
 
 var TruePtr *bool = &[]bool{true}[0]
 var FalsePtr *bool = &[]bool{false}[0]
+
+type PlatformType string
 
 const (
 	PLATFORM_TYPE_GIT    PlatformType = "git"

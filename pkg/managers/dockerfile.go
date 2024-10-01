@@ -4,33 +4,26 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"log/slog"
 	"os"
 	"regexp"
 	"strings"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
 )
 
 type DockerfileManager struct {
-	managerBase
+	*managerBase
 }
 
-func NewDockerfileManager(logger *slog.Logger, id string, rootConfig *config.RootConfig, managerSettings *config.ManagerSettings) IManager {
+func NewDockerfileManager(settings *common.ManagerSettings) common.IManager {
 	manager := &DockerfileManager{
-		managerBase: managerBase{
-			logger:     logger.With(slog.String("handlerId", id)),
-			id:         id,
-			rootConfig: rootConfig,
-			settings:   managerSettings,
-		},
+		managerBase: newManagerBase(settings),
 	}
 	manager.impl = manager
 	return manager
 }
 
-func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*shared.Dependency, error) {
+func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*common.Dependency, error) {
 	// Setup
 	dockerFromRegex := regexp.MustCompile(`^FROM(?:\s+--platform=(.*)?)?\s+(.+?)(?:\s+(?:as|AS)\s+.+)?\s*$`)
 
@@ -41,7 +34,7 @@ func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*share
 	}
 
 	// A slice to collect all found dependencies
-	foundDependencies := []*shared.Dependency{}
+	foundDependencies := []*common.Dependency{}
 	// Scan the content line by line
 	scanner := bufio.NewScanner(bytes.NewReader(fileContentBytes))
 	lineCount := 0
@@ -52,24 +45,19 @@ func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*share
 			platform := match[1]
 			image := match[2]
 			name, tag, digest := splitDockerDependency(image)
-			newDepencency := &shared.Dependency{
-				Name:           name,
-				Datasource:     shared.DATASOURCE_TYPE_DOCKER,
-				Version:        tag,
-				ManagerData:    &dockerfileData{lineNumber: lineCount},
-				AdditionalData: map[string]string{},
-			}
+			newDependency := manager.newDependency(name, common.DATASOURCE_TYPE_DOCKER, tag, filePath)
+			newDependency.ManagerInfo.ManagerData = &dockerfileData{lineNumber: lineCount}
 			if platform != "" {
-				newDepencency.AdditionalData["platform"] = platform
+				newDependency.AdditionalData["platform"] = platform
 			}
 			if digest != "" {
-				newDepencency.Digest = digest
-				skipVersionCheckIfVersionMatches(newDepencency, "latest")
+				newDependency.Digest = digest
+				setSkipVersionCheckIfVersionMatchesKeyword(newDependency, "latest")
 			} else {
 				// Without digest and with latest only, we cannot update
-				skipIfVersionMatches(newDepencency, "latest")
+				setSkipIfVersionMatchesKeyword(newDependency, "latest")
 			}
-			foundDependencies = append(foundDependencies, newDepencency)
+			foundDependencies = append(foundDependencies, newDependency)
 			break
 		}
 		lineCount++
@@ -84,8 +72,8 @@ func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*share
 	return foundDependencies, nil
 }
 
-func (manager *DockerfileManager) ApplyDependencyUpdate(dependency *shared.Dependency) error {
-	data := dependency.ManagerData.(*dockerfileData)
+func (manager *DockerfileManager) ApplyDependencyUpdate(dependency *common.Dependency) error {
+	data := dependency.ManagerInfo.ManagerData.(*dockerfileData)
 	oldFullVersion, newFullVersion := getDockerCurrentAndNewFullVersion(dependency)
 	return replaceVersionInFileLine(dependency.FilePath, oldFullVersion, newFullVersion, data.lineNumber)
 }

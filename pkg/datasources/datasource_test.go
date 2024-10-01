@@ -5,13 +5,13 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/roemer/gonovate/internal/pkg/config"
-	"github.com/roemer/gonovate/internal/pkg/shared"
+	"github.com/roemer/gonovate/pkg/common"
+	"github.com/roemer/gonovate/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBrowserVersionChrome(t *testing.T) {
-	t.Skip("This test is for local debugging only")
+	//t.Skip("This test is for local debugging only")
 
 	assert := assert.New(t)
 
@@ -21,14 +21,19 @@ func TestBrowserVersionChrome(t *testing.T) {
 	assert.NotNil(cfg)
 
 	// Create the datasource
-	ds := NewBrowserVersionDatasource(slog.Default(), cfg)
+	settings := &common.DatasourceSettings{
+		Logger:    slog.Default(),
+		HostRules: cfg.HostRulesToCommon(),
+	}
+	ds := NewBrowserVersionDatasource(settings)
 
 	// Create the dependency and enrich it with rules from the config
-	dep := &shared.Dependency{Name: "chrome", Datasource: shared.DATASOURCE_TYPE_BROWSERVERSION, Version: "126.0.0.0"}
-	cfg.EnrichDependencyFromRules(dep)
+	dep := &common.Dependency{Name: "chrome", Datasource: common.DATASOURCE_TYPE_BROWSERVERSION, Version: "126.0.0.0"}
+	err = cfg.ApplyToDependency(dep)
+	assert.NoError(err)
 
 	// Get the releases from the datasource
-	releases, err := ds.getReleases(dep)
+	releases, err := ds.GetReleases(dep)
 	assert.NoError(err)
 	assert.NotNil(releases)
 	fmt.Println("Found releases:")
@@ -55,24 +60,30 @@ func TestDockerDigest(t *testing.T) {
 	assert.NotNil(cfg)
 
 	// Create the datasource
-	ds := NewDockerDatasource(slog.Default(), cfg)
+	settings := &common.DatasourceSettings{
+		Logger:    slog.Default(),
+		HostRules: cfg.HostRulesToCommon(),
+	}
+	ds := NewDockerDatasource(settings)
 
 	fmt.Println("Vaultwarden")
 	{
-		dep := &shared.Dependency{Name: "vaultwarden/server", Datasource: shared.DATASOURCE_TYPE_DOCKER, Version: "1.30.3", IgnoreNonMatching: shared.TruePtr}
-		cfg.EnrichDependencyFromRules(dep)
+		dep := &common.Dependency{Name: "vaultwarden/server", Datasource: common.DATASOURCE_TYPE_DOCKER, Version: "1.30.3", IgnoreNonMatching: common.TruePtr}
+		err = cfg.ApplyToDependency(dep)
+		assert.NoError(err)
 
-		digest, err := ds.(*DockerDatasource).getDigest(dep, "1.30.3")
+		digest, err := ds.(*DockerDatasource).GetDigest(dep, "1.30.3")
 		assert.NoError(err)
 		fmt.Println(digest)
 	}
 
 	fmt.Println("ut99")
 	{
-		dep := &shared.Dependency{Name: "roemer/ut99-server", Datasource: shared.DATASOURCE_TYPE_DOCKER, Version: "latest", IgnoreNonMatching: shared.TruePtr}
-		cfg.EnrichDependencyFromRules(dep)
+		dep := &common.Dependency{Name: "roemer/ut99-server", Datasource: common.DATASOURCE_TYPE_DOCKER, Version: "latest", IgnoreNonMatching: common.TruePtr}
+		err = cfg.ApplyToDependency(dep)
+		assert.NoError(err)
 
-		digest, err := ds.(*DockerDatasource).getDigest(dep, "latest")
+		digest, err := ds.(*DockerDatasource).GetDigest(dep, "latest")
 		assert.NoError(err)
 		fmt.Println(digest)
 	}
