@@ -101,6 +101,10 @@ func (manager *DevcontainerManager) extractDependenciesFromString(jsonContent st
 		}
 
 		// Search for the feature and property in the settings
+		if manager.settings.DevcontainerManagerSettings == nil {
+			manager.logger.Debug("Manager has no settings for features, skipping dependencies")
+			continue
+		}
 		featureSettings, ok := manager.settings.DevcontainerManagerSettings.FeatureDependencies[name]
 		if !ok {
 			manager.logger.Debug(fmt.Sprintf("Feature '%s' has no settings, skipping dependencies", name))
