@@ -137,14 +137,14 @@ func (ManagerConfigA *ManagerConfig) MergeWith(ManagerConfigB *ManagerConfig) {
 	ManagerConfigA.MatchStrings = lo.Union(ManagerConfigA.MatchStrings, ManagerConfigB.MatchStrings)
 	// DevcontainerConfig
 	if len(ManagerConfigB.DevcontainerConfig) > 0 {
-		// Make sure the settings object exiss in A
+		// Make sure the settings object exists in A
 		if ManagerConfigA.DevcontainerConfig == nil {
 			ManagerConfigA.DevcontainerConfig = map[string][]*DevcontainerFeatureDependency{}
 		}
 
 		// Loop thru the features
 		for featureName, featureDependencies := range ManagerConfigB.DevcontainerConfig {
-			// Make sure the feature exist in A
+			// Make sure the feature exists in A
 			if _, ok := ManagerConfigA.DevcontainerConfig[featureName]; !ok {
 				ManagerConfigA.DevcontainerConfig[featureName] = []*DevcontainerFeatureDependency{}
 			}
