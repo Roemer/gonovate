@@ -1,6 +1,6 @@
 module github.com/roemer/gonovate
 
-go 1.23.2
+go 1.23.0
 
 require (
 	github.com/adhocore/jsonc v0.10.0
