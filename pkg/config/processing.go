@@ -1,11 +1,13 @@
 package config
 
 import (
+	"log/slog"
 	"regexp"
 	"slices"
 	"strings"
 
 	"github.com/roemer/gonovate/pkg/common"
+	"github.com/roemer/gonovate/pkg/managers"
 	"github.com/roemer/gonovate/pkg/presets"
 	"github.com/roemer/gotaskr/goext"
 	"github.com/samber/lo"
@@ -36,16 +38,16 @@ func (c *GonovateConfig) PostLoadProcess() {
 	}
 }
 
-func (config *GonovateConfig) GetMergedManagerConfig(manager *Manager) *ManagerConfig {
+func (config *GonovateConfig) GetMergedManagerConfig(managerId string, managerType common.ManagerType) *ManagerConfig {
 	mergedManagerConfig := &ManagerConfig{}
 	for _, rule := range config.Rules {
 		if rule.Matches != nil {
 			// ManagerId
-			if len(rule.Matches.Managers) > 0 && !slices.Contains(rule.Matches.Managers, manager.Id) {
+			if len(rule.Matches.Managers) > 0 && !slices.Contains(rule.Matches.Managers, managerId) {
 				continue
 			}
 			// ManagerTypes
-			if len(rule.Matches.ManagerTypes) > 0 && !slices.Contains(rule.Matches.ManagerTypes, manager.Type) {
+			if len(rule.Matches.ManagerTypes) > 0 && !slices.Contains(rule.Matches.ManagerTypes, managerType) {
 				continue
 			}
 		}
@@ -54,9 +56,29 @@ func (config *GonovateConfig) GetMergedManagerConfig(manager *Manager) *ManagerC
 	return mergedManagerConfig
 }
 
-func (config *GonovateConfig) GetManagerById(managerId string) *Manager {
+func (config *GonovateConfig) GetManagerConfigById(managerId string) *Manager {
 	manager, _ := lo.Find(config.Managers, func(manager *Manager) bool { return manager.Id == managerId })
 	return manager
+}
+
+// Creates a manager out of the config with the given id and manager type.
+func (config *GonovateConfig) GetManager(managerId string, managerType common.ManagerType, logger *slog.Logger) (common.IManager, error) {
+	mergedManagerConfig := config.GetMergedManagerConfig(managerId, managerType)
+
+	managerSettings := &common.ManagerSettings{
+		Logger:       logger,
+		Id:           managerId,
+		ManagerType:  managerType,
+		Disabled:     mergedManagerConfig.Disabled,
+		FilePatterns: mergedManagerConfig.FilePatterns,
+		RegexManagerSettings: &common.RegexManagerSettings{
+			MatchStringPresets: config.MatchStringPresetsToPresets(),
+			MatchStrings:       mergedManagerConfig.MatchStrings,
+		},
+		DevcontainerManagerSettings: mergedManagerConfig.ToCommonDevcontainerManagerSettings(),
+	}
+
+	return managers.GetManager(managerSettings)
 }
 
 // Applies rules and presets to the dependency
@@ -78,7 +100,7 @@ func (config *GonovateConfig) applyRulesToDependency(dependency *common.Dependen
 	// Get the config of the manager for this dependency
 	var managerConfig *Manager
 	if dependency.ManagerInfo != nil && dependency.ManagerInfo.ManagerId != "" {
-		managerConfig = config.GetManagerById(dependency.ManagerInfo.ManagerId)
+		managerConfig = config.GetManagerConfigById(dependency.ManagerInfo.ManagerId)
 	}
 
 	// Prepare the merged settings

@@ -18,6 +18,10 @@ type IEngine interface {
 type IManager interface {
 	// Gets the id of the manager.
 	Id() string
+	// Gets the type of the manager.
+	Type() ManagerType
+	// Gets the settings with which the manager was created.
+	Settings() *ManagerSettings
 	// Extracts all dependencies from the manager.
 	ExtractDependencies(filePath string) ([]*Dependency, error)
 	// Applies a dependency update with the manager.

@@ -14,6 +14,10 @@ type ManagerSettings struct {
 	Id string
 	// The type of the manager.
 	ManagerType ManagerType
+	// A flag which is set when the manager is disabled.
+	Disabled *bool
+	// A list of patterns with the files that the manager should process.
+	FilePatterns []string
 	// Settings for the RegexManager.
 	RegexManagerSettings *RegexManagerSettings
 	// Settings for the DevcontainerManager.

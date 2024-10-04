@@ -13,7 +13,6 @@ import (
 	"github.com/roemer/gonovate/pkg/config"
 	"github.com/roemer/gonovate/pkg/datasources"
 	"github.com/roemer/gonovate/pkg/logging"
-	"github.com/roemer/gonovate/pkg/managers"
 	"github.com/roemer/gonovate/pkg/platforms"
 	"github.com/samber/lo"
 )
@@ -226,36 +225,24 @@ func RunCmd(args []string) error {
 		// Loop thru the managers and collect the dependencies
 		allDependencies := []*common.Dependency{}
 		logger.Info(fmt.Sprintf("Searching for dependencies in %d manager(s)", len(projectConfig.Managers)))
-		for _, manager := range projectConfig.Managers {
-			// Get the merged configs for the current manager
-			mergedManagerConfig := projectConfig.GetMergedManagerConfig(manager)
-
-			// Skip the manager if it is disabled
-			if mergedManagerConfig.Disabled != nil && *mergedManagerConfig.Disabled {
-				logger.Info(fmt.Sprintf("Manager '%s': Skip as it is disabled", manager.Id))
-				continue
-			}
-			logger.Info(fmt.Sprintf("Processing Manager '%s' (%s)", manager.Id, manager.Type))
-
-			// Get the manager
-			managerSettings := &common.ManagerSettings{
-				Logger:      logger,
-				Id:          manager.Id,
-				ManagerType: manager.Type,
-				RegexManagerSettings: &common.RegexManagerSettings{
-					MatchStringPresets: projectConfig.MatchStringPresetsToPresets(),
-					MatchStrings:       mergedManagerConfig.MatchStrings,
-				},
-				DevcontainerManagerSettings: mergedManagerConfig.ToCommonDevcontainerManagerSettings(),
-			}
-			managerInstance, err := managers.GetManager(managerSettings)
+		for _, managerConfig := range projectConfig.Managers {
+			// Get the appropriate manager from the config
+			manager, err := projectConfig.GetManager(managerConfig.Id, managerConfig.Type, logger)
 			if err != nil {
 				return err
 			}
 
+			// Skip the manager if it is disabled
+			if manager.Settings().Disabled != nil && *manager.Settings().Disabled {
+				logger.Info(fmt.Sprintf("Manager '%s': Skip as it is disabled", manager.Id()))
+				continue
+			}
+			logger.Info(fmt.Sprintf("Processing Manager '%s' (%s)", manager.Id(), manager.Type()))
+
 			// Search for the files relevant for the manager
-			logger.Debug(fmt.Sprintf("Searching files with %d pattern(s)", len(mergedManagerConfig.FilePatterns)))
-			matchingFiles, err := common.SearchFiles(".", mergedManagerConfig.FilePatterns, gonovateConfig.IgnorePatterns)
+			managerFilePatterns := manager.Settings().FilePatterns
+			logger.Debug(fmt.Sprintf("Searching files with %d pattern(s)", len(managerFilePatterns)))
+			matchingFiles, err := common.SearchFiles(".", managerFilePatterns, gonovateConfig.IgnorePatterns)
 			logger.Debug(fmt.Sprintf("Found %d matching file(s)", len(matchingFiles)))
 			if err != nil {
 				return err
@@ -266,7 +253,7 @@ func RunCmd(args []string) error {
 			for _, matchingFile := range matchingFiles {
 				logger.Debug(fmt.Sprintf("Processing file '%s'", matchingFile))
 				// Extract the dependencies for this file
-				currDependencies, err := managerInstance.ExtractDependencies(matchingFile)
+				currDependencies, err := manager.ExtractDependencies(matchingFile)
 				if err != nil {
 					return err
 				}
@@ -370,26 +357,17 @@ func RunCmd(args []string) error {
 			// Apply the changes
 			for _, dependency := range updateGroup.Dependencies {
 				logger.Info(fmt.Sprintf("Updating '%s' from '%s' to '%s'", dependency.Name, dependency.Version, dependency.NewRelease.VersionString))
-				manager := projectConfig.GetManagerById(dependency.ManagerInfo.ManagerId)
-				// Get the merged configs for the current manager
-				mergedManagerConfig := projectConfig.GetMergedManagerConfig(manager)
+				// Get the manager config the for the manager that created the dependency
+				managerConfig := projectConfig.GetManagerConfigById(dependency.ManagerInfo.ManagerId)
 
-				// Get the manager
-				managerSettings := &common.ManagerSettings{
-					Logger:      logger,
-					Id:          manager.Id,
-					ManagerType: manager.Type,
-					RegexManagerSettings: &common.RegexManagerSettings{
-						MatchStringPresets: projectConfig.MatchStringPresetsToPresets(),
-						MatchStrings:       mergedManagerConfig.MatchStrings,
-					},
-					DevcontainerManagerSettings: mergedManagerConfig.ToCommonDevcontainerManagerSettings(),
-				}
-				managerInstance, err := managers.GetManager(managerSettings)
+				// Get the appropriate manager from the config
+				manager, err := projectConfig.GetManager(managerConfig.Id, managerConfig.Type, logger)
 				if err != nil {
 					return err
 				}
-				if err := managerInstance.ApplyDependencyUpdate(dependency); err != nil {
+
+				// Apply the update to the dependency
+				if err := manager.ApplyDependencyUpdate(dependency); err != nil {
 					return err
 				}
 

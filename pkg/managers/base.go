@@ -42,6 +42,14 @@ func (manager *managerBase) Id() string {
 	return manager.settings.Id
 }
 
+func (manager *managerBase) Type() common.ManagerType {
+	return manager.settings.ManagerType
+}
+
+func (manager *managerBase) Settings() *common.ManagerSettings {
+	return manager.settings
+}
+
 // Creates a new dependency some fields prefilled.
 func (manager *managerBase) newDependency(name string, datasource common.DatasourceType, version string, filePath string) *common.Dependency {
 	return &common.Dependency{
