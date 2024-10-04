@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.6.2 (2024-10-04)
+
+### Features
+
+* Added GetDatasource to the config object
+
 ## v0.6.1 (2024-10-04)
 
 ### Features
