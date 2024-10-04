@@ -6,10 +6,8 @@ import (
 
 // This type represents the gonovate config object.
 type GonovateConfig struct {
-	// The type of the platform to use.
-	Platform common.PlatformType `json:"platform" yaml:"platform"`
-	// Settings that are relevant for the specified platform.
-	PlatformConfig *PlatformConfig `json:"platformConfig" yaml:"platformConfig"`
+	// Settings that are relevant for the platform.
+	Platform *PlatformConfig `json:"platform" yaml:"platform"`
 	// A map of presets for matchstrings that can be used and referenced.
 	MatchStringPresets map[string]*MatchStringPreset `json:"matchStringPresets" yaml:"matchStringPresets"`
 	// A map of presets for versionings that can be used and referenced.
@@ -33,11 +31,13 @@ type MatchStringPreset struct {
 
 // This type defines configurations regarding the platform.
 type PlatformConfig struct {
-	Token     string   `json:"token" yaml:"token"`
-	GitAuthor string   `json:"gitAuthor" yaml:"gitAuthor"`
-	Endpoint  string   `json:"endpoint" yaml:"endpoint"`
-	Inplace   *bool    `json:"inplace" yaml:"inplace"`
-	Projects  []string `json:"projects" yaml:"projects"`
+	// The type of the platform to use.
+	Type      common.PlatformType `json:"type" yaml:"type"`
+	Token     string              `json:"token" yaml:"token"`
+	GitAuthor string              `json:"gitAuthor" yaml:"gitAuthor"`
+	Endpoint  string              `json:"endpoint" yaml:"endpoint"`
+	Inplace   *bool               `json:"inplace" yaml:"inplace"`
+	Projects  []string            `json:"projects" yaml:"projects"`
 	// The name of the base branch, defaults to "main".
 	BaseBranch string `json:"baseBranch" yaml:"baseBranch"`
 	// The prefix for branches created by gonovate. Defaults to "gonovate/".

@@ -19,14 +19,10 @@ func (configA *GonovateConfig) MergeWith(configB *GonovateConfig) {
 		return
 	}
 	// Platform
-	if configB.Platform != "" {
-		configA.Platform = configB.Platform
+	if configA.Platform == nil {
+		configA.Platform = &PlatformConfig{}
 	}
-	// PlatformConfig
-	if configA.PlatformConfig == nil {
-		configA.PlatformConfig = &PlatformConfig{}
-	}
-	configA.PlatformConfig.MergeWith(configB.PlatformConfig)
+	configA.Platform.MergeWith(configB.Platform)
 	// MatchStringPresets
 	if configA.MatchStringPresets == nil {
 		configA.MatchStringPresets = map[string]*MatchStringPreset{}
@@ -70,35 +66,39 @@ func (configA *GonovateConfig) MergeWith(configB *GonovateConfig) {
 	configA.HostRules = append(configA.HostRules, configB.HostRules...)
 }
 
-func (PlatformConfigA *PlatformConfig) MergeWith(PlatformConfigB *PlatformConfig) {
-	if PlatformConfigB == nil {
+func (platformConfigA *PlatformConfig) MergeWith(platformConfigB *PlatformConfig) {
+	if platformConfigB == nil {
 		return
 	}
+	// Platform
+	if platformConfigB.Type != "" {
+		platformConfigA.Type = platformConfigB.Type
+	}
 	// Token
-	if PlatformConfigB.Token != "" {
-		PlatformConfigA.Token = PlatformConfigB.Token
+	if platformConfigB.Token != "" {
+		platformConfigA.Token = platformConfigB.Token
 	}
 	// GitAuthor
-	if PlatformConfigB.GitAuthor != "" {
-		PlatformConfigA.GitAuthor = PlatformConfigB.GitAuthor
+	if platformConfigB.GitAuthor != "" {
+		platformConfigA.GitAuthor = platformConfigB.GitAuthor
 	}
 	// Endpoint
-	if PlatformConfigB.Endpoint != "" {
-		PlatformConfigA.Endpoint = PlatformConfigB.Endpoint
+	if platformConfigB.Endpoint != "" {
+		platformConfigA.Endpoint = platformConfigB.Endpoint
 	}
 	// Direct
-	if PlatformConfigB.Inplace != nil {
-		PlatformConfigA.Inplace = PlatformConfigB.Inplace
+	if platformConfigB.Inplace != nil {
+		platformConfigA.Inplace = platformConfigB.Inplace
 	}
 	// Projects
-	PlatformConfigA.Projects = lo.Union(PlatformConfigA.Projects, PlatformConfigB.Projects)
+	platformConfigA.Projects = lo.Union(platformConfigA.Projects, platformConfigB.Projects)
 	// BaseBranch
-	if PlatformConfigB.BaseBranch != "" {
-		PlatformConfigA.BaseBranch = PlatformConfigB.BaseBranch
+	if platformConfigB.BaseBranch != "" {
+		platformConfigA.BaseBranch = platformConfigB.BaseBranch
 	}
 	// BranchPrefix
-	if PlatformConfigB.BranchPrefix != "" {
-		PlatformConfigA.BranchPrefix = PlatformConfigB.BranchPrefix
+	if platformConfigB.BranchPrefix != "" {
+		platformConfigA.BranchPrefix = platformConfigB.BranchPrefix
 	}
 }
 

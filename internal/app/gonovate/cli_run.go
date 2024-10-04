@@ -139,7 +139,10 @@ func RunCmd(args []string) error {
 
 	// Process overrides
 	if platformOverride != "" {
-		gonovateConfig.Platform = common.PlatformType(platformOverride)
+		if gonovateConfig.Platform == nil {
+			gonovateConfig.Platform = &config.PlatformConfig{}
+		}
+		gonovateConfig.Platform.Type = common.PlatformType(platformOverride)
 	}
 
 	// Prepare the platform
@@ -154,21 +157,21 @@ func RunCmd(args []string) error {
 	projects := []*common.Project{}
 	isInplace := false
 	hasProject := true
-	if gonovateConfig.PlatformConfig.Inplace != nil {
-		isInplace = *gonovateConfig.PlatformConfig.Inplace
+	if gonovateConfig.Platform.Inplace != nil {
+		isInplace = *gonovateConfig.Platform.Inplace
 	}
 	if isInplace {
 		// If no project is passed, use a fake project
-		if len(gonovateConfig.PlatformConfig.Projects) == 0 {
+		if len(gonovateConfig.Platform.Projects) == 0 {
 			hasProject = false
 			projects = append(projects, &common.Project{Path: "local/local"})
 		} else {
 			// Use the first passed project
-			projects = append(projects, &common.Project{Path: gonovateConfig.PlatformConfig.Projects[0]})
+			projects = append(projects, &common.Project{Path: gonovateConfig.Platform.Projects[0]})
 		}
 	} else {
 		// Add all projects
-		for _, p := range gonovateConfig.PlatformConfig.Projects {
+		for _, p := range gonovateConfig.Platform.Projects {
 			projects = append(projects, &common.Project{Path: p})
 		}
 	}
@@ -326,13 +329,13 @@ func RunCmd(args []string) error {
 			if dependency.GroupName != "" {
 				title = fmt.Sprintf("Update group '%s'", dependency.GroupName)
 				branchName = fmt.Sprintf("%s%s",
-					projectConfig.PlatformConfig.BranchPrefix,
+					projectConfig.Platform.BranchPrefix,
 					dependency.GroupName)
 			} else {
 				title = fmt.Sprintf("Update '%s' to '%s'", dependency.Name, dependency.NewRelease.VersionString)
 				branchName = fmt.Sprintf("%s%s-%s-%s",
-					projectConfig.PlatformConfig.BranchPrefix,
-					common.NormalizeString(projectConfig.PlatformConfig.BaseBranch, 20),
+					projectConfig.Platform.BranchPrefix,
+					common.NormalizeString(projectConfig.Platform.BaseBranch, 20),
 					common.NormalizeString(dependency.Name, 40),
 					common.NormalizeString(dependency.NewRelease.VersionString, 0))
 			}
@@ -449,8 +452,8 @@ func RunCmd(args []string) error {
 		if err := platform.Cleanup(&platforms.PlatformCleanupSettings{
 			Project:      project,
 			UpdateGroups: updateGroups,
-			BaseBranch:   projectConfig.PlatformConfig.BaseBranch,
-			BranchPrefix: projectConfig.PlatformConfig.BranchPrefix,
+			BaseBranch:   projectConfig.Platform.BaseBranch,
+			BranchPrefix: projectConfig.Platform.BranchPrefix,
 		}); err != nil {
 			return err
 		}

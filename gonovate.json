@@ -1,6 +1,6 @@
 {
-    "platform": "noop",
-    "platformConfig": {
+    "platform": {
+        "type": "noop",
         "token": "$GONOVATE_GITHUB_LOCAL_TOKEN",
         "gitAuthor": "gonovate-bot <bot@gonovate.org>",
         "inplace": true,

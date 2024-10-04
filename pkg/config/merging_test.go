@@ -94,18 +94,18 @@ func TestMergePlatformConfig(t *testing.T) {
 	assert := assert.New(t)
 
 	configA := &GonovateConfig{
-		PlatformConfig: &PlatformConfig{
+		Platform: &PlatformConfig{
 			Token: "token_a",
 		},
 	}
 	configB := &GonovateConfig{
-		PlatformConfig: &PlatformConfig{
+		Platform: &PlatformConfig{
 			Token: "token_b",
 		},
 	}
 	merged := configA.MergeWithAsCopy(configB)
 
-	assert.Equal("token_b", merged.PlatformConfig.Token)
+	assert.Equal("token_b", merged.Platform.Token)
 }
 
 func TestMergeDevcontainerConfig(t *testing.T) {

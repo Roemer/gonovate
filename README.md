@@ -22,8 +22,8 @@ There is usually a `gonovate.json` file which contains your configuration. The b
 
 ```json
 {
-    "platform": "noop",
-    "platformConfig": {
+    "platform": {
+        "type": "noop",
         ...
     },
     "extends": [

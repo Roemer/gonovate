@@ -36,10 +36,10 @@ func (managerConfig *ManagerConfig) ToCommonDevcontainerManagerSettings() *commo
 func (cfg *GonovateConfig) ToCommonPlatformSettings(logger *slog.Logger) *common.PlatformSettings {
 	return &common.PlatformSettings{
 		Logger:     logger,
-		Platform:   cfg.Platform,
-		Token:      cfg.PlatformConfig.Token,
-		Endpoint:   cfg.PlatformConfig.Endpoint,
-		GitAuthor:  cfg.PlatformConfig.GitAuthor,
-		BaseBranch: cfg.PlatformConfig.BaseBranch,
+		Platform:   cfg.Platform.Type,
+		Token:      cfg.Platform.Token,
+		Endpoint:   cfg.Platform.Endpoint,
+		GitAuthor:  cfg.Platform.GitAuthor,
+		BaseBranch: cfg.Platform.BaseBranch,
 	}
 }
