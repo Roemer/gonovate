@@ -300,7 +300,7 @@ func RunCmd(args []string) error {
 			datasourceSettings := &common.DatasourceSettings{
 				Logger:         logger,
 				DatasourceType: dependency.Datasource,
-				HostRules:      projectConfig.HostRulesToCommon(),
+				HostRules:      projectConfig.HostRules,
 			}
 			ds, err := datasources.GetDatasource(datasourceSettings)
 			if err != nil {

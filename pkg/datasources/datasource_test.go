@@ -23,7 +23,7 @@ func TestBrowserVersionChrome(t *testing.T) {
 	// Create the datasource
 	settings := &common.DatasourceSettings{
 		Logger:    slog.Default(),
-		HostRules: cfg.HostRulesToCommon(),
+		HostRules: cfg.HostRules,
 	}
 	ds := NewBrowserVersionDatasource(settings)
 
@@ -62,7 +62,7 @@ func TestDockerDigest(t *testing.T) {
 	// Create the datasource
 	settings := &common.DatasourceSettings{
 		Logger:    slog.Default(),
-		HostRules: cfg.HostRulesToCommon(),
+		HostRules: cfg.HostRules,
 	}
 	ds := NewDockerDatasource(settings)
 

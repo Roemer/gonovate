@@ -23,7 +23,7 @@ type GonovateConfig struct {
 	// A list of rules that can apply to managers or dependencies.
 	Rules []*Rule `json:"rules" yaml:"rules"`
 	// A list of rules that can apply to hosts.
-	HostRules []*HostRule `json:"hostRules" yaml:"hostRules"`
+	HostRules []*common.HostRule `json:"hostRules" yaml:"hostRules"`
 }
 
 type MatchStringPreset struct {
@@ -117,11 +117,4 @@ func (rm *RuleMatch) IsMatchAll() bool {
 		len(rm.Files) == 0 &&
 		len(rm.ManagerTypes) == 0 &&
 		len(rm.Managers) == 0)
-}
-
-type HostRule struct {
-	MatchHost string `json:"matchHost" yaml:"matchHost"`
-	Username  string `json:"username" yaml:"username"`
-	Password  string `json:"password" yaml:"password"`
-	Token     string `json:"token" yaml:"token"`
 }

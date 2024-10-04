@@ -8,17 +8,6 @@ import (
 	"github.com/samber/lo"
 )
 
-func (cfg *GonovateConfig) HostRulesToCommon() []*common.HostRule {
-	return lo.Map(cfg.HostRules, func(configHostRule *HostRule, _ int) *common.HostRule {
-		return &common.HostRule{
-			MatchHost: configHostRule.MatchHost,
-			Username:  configHostRule.Username,
-			Password:  configHostRule.Password,
-			Token:     configHostRule.Token,
-		}
-	})
-}
-
 func (cfg *GonovateConfig) MatchStringPresetsToPresets() map[string]*presets.MatchStringPreset {
 	return lo.MapEntries(cfg.MatchStringPresets, func(key string, value *MatchStringPreset) (string, *presets.MatchStringPreset) {
 		return key, &presets.MatchStringPreset{
