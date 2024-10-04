@@ -1,4 +1,4 @@
-package datasources
+package integration_tests
 
 import (
 	"fmt"
@@ -7,11 +7,12 @@ import (
 
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/roemer/gonovate/pkg/config"
+	"github.com/roemer/gonovate/pkg/datasources"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBrowserVersionChrome(t *testing.T) {
-	//t.Skip("This test is for local debugging only")
+	t.Skip("This test is for local debugging only")
 
 	assert := assert.New(t)
 
@@ -25,7 +26,7 @@ func TestBrowserVersionChrome(t *testing.T) {
 		Logger:    slog.Default(),
 		HostRules: cfg.HostRules,
 	}
-	ds := NewBrowserVersionDatasource(settings)
+	ds := datasources.NewBrowserVersionDatasource(settings)
 
 	// Create the dependency and enrich it with rules from the config
 	dep := &common.Dependency{Name: "chrome", Datasource: common.DATASOURCE_TYPE_BROWSERVERSION, Version: "126.0.0.0"}
@@ -64,7 +65,7 @@ func TestDockerDigest(t *testing.T) {
 		Logger:    slog.Default(),
 		HostRules: cfg.HostRules,
 	}
-	ds := NewDockerDatasource(settings)
+	ds := datasources.NewDockerDatasource(settings)
 
 	fmt.Println("Vaultwarden")
 	{
@@ -72,7 +73,7 @@ func TestDockerDigest(t *testing.T) {
 		err = cfg.ApplyToDependency(dep)
 		assert.NoError(err)
 
-		digest, err := ds.(*DockerDatasource).GetDigest(dep, "1.30.3")
+		digest, err := ds.(*datasources.DockerDatasource).GetDigest(dep, "1.30.3")
 		assert.NoError(err)
 		fmt.Println(digest)
 	}
@@ -83,7 +84,7 @@ func TestDockerDigest(t *testing.T) {
 		err = cfg.ApplyToDependency(dep)
 		assert.NoError(err)
 
-		digest, err := ds.(*DockerDatasource).GetDigest(dep, "latest")
+		digest, err := ds.(*datasources.DockerDatasource).GetDigest(dep, "latest")
 		assert.NoError(err)
 		fmt.Println(digest)
 	}

@@ -11,7 +11,6 @@ import (
 
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/roemer/gonovate/pkg/config"
-	"github.com/roemer/gonovate/pkg/datasources"
 	"github.com/roemer/gonovate/pkg/logging"
 	"github.com/roemer/gonovate/pkg/platforms"
 	"github.com/samber/lo"
@@ -287,12 +286,7 @@ func RunCmd(args []string) error {
 			}
 
 			// Lookup the correct datasource
-			datasourceSettings := &common.DatasourceSettings{
-				Logger:         logger,
-				DatasourceType: dependency.Datasource,
-				HostRules:      projectConfig.HostRules,
-			}
-			ds, err := datasources.GetDatasource(datasourceSettings)
+			ds, err := projectConfig.GetDatasource(dependency.Datasource, logger)
 			if err != nil {
 				return err
 			}

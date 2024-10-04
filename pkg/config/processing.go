@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/roemer/gonovate/pkg/common"
+	"github.com/roemer/gonovate/pkg/datasources"
 	"github.com/roemer/gonovate/pkg/managers"
 	"github.com/roemer/gonovate/pkg/presets"
 	"github.com/roemer/gotaskr/goext"
@@ -79,6 +80,16 @@ func (config *GonovateConfig) GetManager(managerId string, managerType common.Ma
 	}
 
 	return managers.GetManager(managerSettings)
+}
+
+// Creates a datasource out of the config of the given datasource type.
+func (config *GonovateConfig) GetDatasource(datasourceType common.DatasourceType, logger *slog.Logger) (common.IDatasource, error) {
+	datasourceSettings := &common.DatasourceSettings{
+		Logger:         logger,
+		DatasourceType: datasourceType,
+		HostRules:      config.HostRules,
+	}
+	return datasources.GetDatasource(datasourceSettings)
 }
 
 // Applies rules and presets to the dependency
