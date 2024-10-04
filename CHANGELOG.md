@@ -1,5 +1,14 @@
 # Change Log
 
+## v0.6.1 (2024-10-04)
+
+### Features
+
+* Unified manager creation from config
+* Moved platform type into platform config
+* Merged host rules
+* Updated some dependencies
+
 ## v0.6.0 (2024-10-01)
 
 ### Features
