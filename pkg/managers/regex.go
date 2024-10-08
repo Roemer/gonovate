@@ -13,9 +13,9 @@ type RegexManager struct {
 	*managerBase
 }
 
-func NewRegexManager(settings *common.ManagerSettings) common.IManager {
+func NewRegexManager(id string, settings *common.ManagerSettings) common.IManager {
 	manager := &RegexManager{
-		managerBase: newManagerBase(settings),
+		managerBase: newManagerBase(id, common.MANAGER_TYPE_INLINE, settings),
 	}
 	manager.impl = manager
 	return manager

@@ -13,7 +13,7 @@ type GradleVersionDatasource struct {
 
 func NewGradleVersionDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &GradleVersionDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_GRADLEVERSION, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

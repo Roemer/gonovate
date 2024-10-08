@@ -10,10 +10,6 @@ import (
 type ManagerSettings struct {
 	// The logger to use for the manager.
 	Logger *slog.Logger
-	// The id of the manager.
-	Id string
-	// The type of the manager.
-	ManagerType ManagerType
 	// A flag which is set when the manager is disabled.
 	Disabled *bool
 	// A list of patterns with the files that the manager should process.

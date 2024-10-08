@@ -18,7 +18,7 @@ type ArtifactoryDatasource struct {
 
 func NewArtifactoryDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &ArtifactoryDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_ARTIFACTORY, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

@@ -16,7 +16,7 @@ type AntVersionDatasource struct {
 
 func NewAntVersionDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &AntVersionDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_ANTVERSION, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

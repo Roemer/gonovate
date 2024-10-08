@@ -14,7 +14,7 @@ type GitHubReleasesDatasource struct {
 
 func NewGitHubReleasesDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &GitHubReleasesDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_GITHUB_RELEASES, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

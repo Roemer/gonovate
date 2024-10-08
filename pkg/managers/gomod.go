@@ -15,9 +15,9 @@ type GoModManager struct {
 	*managerBase
 }
 
-func NewGoModManager(settings *common.ManagerSettings) common.IManager {
+func NewGoModManager(id string, settings *common.ManagerSettings) common.IManager {
 	manager := &GoModManager{
-		managerBase: newManagerBase(settings),
+		managerBase: newManagerBase(id, common.MANAGER_TYPE_GOMOD, settings),
 	}
 	manager.impl = manager
 	return manager

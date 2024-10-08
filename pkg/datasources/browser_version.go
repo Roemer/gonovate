@@ -15,7 +15,7 @@ type BrowserVersionDatasource struct {
 
 func NewBrowserVersionDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &BrowserVersionDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_BROWSERVERSION, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

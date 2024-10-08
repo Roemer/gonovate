@@ -14,7 +14,7 @@ type GitHubTagsDatasource struct {
 
 func NewGitHubTagsDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &GitHubTagsDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_GITHUB_TAGS, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

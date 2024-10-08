@@ -13,7 +13,7 @@ type GoModDatasource struct {
 
 func NewGoModDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &GoModDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_GOMOD, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

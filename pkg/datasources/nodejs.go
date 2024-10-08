@@ -16,7 +16,7 @@ type NodeJsDatasource struct {
 
 func NewNodeJsDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &NodeJsDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_NODEJS, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

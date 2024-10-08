@@ -14,9 +14,9 @@ type DevcontainerManager struct {
 	*managerBase
 }
 
-func NewDevcontainerManager(settings *common.ManagerSettings) common.IManager {
+func NewDevcontainerManager(id string, settings *common.ManagerSettings) common.IManager {
 	manager := &DevcontainerManager{
-		managerBase: newManagerBase(settings),
+		managerBase: newManagerBase(id, common.MANAGER_TYPE_DEVCONTAINER, settings),
 	}
 	manager.impl = manager
 	return manager

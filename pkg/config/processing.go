@@ -68,8 +68,6 @@ func (config *GonovateConfig) GetManager(managerId string, managerType common.Ma
 
 	managerSettings := &common.ManagerSettings{
 		Logger:       logger,
-		Id:           managerId,
-		ManagerType:  managerType,
 		Disabled:     mergedManagerConfig.Disabled,
 		FilePatterns: mergedManagerConfig.FilePatterns,
 		RegexManagerSettings: &common.RegexManagerSettings{
@@ -79,17 +77,16 @@ func (config *GonovateConfig) GetManager(managerId string, managerType common.Ma
 		DevcontainerManagerSettings: mergedManagerConfig.ToCommonDevcontainerManagerSettings(),
 	}
 
-	return managers.GetManager(managerSettings)
+	return managers.GetManager(managerId, managerType, managerSettings)
 }
 
 // Creates a datasource out of the config of the given datasource type.
 func (config *GonovateConfig) GetDatasource(datasourceType common.DatasourceType, logger *slog.Logger) (common.IDatasource, error) {
 	datasourceSettings := &common.DatasourceSettings{
-		Logger:         logger,
-		DatasourceType: datasourceType,
-		HostRules:      config.HostRules,
+		Logger:    logger,
+		HostRules: config.HostRules,
 	}
-	return datasources.GetDatasource(datasourceSettings)
+	return datasources.GetDatasource(datasourceType, datasourceSettings)
 }
 
 // Applies rules and presets to the dependency

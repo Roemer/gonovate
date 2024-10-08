@@ -19,7 +19,7 @@ type DockerDatasource struct {
 
 func NewDockerDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &DockerDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_DOCKER, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

@@ -49,7 +49,7 @@ type Dependency struct {
 	// Contains the information about the new release if any is found.
 	NewRelease *ReleaseInfo
 
-	// Contains information about the manager from which this dependnecy was found from. Is "nil" if the dependency is not from a manager.
+	// Contains information about the manager from which this dependency was found from. Is "nil" if the dependency is not from a manager.
 	ManagerInfo *ManagerInfo
 }
 

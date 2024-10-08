@@ -15,7 +15,7 @@ type NpmDatasource struct {
 
 func NewNpmDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &NpmDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_NPM, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

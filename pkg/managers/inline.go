@@ -14,9 +14,9 @@ type InlineManager struct {
 	*managerBase
 }
 
-func NewInlineManager(settings *common.ManagerSettings) common.IManager {
+func NewInlineManager(id string, settings *common.ManagerSettings) common.IManager {
 	manager := &InlineManager{
-		managerBase: newManagerBase(settings),
+		managerBase: newManagerBase(id, common.MANAGER_TYPE_INLINE, settings),
 	}
 	manager.impl = manager
 	return manager

@@ -8,13 +8,13 @@ import (
 )
 
 // Get a manager with the given settings.
-func GetManager(settings *common.ManagerSettings) (common.IManager, error) {
-	return managers.GetManager(settings)
+func GetManager(id string, managerType common.ManagerType, settings *common.ManagerSettings) (common.IManager, error) {
+	return managers.GetManager(id, managerType, settings)
 }
 
 // Get a datasource with the given settings.
-func GetDatasource(settings *common.DatasourceSettings) (common.IDatasource, error) {
-	return datasources.GetDatasource(settings)
+func GetDatasource(datasourceType common.DatasourceType, settings *common.DatasourceSettings) (common.IDatasource, error) {
+	return datasources.GetDatasource(datasourceType, settings)
 }
 
 // Load the default configuration.

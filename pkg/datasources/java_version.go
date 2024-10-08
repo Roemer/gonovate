@@ -15,7 +15,7 @@ type JavaVersionDatasource struct {
 
 func NewJavaVersionDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &JavaVersionDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_JAVAVERSION, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

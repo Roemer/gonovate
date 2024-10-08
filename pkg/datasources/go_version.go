@@ -14,7 +14,7 @@ type GoVersionDatasource struct {
 
 func NewGoVersionDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &GoVersionDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_GOVERSION, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

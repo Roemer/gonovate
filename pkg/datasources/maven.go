@@ -14,7 +14,7 @@ type MavenDatasource struct {
 
 func NewMavenDatasource(settings *common.DatasourceSettings) common.IDatasource {
 	newDatasource := &MavenDatasource{
-		datasourceBase: newDatasourceBase(settings),
+		datasourceBase: newDatasourceBase(common.DATASOURCE_TYPE_MAVEN, settings),
 	}
 	newDatasource.impl = newDatasource
 	return newDatasource

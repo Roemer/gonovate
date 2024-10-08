@@ -10,40 +10,44 @@ import (
 
 // The internal base class for a manager.
 type managerBase struct {
-	logger   *slog.Logger
-	impl     common.IManager
-	settings *common.ManagerSettings
+	id          string
+	managerType common.ManagerType
+	logger      *slog.Logger
+	impl        common.IManager
+	settings    *common.ManagerSettings
 }
 
-func newManagerBase(settings *common.ManagerSettings) *managerBase {
+func newManagerBase(id string, managerType common.ManagerType, settings *common.ManagerSettings) *managerBase {
 	return &managerBase{
-		logger:   settings.Logger.With(slog.String("manager", settings.Id)),
-		settings: settings,
+		id:          id,
+		managerType: managerType,
+		logger:      settings.Logger.With(slog.String("manager", id)),
+		settings:    settings,
 	}
 }
 
-func GetManager(settings *common.ManagerSettings) (common.IManager, error) {
-	switch settings.ManagerType {
+func GetManager(id string, managerType common.ManagerType, settings *common.ManagerSettings) (common.IManager, error) {
+	switch managerType {
 	case common.MANAGER_TYPE_DEVCONTAINER:
-		return NewDevcontainerManager(settings), nil
+		return NewDevcontainerManager(id, settings), nil
 	case common.MANAGER_TYPE_DOCKERFILE:
-		return NewDockerfileManager(settings), nil
+		return NewDockerfileManager(id, settings), nil
 	case common.MANAGER_TYPE_GOMOD:
-		return NewGoModManager(settings), nil
+		return NewGoModManager(id, settings), nil
 	case common.MANAGER_TYPE_INLINE:
-		return NewInlineManager(settings), nil
+		return NewInlineManager(id, settings), nil
 	case common.MANAGER_TYPE_REGEX:
-		return NewRegexManager(settings), nil
+		return NewRegexManager(id, settings), nil
 	}
-	return nil, fmt.Errorf("no manager defined for type '%s'", settings.ManagerType)
+	return nil, fmt.Errorf("no manager defined for type '%s'", managerType)
 }
 
 func (manager *managerBase) Id() string {
-	return manager.settings.Id
+	return manager.id
 }
 
 func (manager *managerBase) Type() common.ManagerType {
-	return manager.settings.ManagerType
+	return manager.managerType
 }
 
 func (manager *managerBase) Settings() *common.ManagerSettings {
@@ -58,7 +62,7 @@ func (manager *managerBase) newDependency(name string, datasource common.Datasou
 		Version:    version,
 		FilePath:   filePath,
 		ManagerInfo: &common.ManagerInfo{
-			ManagerId: manager.settings.Id,
+			ManagerId: manager.id,
 		},
 		AdditionalData: map[string]string{},
 	}

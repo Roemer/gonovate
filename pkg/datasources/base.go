@@ -13,20 +13,22 @@ import (
 )
 
 type datasourceBase struct {
-	logger   *slog.Logger
-	impl     common.IDatasource
-	settings *common.DatasourceSettings
+	datasourceType common.DatasourceType
+	logger         *slog.Logger
+	impl           common.IDatasource
+	settings       *common.DatasourceSettings
 }
 
-func newDatasourceBase(settings *common.DatasourceSettings) *datasourceBase {
+func newDatasourceBase(datasourceType common.DatasourceType, settings *common.DatasourceSettings) *datasourceBase {
 	return &datasourceBase{
-		logger:   settings.Logger.With(slog.String("datasource", string(settings.DatasourceType))),
-		settings: settings,
+		datasourceType: datasourceType,
+		logger:         settings.Logger.With(slog.String("datasource", string(datasourceType))),
+		settings:       settings,
 	}
 }
 
-func GetDatasource(settings *common.DatasourceSettings) (common.IDatasource, error) {
-	switch settings.DatasourceType {
+func GetDatasource(datasourceType common.DatasourceType, settings *common.DatasourceSettings) (common.IDatasource, error) {
+	switch datasourceType {
 	case common.DATASOURCE_TYPE_ANTVERSION:
 		return NewAntVersionDatasource(settings), nil
 	case common.DATASOURCE_TYPE_ARTIFACTORY:
@@ -54,7 +56,7 @@ func GetDatasource(settings *common.DatasourceSettings) (common.IDatasource, err
 	case common.DATASOURCE_TYPE_NPM:
 		return NewNpmDatasource(settings), nil
 	}
-	return nil, fmt.Errorf("no datasource defined for '%s'", settings.DatasourceType)
+	return nil, fmt.Errorf("no datasource defined for '%s'", datasourceType)
 }
 
 func (ds *datasourceBase) SearchDependencyUpdate(dependency *common.Dependency) (*common.ReleaseInfo, error) {
@@ -150,7 +152,7 @@ func (ds *datasourceBase) GetAdditionalData(dependency *common.Dependency, newRe
 // Searches for a new version update for the given dependency
 func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*common.ReleaseInfo, *gover.Version, error) {
 	// Setup everything for the releases lookup
-	cacheIdentifier := fmt.Sprintf("%s|%s", ds.settings.DatasourceType, dependency.Name)
+	cacheIdentifier := fmt.Sprintf("%s|%s", ds.datasourceType, dependency.Name)
 	allowUnstable := false
 	if dependency.AllowUnstable != nil {
 		allowUnstable = *dependency.AllowUnstable
@@ -175,7 +177,7 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*
 	}
 
 	// Try get releases from the cache
-	avaliableReleases := cache.DatasourceCache.GetCache(ds.settings.DatasourceType, cacheIdentifier)
+	avaliableReleases := cache.DatasourceCache.GetCache(ds.datasourceType, cacheIdentifier)
 	if avaliableReleases == nil {
 		// No data in cache, fetch new data
 		ds.logger.Debug("Lookup releases from remote")
@@ -211,7 +213,7 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*
 			avaliableReleases = append(avaliableReleases, release)
 		}
 		// Store in cache
-		cache.DatasourceCache.SetCache(ds.settings.DatasourceType, cacheIdentifier, avaliableReleases)
+		cache.DatasourceCache.SetCache(ds.datasourceType, cacheIdentifier, avaliableReleases)
 	} else {
 		ds.logger.Debug("Returned releases from cache")
 	}

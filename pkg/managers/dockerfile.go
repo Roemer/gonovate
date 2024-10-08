@@ -15,9 +15,9 @@ type DockerfileManager struct {
 	*managerBase
 }
 
-func NewDockerfileManager(settings *common.ManagerSettings) common.IManager {
+func NewDockerfileManager(id string, settings *common.ManagerSettings) common.IManager {
 	manager := &DockerfileManager{
-		managerBase: newManagerBase(settings),
+		managerBase: newManagerBase(id, common.MANAGER_TYPE_DOCKERFILE, settings),
 	}
 	manager.impl = manager
 	return manager
