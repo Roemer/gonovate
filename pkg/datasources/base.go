@@ -41,6 +41,8 @@ func GetDatasource(datasourceType common.DatasourceType, settings *common.Dataso
 		return NewGitHubReleasesDatasource(settings), nil
 	case common.DATASOURCE_TYPE_GITHUB_TAGS:
 		return NewGitHubTagsDatasource(settings), nil
+	case common.DATASOURCE_TYPE_GITLAB_PACKAGES:
+		return NewGitLabPackagesDatasource(settings), nil
 	case common.DATASOURCE_TYPE_GOMOD:
 		return NewGoModDatasource(settings), nil
 	case common.DATASOURCE_TYPE_GOVERSION:

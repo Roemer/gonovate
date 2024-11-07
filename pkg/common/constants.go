@@ -31,6 +31,7 @@ const (
 	DATASOURCE_TYPE_DOCKER          DatasourceType = "docker"
 	DATASOURCE_TYPE_GITHUB_RELEASES DatasourceType = "github-releases"
 	DATASOURCE_TYPE_GITHUB_TAGS     DatasourceType = "github-tags"
+	DATASOURCE_TYPE_GITLAB_PACKAGES DatasourceType = "gitlab-packages"
 	DATASOURCE_TYPE_GOMOD           DatasourceType = "go-mod"
 	DATASOURCE_TYPE_GOVERSION       DatasourceType = "go-version"
 	DATASOURCE_TYPE_GRADLEVERSION   DatasourceType = "gradle-version"

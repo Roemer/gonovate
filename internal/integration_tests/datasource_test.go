@@ -89,3 +89,44 @@ func TestDockerDigest(t *testing.T) {
 		fmt.Println(digest)
 	}
 }
+
+func TestGitLabPackages(t *testing.T) {
+	t.Skip("This test is for local debugging only")
+
+	assert := assert.New(t)
+
+	// Load the defaults
+	cfg, err := config.Load("preset:defaults")
+	assert.NoError(err)
+	assert.NotNil(cfg)
+
+	// Create the datasource
+	settings := &common.DatasourceSettings{
+		Logger:    slog.Default(),
+		HostRules: cfg.HostRules,
+	}
+	ds := datasources.NewGitLabPackagesDatasource(settings)
+
+	// Create the dependency and enrich it with rules from the config
+	dep := &common.Dependency{Name: "gitlab-org/release-cli:release-cli", Datasource: common.DATASOURCE_TYPE_GITLAB_PACKAGES, Version: "0.18.0"}
+	//dep.ExtractVersion
+	dep.IgnoreNonMatching = common.TruePtr
+	err = cfg.ApplyToDependency(dep)
+	assert.NoError(err)
+
+	// Get the releases from the datasource
+	releases, err := ds.GetReleases(dep)
+	assert.NoError(err)
+	assert.NotNil(releases)
+	fmt.Println("Found releases:")
+	for _, release := range releases {
+		fmt.Println(release.VersionString)
+	}
+
+	// Search for an update
+	ri, err := ds.SearchDependencyUpdate(dep)
+	assert.NoError(err)
+	assert.NotNil(ri)
+	fmt.Println("Update found to version:")
+	fmt.Println(ri.VersionString)
+}

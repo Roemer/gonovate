@@ -94,10 +94,13 @@ With that information, gonovate can decide which version a dependency should upd
 The following datasources are available:
 | manager | description |
 | --- | --- |
+| ant_version | Fetches information for the ant version. |
 | artifactory | Fetches information from a self hosted artifactory. |
+| browser_version | Fetches information browser versions. |
 | docker | Fetches information from any docker registry. |
 | github_releases | Fetches information from GitHub releases. |
 | github_tags | Fetches information from GitHub tags. |
+| gitlab_packages | Fetches information from GitLab packages. |
 | go_mod | Fetches information for go modules. |
 | go_version | Fetches information for the go version. |
 | gradle_version | Fetches information for the gradle version. |
