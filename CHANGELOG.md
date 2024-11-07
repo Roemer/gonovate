@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.6.4 (2024-11-07)
+### Features
+* Added gitlab_packages datasource
+
 ## v0.6.3 (2024-10-10)
 ### Features
 * Small adjustments for creating managers and datasources
