@@ -62,6 +62,7 @@ func GetDatasource(datasourceType common.DatasourceType, settings *common.Dataso
 }
 
 func (ds *datasourceBase) SearchDependencyUpdate(dependency *common.Dependency) (*common.ReleaseInfo, error) {
+	ds.logger.Info(fmt.Sprintf("Searching an update for '%s'", dependency.Name))
 	skipVersionCheck := false
 	if dependency.SkipVersionCheck != nil {
 		skipVersionCheck = *dependency.SkipVersionCheck
@@ -78,7 +79,7 @@ func (ds *datasourceBase) SearchDependencyUpdate(dependency *common.Dependency) 
 	if skipVersionCheck {
 		if !hasDigest {
 			// No version check and no digest, the dependency cannot have an update
-			ds.logger.Warn("Version check is skipped and no digest is defined")
+			ds.logger.Warn("Version check is disabled and no digest is defined, skipping check")
 			return nil, nil
 		}
 		// The new release keeps the current version

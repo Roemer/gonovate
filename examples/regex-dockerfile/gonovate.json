@@ -1,6 +1,6 @@
 {
-    "platform": "noop",
-    "platformConfig": {
+    "platform": {
+        "type": "noop",
         "inplace": true
     },
     "extends": [
