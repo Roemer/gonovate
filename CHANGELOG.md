@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.6.5 (2024-11-15)
+### Features
+* Small logging improvements
+
 ## v0.6.4 (2024-11-07)
 ### Features
 * Added gitlab_packages datasource
