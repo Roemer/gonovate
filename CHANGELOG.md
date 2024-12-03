@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.6.6 (2024-12-03)
+### Fixes
+* Prevent the same file from being added multiple times from different match-patterns
+
 ## v0.6.5 (2024-11-15)
 ### Features
 * Small logging improvements
