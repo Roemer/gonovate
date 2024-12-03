@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/bmatcuk/doublestar/v4"
 )
@@ -60,7 +61,7 @@ func SearchFiles(rootPath string, matchPaths []string, ignorePatterns []string) 
 		// Check if the file matches
 		for _, matchPath := range matchPaths {
 			isMatch, _ := doublestar.Match(filepath.ToSlash(matchPath), filepath.ToSlash(path))
-			if isMatch {
+			if isMatch && !slices.Contains(matchedFiles, path) {
 				matchedFiles = append(matchedFiles, path)
 			}
 		}
