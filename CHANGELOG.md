@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.6.8 (2025-01-21)
+### Fixes
+* Correctly inherit ClearFilePatterns
+
 ## v0.6.7 (2025-01-21)
 ### Features
 * Add ClearFilePatterns to allow clearing default patterns to only use custom ones
