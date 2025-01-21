@@ -24,3 +24,8 @@ rules:
           - property: gradleVersion
             datasource: gradle-version
             dependencyName: gradle
+        ghcr.io/roemer/devcontainer-features/gonovate:
+          - property: version
+            datasource: github-tags
+            dependencyName: roemer/gonovate
+
