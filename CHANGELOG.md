@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.6.7 (2025-01-21)
+### Features
+* Add ClearFilePatterns to allow clearing default patterns to only use custom ones
+
 ## v0.6.6 (2024-12-03)
 ### Fixes
 * Prevent the same file from being added multiple times from different match-patterns
