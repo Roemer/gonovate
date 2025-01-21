@@ -55,8 +55,9 @@ type Manager struct {
 
 type ManagerConfig struct {
 	// General settings
-	Disabled     *bool    `json:"disabled" yaml:"disabled"`
-	FilePatterns []string `json:"filePatterns" yaml:"filePatterns"`
+	Disabled          *bool    `json:"disabled" yaml:"disabled"`
+	FilePatterns      []string `json:"filePatterns" yaml:"filePatterns"`
+	ClearFilePatterns *bool    `json:"clearFilePatterns" yaml:"clearFilePatterns"`
 	// Specific settings for RegexManager
 	MatchStrings []string `json:"matchStrings" yaml:"matchStrings"`
 	// Specific settings for DevcontainerManager

@@ -90,6 +90,84 @@ func TestMergeIgnorePatterns(t *testing.T) {
 	assert.Equal([]string{"ignore_a", "ignore_both", "ignore_b"}, merged.IgnorePatterns)
 }
 
+func TestClearFilePatterns(t *testing.T) {
+	assert := assert.New(t)
+
+	configA := &GonovateConfig{
+		Managers: []*Manager{
+			{
+				Id: "manager",
+				ManagerConfig: &ManagerConfig{
+					FilePatterns: []string{"pattern_a", "pattern_both"},
+				},
+			},
+		},
+	}
+	configB := &GonovateConfig{
+		Managers: []*Manager{
+			{
+				Id: "manager",
+				ManagerConfig: &ManagerConfig{
+					FilePatterns: []string{"pattern_b", "pattern_both"},
+				},
+			},
+		},
+	}
+	configC := &GonovateConfig{
+		Managers: []*Manager{
+			{
+				Id: "manager",
+				ManagerConfig: &ManagerConfig{
+					FilePatterns: []string{"pattern_c", "pattern_both"},
+				},
+			},
+		},
+	}
+
+	// Check with normal merging
+	{
+		merged := configA.MergeWithAsCopy(configB)
+		settingsToCheck := merged.Managers[0].ManagerConfig.FilePatterns
+		assert.Len(settingsToCheck, 3)
+		assert.Contains(settingsToCheck, "pattern_a")
+		assert.Contains(settingsToCheck, "pattern_b")
+		assert.Contains(settingsToCheck, "pattern_both")
+	}
+
+	// Check if the outer (A) has the flag set
+	{
+		configA.Managers[0].ManagerConfig.ClearFilePatterns = common.TruePtr
+		merged := configA.MergeWithAsCopy(configB)
+		settingsToCheck := merged.Managers[0].ManagerConfig.FilePatterns
+		assert.Len(settingsToCheck, 3)
+		assert.Contains(settingsToCheck, "pattern_a")
+		assert.Contains(settingsToCheck, "pattern_b")
+		assert.Contains(settingsToCheck, "pattern_both")
+	}
+
+	// Check if the inner (B) has the flag set
+	{
+		configB.Managers[0].ManagerConfig.ClearFilePatterns = common.TruePtr
+		merged := configA.MergeWithAsCopy(configB)
+		settingsToCheck := merged.Managers[0].ManagerConfig.FilePatterns
+		assert.Len(settingsToCheck, 2)
+		assert.Contains(settingsToCheck, "pattern_b")
+		assert.Contains(settingsToCheck, "pattern_both")
+	}
+
+	// Check if the inner (B) has the flag set but an even more inner (C) has the flag not set
+	{
+		configB.Managers[0].ManagerConfig.ClearFilePatterns = common.TruePtr
+		merged := configA.MergeWithAsCopy(configB)
+		merged = merged.MergeWithAsCopy(configC)
+		settingsToCheck := merged.Managers[0].ManagerConfig.FilePatterns
+		assert.Len(settingsToCheck, 3)
+		assert.Contains(settingsToCheck, "pattern_b")
+		assert.Contains(settingsToCheck, "pattern_c")
+		assert.Contains(settingsToCheck, "pattern_both")
+	}
+}
+
 func TestMergePlatformConfig(t *testing.T) {
 	assert := assert.New(t)
 

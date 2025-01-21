@@ -132,7 +132,11 @@ func (ManagerConfigA *ManagerConfig) MergeWith(ManagerConfigB *ManagerConfig) {
 		ManagerConfigA.Disabled = ManagerConfigB.Disabled
 	}
 	// FilePatterns
-	ManagerConfigA.FilePatterns = lo.Union(ManagerConfigA.FilePatterns, ManagerConfigB.FilePatterns)
+	if ManagerConfigB.ClearFilePatterns != nil && *ManagerConfigB.ClearFilePatterns {
+		ManagerConfigA.FilePatterns = append([]string{}, ManagerConfigB.FilePatterns...)
+	} else {
+		ManagerConfigA.FilePatterns = lo.Union(ManagerConfigA.FilePatterns, ManagerConfigB.FilePatterns)
+	}
 	// MatchStrings
 	ManagerConfigA.MatchStrings = lo.Union(ManagerConfigA.MatchStrings, ManagerConfigB.MatchStrings)
 	// DevcontainerConfig
