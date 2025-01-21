@@ -131,6 +131,10 @@ func (ManagerConfigA *ManagerConfig) MergeWith(ManagerConfigB *ManagerConfig) {
 	if ManagerConfigB.Disabled != nil {
 		ManagerConfigA.Disabled = ManagerConfigB.Disabled
 	}
+	// ClearFilePatterns
+	if ManagerConfigB.ClearFilePatterns != nil {
+		ManagerConfigA.ClearFilePatterns = ManagerConfigB.ClearFilePatterns
+	}
 	// FilePatterns
 	if ManagerConfigB.ClearFilePatterns != nil && *ManagerConfigB.ClearFilePatterns {
 		ManagerConfigA.FilePatterns = append([]string{}, ManagerConfigB.FilePatterns...)
