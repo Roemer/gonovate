@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/google/go-github/v63/github"
+	"github.com/google/go-github/v66/github"
 	"github.com/roemer/gonovate/pkg/common"
 )
 
@@ -21,15 +21,7 @@ func NewGitHubReleasesDatasource(settings *common.DatasourceSettings) common.IDa
 }
 
 func (ds *GitHubReleasesDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
-	client := github.NewClient(nil)
-
-	// Get a host rule if any was defined
-	relevantHostRule := ds.getHostRuleForHost("api.github.com")
-	// Add the token to the client
-	if relevantHostRule != nil {
-		token := relevantHostRule.TokendExpanded()
-		client = client.WithAuthToken(token)
-	}
+	client := getGitHubClient(ds.datasourceBase)
 
 	parts := strings.SplitN(dependency.Name, "/", 2)
 	owner := parts[0]

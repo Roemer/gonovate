@@ -21,15 +21,7 @@ func NewGitHubTagsDatasource(settings *common.DatasourceSettings) common.IDataso
 }
 
 func (ds *GitHubTagsDatasource) GetReleases(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
-	client := github.NewClient(nil)
-
-	// Get a host rule if any was defined
-	relevantHostRule := ds.getHostRuleForHost("api.github.com")
-	// Add the token to the client
-	if relevantHostRule != nil {
-		token := relevantHostRule.TokendExpanded()
-		client = client.WithAuthToken(token)
-	}
+	client := getGitHubClient(ds.datasourceBase)
 
 	parts := strings.SplitN(dependency.Name, "/", 2)
 	owner := parts[0]
