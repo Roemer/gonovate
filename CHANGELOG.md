@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.6.9 (2025-02-05)
+### Fixes
+* Only add GitHub token if it is correctly set
+## Chore
+* Updated dependencies
+
 ## v0.6.8 (2025-01-21)
 ### Fixes
 * Correctly inherit ClearFilePatterns
