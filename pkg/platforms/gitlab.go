@@ -7,7 +7,7 @@ import (
 
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/samber/lo"
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 type GitlabPlatform struct {

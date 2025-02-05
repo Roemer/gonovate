@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/roemer/gonovate/pkg/common"
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 )
 
 type GitLabPackagesDatasource struct {

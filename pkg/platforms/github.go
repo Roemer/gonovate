@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"slices"
 
-	"github.com/google/go-github/v63/github"
+	"github.com/google/go-github/v68/github"
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/samber/lo"
 )
