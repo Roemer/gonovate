@@ -1,9 +1,18 @@
 # Change Log
 
+## v0.7.0 (2025-03-31)
+### Breaking
+* Don't use any extractVersion as default
+### Features
+* Added major-minor-patch-fixed versioning preset
+* Added docker-compose manager
+### Chore
+* Updated dependencies
+
 ## v0.6.9 (2025-02-05)
 ### Fixes
 * Only add GitHub token if it is correctly set
-## Chore
+### Chore
 * Updated dependencies
 
 ## v0.6.8 (2025-01-21)
