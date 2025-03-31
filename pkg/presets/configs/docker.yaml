@@ -1,4 +1,4 @@
-# Rules for dockerfile manager and versioning from docker datasource
+# Rules for docker related managers and versioning from docker datasource
 rules:
   # The dockerfile manager
   - matches:
@@ -7,6 +7,15 @@ rules:
     managerConfig:
       filePatterns:
         - "**/Dockerfile"
+
+  # The docker-compose manager
+  - matches:
+      managerTypes:
+      - docker-compose
+    managerConfig:
+      filePatterns:
+        - "**/docker-compose.yml"
+
   # Docker images versioning
   - matches:
       dependencyNames:

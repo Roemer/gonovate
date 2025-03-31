@@ -30,6 +30,8 @@ func GetManager(id string, managerType common.ManagerType, settings *common.Mana
 	switch managerType {
 	case common.MANAGER_TYPE_DEVCONTAINER:
 		return NewDevcontainerManager(id, settings), nil
+	case common.MANAGER_TYPE_DOCKER_COMPOSE:
+		return NewDockerComposeManager(id, settings), nil
 	case common.MANAGER_TYPE_DOCKERFILE:
 		return NewDockerfileManager(id, settings), nil
 	case common.MANAGER_TYPE_GOMOD:

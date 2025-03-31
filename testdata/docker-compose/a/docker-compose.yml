@@ -1,0 +1,9 @@
+services:
+  db:
+    container_name: gitea-db
+    image: postgres:17.4
+  gitea:
+    container_name: gitea
+    image: gitea/gitea:1.23.6
+    depends_on:
+      - db

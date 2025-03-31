@@ -1,0 +1,12 @@
+platform:
+  type: noop
+  inplace: true
+extends:
+- defaults
+
+managers:
+- id: docker-compose
+  type: docker-compose
+  dependencyConfig:
+    maxUpdateType: major
+    ignoreNonMatching: true

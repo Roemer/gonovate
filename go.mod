@@ -5,7 +5,7 @@ go 1.23.6
 require (
 	github.com/adhocore/jsonc v0.10.0
 	github.com/bmatcuk/doublestar/v4 v4.8.1
-	github.com/goccy/go-yaml v1.15.17
+	github.com/goccy/go-yaml v1.17.0
 	github.com/google/go-github/v68 v68.0.0
 	github.com/jfrog/jfrog-client-go v1.49.1
 	github.com/roemer/gotaskr v0.4.5
