@@ -32,6 +32,7 @@
     },
     "versioningPresets": {
         "semver": "^(\\d+)\\.(\\d+)\\.(\\d+)(?:-([^+]+))?(?:\\+(.*))?$",
-        "major-minor-patch": "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$"
+        "major-minor-patch": "^(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$",
+        "major-minor-patch-fixed": "^(\\d+)\\.(\\d+)\\.(\\d+)?$"
     }
 }
