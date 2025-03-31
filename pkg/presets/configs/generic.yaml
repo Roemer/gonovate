@@ -2,4 +2,3 @@ rules:
   - dependencyConfig:
       maxUpdateType: minor
       versioning: preset:major-minor-patch
-      extractVersion: v?(.*)
