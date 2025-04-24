@@ -21,6 +21,7 @@ const (
 	MANAGER_TYPE_DOCKERFILE     ManagerType = "dockerfile"
 	MANAGER_TYPE_GOMOD          ManagerType = "go-mod"
 	MANAGER_TYPE_INLINE         ManagerType = "inline"
+	MANAGER_TYPE_KUBERNETES     ManagerType = "kubernetes"
 	MANAGER_TYPE_REGEX          ManagerType = "regex"
 )
 
