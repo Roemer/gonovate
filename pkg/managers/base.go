@@ -38,6 +38,8 @@ func GetManager(id string, managerType common.ManagerType, settings *common.Mana
 		return NewGoModManager(id, settings), nil
 	case common.MANAGER_TYPE_INLINE:
 		return NewInlineManager(id, settings), nil
+	case common.MANAGER_TYPE_KUBERNETES:
+		return NewKubernetesManager(id, settings), nil
 	case common.MANAGER_TYPE_REGEX:
 		return NewRegexManager(id, settings), nil
 	}
