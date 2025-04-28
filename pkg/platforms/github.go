@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"slices"
 
-	"github.com/google/go-github/v68/github"
+	"github.com/google/go-github/v71/github"
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/samber/lo"
 )
@@ -87,8 +87,8 @@ func (p *GitHubPlatform) NotifyChanges(project *common.Project, updateGroup *com
 		if existingPr.Title == nil || *existingPr.Title != updateGroup.Title || existingPr.Body == nil || *existingPr.Body != content {
 			p.logger.Debug("Updating PR")
 			if _, _, err := client.PullRequests.Edit(context.Background(), owner, repository, existingPr.GetNumber(), &github.PullRequest{
-				Title: github.String(updateGroup.Title),
-				Body:  github.String(content),
+				Title: github.Ptr(updateGroup.Title),
+				Body:  github.Ptr(content),
 			}); err != nil {
 				return err
 			}
@@ -96,10 +96,10 @@ func (p *GitHubPlatform) NotifyChanges(project *common.Project, updateGroup *com
 	} else {
 		// Create the PR
 		pr, _, err := client.PullRequests.Create(context.Background(), owner, repository, &github.NewPullRequest{
-			Title: github.String(updateGroup.Title),
-			Body:  github.String(content),
-			Head:  github.String(updateGroup.BranchName),
-			Base:  github.String(p.settings.BaseBranch),
+			Title: github.Ptr(updateGroup.Title),
+			Body:  github.Ptr(content),
+			Head:  github.Ptr(updateGroup.BranchName),
+			Base:  github.Ptr(p.settings.BaseBranch),
 		})
 		if err != nil {
 			return err

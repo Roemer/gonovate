@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/google/go-github/v68/github"
+	"github.com/google/go-github/v71/github"
 	"github.com/roemer/gonovate/internal/app/gonovate"
 	"github.com/roemer/gotaskr"
 	"github.com/roemer/gotaskr/execr"
