@@ -7,6 +7,7 @@ type PlatformType string
 
 const (
 	PLATFORM_TYPE_GIT    PlatformType = "git"
+	PLATFORM_TYPE_GITEA  PlatformType = "gitea"
 	PLATFORM_TYPE_GITHUB PlatformType = "github"
 	PLATFORM_TYPE_GITLAB PlatformType = "gitlab"
 	PLATFORM_TYPE_NOOP   PlatformType = "noop"
