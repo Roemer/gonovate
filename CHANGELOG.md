@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.8.0 (2025-04-29)
+### Features
+* Added Gitea platform
+### Chore
+* Updated dependencies
+
 ## v0.7.0 (2025-03-31)
 ### Breaking
 * Don't use any extractVersion as default
