@@ -48,7 +48,7 @@ func (p *GitHubPlatform) FetchProject(project *common.Project) error {
 		return err
 	}
 	cloneUrlWithCredentials.User = url.UserPassword("oauth2", p.settings.TokendExpanded())
-	_, _, err = common.Git.Run("clone", cloneUrlWithCredentials.String(), ".gonovate-clone")
+	_, _, err = common.Git.Run("clone", cloneUrlWithCredentials.String(), ClonePath)
 	return err
 }
 

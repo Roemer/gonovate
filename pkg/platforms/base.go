@@ -26,6 +26,8 @@ type IPlatform interface {
 	Cleanup(cleanupSettings *PlatformCleanupSettings) error
 }
 
+var ClonePath = ".gonovate-clone"
+
 type PlatformCleanupSettings struct {
 	Project      *common.Project
 	UpdateGroups []*common.UpdateGroup
@@ -49,6 +51,8 @@ func GetPlatform(settings *common.PlatformSettings) (IPlatform, error) {
 	switch settings.Platform {
 	case common.PLATFORM_TYPE_GIT:
 		return NewGitPlatform(settings), nil
+	case common.PLATFORM_TYPE_GITEA:
+		return NewGiteaPlatform(settings), nil
 	case common.PLATFORM_TYPE_GITHUB:
 		return NewGitHubPlatform(settings), nil
 	case common.PLATFORM_TYPE_GITLAB:

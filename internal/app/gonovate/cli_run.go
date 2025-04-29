@@ -199,7 +199,7 @@ func RunCmd(args []string) error {
 			if err != nil {
 				return err
 			}
-			if err := os.Chdir(".gonovate-clone"); err != nil {
+			if err := os.Chdir(platforms.ClonePath); err != nil {
 				return err
 			}
 			// If the project has its own config file, merge it
@@ -436,7 +436,7 @@ func RunCmd(args []string) error {
 				return err
 			}
 		}
-		if err := os.RemoveAll(".gonovate-clone"); err != nil {
+		if err := os.RemoveAll(platforms.ClonePath); err != nil {
 			return err
 		}
 	}
