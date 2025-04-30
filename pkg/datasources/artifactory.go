@@ -9,6 +9,7 @@ import (
 	"github.com/jfrog/jfrog-client-go/artifactory/services"
 	artifactory_config "github.com/jfrog/jfrog-client-go/config"
 	"github.com/jfrog/jfrog-client-go/http/httpclient"
+	"github.com/jfrog/jfrog-client-go/utils/log"
 	"github.com/roemer/gonovate/pkg/common"
 )
 
@@ -92,6 +93,11 @@ type artifactorySearchResultItem struct {
 type artifactorySearchResultProperty struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
+}
+
+// Method that can be used to enable debug log level
+func (ds *ArtifactoryDatasource) enableDebugLog() {
+	log.SetLogger(log.NewLogger(log.DEBUG, nil))
 }
 
 func (ds *ArtifactoryDatasource) createManager(baseUrl string, token string, user string, password string) (artifactory.ArtifactoryServicesManager, error) {
