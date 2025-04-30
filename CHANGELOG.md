@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.8.1 (2025-04-30)
+### Fixes
+* Fix platform defaults
+* Set the git committer instead of the author
+
 ## v0.8.0 (2025-04-29)
 ### Features
 * Added Gitea platform
