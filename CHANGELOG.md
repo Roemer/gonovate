@@ -1,6 +1,8 @@
 # Change Log
 
 ## v0.8.1 (2025-04-30)
+### Features
+* Added kubernetes manager
 ### Fixes
 * Fix platform defaults
 * Set the git committer instead of the author
