@@ -9,6 +9,8 @@ import (
 	"github.com/samber/lo"
 )
 
+var authorRegex = regexp.MustCompile(`^(?P<name>[^<>]+)(?:\s+<(?P<email>.*?)>)?$`)
+
 type GitPlatform struct {
 	*platformBase
 }
@@ -40,15 +42,18 @@ func (p *GitPlatform) SubmitChanges(updateGroup *common.UpdateGroup) error {
 		return err
 	}
 
-	// Build the arguments
-	args := []string{
-		"commit",
-		"--message=" + updateGroup.Title,
-	}
-	// Optionally add the author if it is set
+	// Prepare the slice for the arguments
+	args := []string{}
+
+	// Optionally set the committer if it is set
 	if p.settings != nil && p.settings.GitAuthor != "" {
-		args = append(args, "--author="+p.settings.GitAuthor)
+		name, email := splitAuthor(p.settings.GitAuthor)
+		args = append(args, "-c", "user.name="+name)
+		args = append(args, "-c", "user.email="+email)
 	}
+
+	// Build the commit arguments
+	args = append(args, "commit", "--message="+updateGroup.Title)
 
 	// Execute the command
 	_, _, err := common.Git.Run(args...)
@@ -108,4 +113,9 @@ func (p *GitPlatform) getRemoteGonovateBranches(remoteName string, branchPrefix 
 	})
 
 	return gonovateBranches, nil
+}
+
+func splitAuthor(author string) (string, string) {
+	matchMap := common.FindNamedMatchesWithIndex(authorRegex, author, true)
+	return matchMap["name"][0].Value, matchMap["email"][0].Value
 }
