@@ -16,6 +16,8 @@ type IPlatform interface {
 	PrepareForChanges(updateGroup *common.UpdateGroup) error
 	// Submit the changes to the project locally.
 	SubmitChanges(updateGroup *common.UpdateGroup) error
+	// Checks if the remote already has the same changes.
+	IsNewOrChanged(updateGroup *common.UpdateGroup) (bool, error)
 	// Publishes the changes to the remote location.
 	PublishChanges(updateGroup *common.UpdateGroup) error
 	// Notifies the remote about the changes with eg. MRs/PRs.

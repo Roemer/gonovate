@@ -1,7 +1,9 @@
 package platforms
 
 import (
+	"errors"
 	"fmt"
+	"os/exec"
 	"regexp"
 	"strings"
 
@@ -58,6 +60,28 @@ func (p *GitPlatform) SubmitChanges(updateGroup *common.UpdateGroup) error {
 	// Execute the command
 	_, _, err := common.Git.Run(args...)
 	return err
+}
+
+func (p *GitPlatform) IsNewOrChanged(updateGroup *common.UpdateGroup) (bool, error) {
+	_, _, err := common.Git.Run("ls-remote", "--exit-code", "origin", updateGroup.BranchName)
+	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() == 2 {
+			// The branch does not exist
+			return true, nil
+		}
+		// There was an error
+		return false, err
+	}
+	// The branch exists, get the diff
+	stdOut, _, err := common.Git.Run("diff", fmt.Sprintf("origin/%s", updateGroup.BranchName), updateGroup.BranchName, "--name-status")
+	if err != nil {
+		return false, err
+	}
+	if len(stdOut) > 0 {
+		return true, nil
+	}
+	return false, err
 }
 
 func (p *GitPlatform) PublishChanges(updateGroup *common.UpdateGroup) error {

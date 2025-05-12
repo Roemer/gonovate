@@ -398,18 +398,25 @@ func RunCmd(args []string) error {
 				return err
 			}
 
-			// Publish
-			logger.Debug("Publishing the changes")
-			if err := platform.PublishChanges(updateGroup); err != nil {
+			// Check if there is a differente to a remote branch
+			if isNewOrChanged, err := platform.IsNewOrChanged(updateGroup); err != nil {
 				return err
-			}
-
-			// Notify
-			if hasProject {
-				// Only notify if a project was defined, otherwise we do not know where to notify
-				logger.Debug("Notifying the project about the changes")
-				if err := platform.NotifyChanges(project, updateGroup); err != nil {
+			} else if !isNewOrChanged {
+				logger.Info("Branch on remote exists and already has the same changes, skipping publish")
+			} else {
+				// Publish
+				logger.Debug("Publishing the changes")
+				if err := platform.PublishChanges(updateGroup); err != nil {
 					return err
+				}
+
+				// Notify
+				if hasProject {
+					// Only notify if a project was defined, otherwise we do not know where to notify
+					logger.Debug("Notifying the project about the changes")
+					if err := platform.NotifyChanges(project, updateGroup); err != nil {
+						return err
+					}
 				}
 			}
 

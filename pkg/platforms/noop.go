@@ -31,6 +31,10 @@ func (p *NoopPlatform) SubmitChanges(updateGroup *common.UpdateGroup) error {
 	return nil
 }
 
+func (p *NoopPlatform) IsNewOrChanged(updateGroup *common.UpdateGroup) (bool, error) {
+	return true, nil
+}
+
 func (p *NoopPlatform) PublishChanges(updateGroup *common.UpdateGroup) error {
 	return nil
 }
