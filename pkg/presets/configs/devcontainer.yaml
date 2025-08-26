@@ -10,6 +10,10 @@ rules:
           - property: version
             datasource: npm
             dependencyName: "@devcontainers/cli"
+        ghcr.io/devcontainers-extra/features/devcontainers-cli:
+          - property: version
+            datasource: npm
+            dependencyName: "@devcontainers/cli"
         ghcr.io/devcontainers/features/go:
           - property: version
             datasource: go-version
