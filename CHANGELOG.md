@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.9.0 (2025-08-27)
+### Features
+* Do not publish changes again if the same branch exists with the same changes
+* Added linux ARM64 build
+
 ## v0.8.1 (2025-04-30)
 ### Features
 * Added kubernetes manager
