@@ -34,6 +34,7 @@ func init() {
 	}).
 		DependsOn("Compile:Windows").
 		DependsOn("Compile:Linux").
+		DependsOn("Compile:LinuxArm").
 		DependsOn("Compile:Mac").
 		DependsOn("Compile:MacArm")
 
@@ -51,6 +52,18 @@ func init() {
 	gotaskr.Task("Compile:Linux", func() error {
 		os.Setenv("GOOS", "linux")
 		os.Setenv("GOARCH", "amd64")
+		os.Setenv("CGO_ENABLED", "0")
+
+		path, err := compile("")
+		if err != nil {
+			return err
+		}
+		return zipRelease(path)
+	})
+
+	gotaskr.Task("Compile:LinuxArm", func() error {
+		os.Setenv("GOOS", "linux")
+		os.Setenv("GOARCH", "arm64")
 		os.Setenv("CGO_ENABLED", "0")
 
 		path, err := compile("")
@@ -116,9 +129,9 @@ func init() {
 
 		// Create the new release
 		newRelease := &github.RepositoryRelease{
-			Name:    github.String(fullVersionName),
-			Draft:   github.Bool(true),
-			TagName: github.String(fullVersionName),
+			Name:    github.Ptr(fullVersionName),
+			Draft:   github.Ptr(true),
+			TagName: github.Ptr(fullVersionName),
 		}
 		release, _, err := client.Repositories.CreateRelease(ctx, gitHubOwner, gitHubRepo, newRelease)
 		if err != nil {
