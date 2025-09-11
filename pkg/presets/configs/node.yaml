@@ -1,5 +1,11 @@
 rules:
   - matches:
+      managerTypes:
+      - npm
+    managerConfig:
+      filePatterns:
+      - "**/package.json"
+  - matches:
       datasources:
         - nodejs
     dependencyConfig:

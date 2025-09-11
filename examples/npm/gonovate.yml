@@ -1,0 +1,10 @@
+platform:
+  type: noop
+  inplace: true
+
+extends:
+- defaults
+
+managers:
+- id: npm
+  type: npm

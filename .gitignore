@@ -8,4 +8,6 @@
 # Run
 .gonovate-clone/
 
+# Varia
 .devcontainer/.env
+**/node_modules/

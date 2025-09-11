@@ -24,6 +24,7 @@ const (
 	MANAGER_TYPE_INLINE         ManagerType = "inline"
 	MANAGER_TYPE_KUBERNETES     ManagerType = "kubernetes"
 	MANAGER_TYPE_REGEX          ManagerType = "regex"
+	MANAGER_TYPE_NPM            ManagerType = "npm"
 )
 
 type DatasourceType string
