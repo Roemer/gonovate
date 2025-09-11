@@ -87,7 +87,7 @@ func (p *GiteaPlatform) NotifyChanges(project *common.Project, updateGroup *comm
 			p.logger.Debug("Updating PR")
 			if _, _, err := client.EditPullRequest(owner, repository, existingPr.Index, gitea.EditPullRequestOption{
 				Title: updateGroup.Title,
-				Body:  content,
+				Body:  gitea.OptionalString(content),
 			}); err != nil {
 				return err
 			}

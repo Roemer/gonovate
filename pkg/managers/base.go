@@ -44,6 +44,8 @@ func GetManager(id string, managerType common.ManagerType, settings *common.Mana
 		return NewKubernetesManager(id, settings), nil
 	case common.MANAGER_TYPE_REGEX:
 		return NewRegexManager(id, settings), nil
+	case common.MANAGER_TYPE_NPM:
+		return NewNpmManager(id, settings), nil
 	}
 	return nil, fmt.Errorf("no manager defined for type '%s'", managerType)
 }
