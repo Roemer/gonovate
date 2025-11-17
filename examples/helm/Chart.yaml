@@ -1,0 +1,10 @@
+apiVersion: v2
+name: TestChart
+description: A Helm chart for testing
+type: application
+version: 1.0.0
+appVersion: 1.0.0
+dependencies:
+  - name: elasticsearch
+    repository: "https://helm.elastic.co"
+    version: 8.4.0

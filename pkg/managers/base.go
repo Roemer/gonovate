@@ -36,6 +36,8 @@ func GetManager(id string, managerType common.ManagerType, settings *common.Mana
 		return NewDockerfileManager(id, settings), nil
 	case common.MANAGER_TYPE_GOMOD:
 		return NewGoModManager(id, settings), nil
+	case common.MANAGER_TYPE_HELM:
+		return NewHelmManager(id, settings), nil
 	case common.MANAGER_TYPE_INLINE:
 		return NewInlineManager(id, settings), nil
 	case common.MANAGER_TYPE_KUBERNETES:

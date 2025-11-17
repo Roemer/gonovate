@@ -16,6 +16,7 @@
         "docker",
         "github",
         "go",
+        "helm",
         "java",
         "node"
     ],
