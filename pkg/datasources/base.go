@@ -49,6 +49,8 @@ func GetDatasource(datasourceType common.DatasourceType, settings *common.Dataso
 		return NewGoVersionDatasource(settings), nil
 	case common.DATASOURCE_TYPE_GRADLEVERSION:
 		return NewGradleVersionDatasource(settings), nil
+	case common.DATASOURCE_TYPE_HELM:
+		return NewHelmDatasource(settings), nil
 	case common.DATASOURCE_TYPE_JAVAVERSION:
 		return NewJavaVersionDatasource(settings), nil
 	case common.DATASOURCE_TYPE_MAVEN:

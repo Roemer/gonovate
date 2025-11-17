@@ -1,6 +1,11 @@
+# Caches
+.go_cache/
+
 # Build
 .build-output/
 .test-reports/
 
 # Run
 .gonovate-clone/
+
+.devcontainer/.env

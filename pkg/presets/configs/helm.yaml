@@ -1,0 +1,12 @@
+rules:
+  - matches:
+      managerTypes:
+      - helm
+    managerConfig:
+      filePatterns:
+      - "**/Chart.{yml,yaml}"
+  - matches:
+      datasources:
+        - helm
+    dependencyConfig:
+      versioning: "preset:major-minor-patch"

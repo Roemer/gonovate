@@ -1,0 +1,12 @@
+platform:
+  type: noop
+  inplace: true
+extends:
+- defaults
+
+managers:
+- id: helm
+  type: helm
+  dependencyConfig:
+    maxUpdateType: major
+    ignoreNonMatching: true
