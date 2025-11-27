@@ -1,5 +1,12 @@
 # Change Log
 
+## v0.10.0 (2025-11-27)
+### Features
+* Added helm
+* Added node
+### Chore
+* Updated dependencies
+
 ## v0.9.0 (2025-08-27)
 ### Features
 * Do not publish changes again if the same branch exists with the same changes
