@@ -42,6 +42,8 @@ type PlatformConfig struct {
 	BaseBranch string `json:"baseBranch" yaml:"baseBranch"`
 	// The prefix for branches created by gonovate. Defaults to "gonovate/".
 	BranchPrefix string `json:"branchPrefix" yaml:"branchPrefix"`
+	// The prefix for commit messages created by gonovate. Defaults to null.
+	CommitMessagePrefix string `json:"commitMessagePrefix" yaml:"commitMessagePrefix"`
 }
 
 // This type represents an instance of manager with its configs and configs that apply for all dependencies within this manager.

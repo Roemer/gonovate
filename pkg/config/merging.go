@@ -100,6 +100,10 @@ func (platformConfigA *PlatformConfig) MergeWith(platformConfigB *PlatformConfig
 	if platformConfigB.BranchPrefix != "" {
 		platformConfigA.BranchPrefix = platformConfigB.BranchPrefix
 	}
+	// CommitMessagePrefix
+	if platformConfigB.CommitMessagePrefix != "" {
+		platformConfigA.CommitMessagePrefix = platformConfigB.CommitMessagePrefix
+	}
 }
 
 func (managerA *Manager) MergeWith(managerB *Manager) {

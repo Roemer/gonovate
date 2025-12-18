@@ -324,6 +324,9 @@ func RunCmd(args []string) error {
 					common.NormalizeString(dependency.Name, 40),
 					common.NormalizeString(dependency.NewRelease.VersionString, 0))
 			}
+			if projectConfig.Platform.CommitMessagePrefix != "" {
+				title = fmt.Sprintf("%s%s", projectConfig.Platform.CommitMessagePrefix, title)
+			}
 
 			// Check if such a group already exists
 			idx := slices.IndexFunc(updateGroups, func(g *common.UpdateGroup) bool { return g.BranchName == branchName })
