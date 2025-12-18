@@ -23,3 +23,7 @@ type PlatformSettings struct {
 func (ps *PlatformSettings) TokendExpanded() string {
 	return os.ExpandEnv(ps.Token)
 }
+
+func (ps *PlatformSettings) EndpointExpanded() string {
+	return os.ExpandEnv(ps.Endpoint)
+}

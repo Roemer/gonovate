@@ -94,8 +94,8 @@ func (p *GitPlatform) NotifyChanges(project *common.Project, updateGroup *common
 	return nil
 }
 
-func (p *GitPlatform) ResetToBase() error {
-	_, _, err := common.Git.Run("checkout", p.settings.BaseBranch)
+func (p *GitPlatform) ResetToBase(baseBranch string) error {
+	_, _, err := common.Git.Run("checkout", baseBranch)
 	return err
 }
 

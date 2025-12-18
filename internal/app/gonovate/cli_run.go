@@ -212,6 +212,10 @@ func RunCmd(args []string) error {
 				}
 				projectConfig.MergeWith(projectConfigFromFile)
 			}
+			// Reset the fetched project to the base branch
+			if err := platform.ResetToBase(projectConfig.Platform.BaseBranch); err != nil {
+				return err
+			}
 		} else {
 			logger.Debug("Using inplace project")
 		}
@@ -422,7 +426,7 @@ func RunCmd(args []string) error {
 
 			// Reset
 			logger.Debug("Resetting to the base branch")
-			if err := platform.ResetToBase(); err != nil {
+			if err := platform.ResetToBase(projectConfig.Platform.BaseBranch); err != nil {
 				return err
 			}
 		}

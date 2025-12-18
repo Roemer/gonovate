@@ -23,7 +23,7 @@ type IPlatform interface {
 	// Notifies the remote about the changes with eg. MRs/PRs.
 	NotifyChanges(project *common.Project, updateGroup *common.UpdateGroup) error
 	// Resets the project to the initial state for other changes.
-	ResetToBase() error
+	ResetToBase(baseBranch string) error
 	// Cleans the platform after a gonovate run.
 	Cleanup(cleanupSettings *PlatformCleanupSettings) error
 }

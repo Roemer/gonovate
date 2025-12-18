@@ -83,7 +83,7 @@ func (manager *InlineManager) extractDependenciesFromString(fileContent string, 
 		// Search the remaining file content with this new regex and process the first match only
 		contentSearchStart := markerEnd + 1
 		matchList := common.FindAllNamedMatchesWithIndex(newReg, fileContent[contentSearchStart:], false, 1)
-		if matchList == nil || len(matchList) < 1 {
+		if len(matchList) < 1 {
 			return nil, fmt.Errorf("regex defined in marker at position %d did not match anything", markerStart)
 		}
 		// We are only interested in the first match

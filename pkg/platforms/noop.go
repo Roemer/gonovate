@@ -43,7 +43,7 @@ func (p *NoopPlatform) NotifyChanges(project *common.Project, updateGroup *commo
 	return nil
 }
 
-func (p *NoopPlatform) ResetToBase() error {
+func (p *NoopPlatform) ResetToBase(baseBranch string) error {
 	return nil
 }
 

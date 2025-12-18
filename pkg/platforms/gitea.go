@@ -187,7 +187,7 @@ func (p *GiteaPlatform) createClient() (*gitea.Client, error) {
 	endpoint := "https://gitea.com"
 	token := p.settings.TokendExpanded()
 	if p.settings.Endpoint != "" {
-		endpoint = p.settings.Endpoint
+		endpoint = p.settings.EndpointExpanded()
 	}
 	return gitea.NewClient(endpoint, gitea.SetToken(token))
 }

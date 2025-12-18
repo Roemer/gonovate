@@ -85,7 +85,7 @@ func (manager *RegexManager) extractDependenciesFromString(fileContent string, f
 				// The version field is mandatory
 				return nil, fmt.Errorf("the field 'version' did not match")
 			}
-			//  Optional fields
+			// Optional fields
 			datasourceObject, datasourceOk := match["datasource"]
 			dependencyObject, dependencyOk := match["dependencyName"]
 			versioningObject, versioningOk := match["versioning"]

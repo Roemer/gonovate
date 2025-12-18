@@ -174,7 +174,7 @@ func (p *GitlabPlatform) createClient() (*gitlab.Client, error) {
 	endpoint := "https://gitlab.com/api/v4"
 	token := p.settings.TokendExpanded()
 	if p.settings.Endpoint != "" {
-		endpoint = p.settings.Endpoint
+		endpoint = p.settings.EndpointExpanded()
 	}
 	return gitlab.NewClient(token, gitlab.WithBaseURL(endpoint))
 }
