@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.10.1 (2025-12-18)
+### Fixes
+* Reset the fetched project to the defined base branch, respecting a project base branch if defined
+### Chore
+* Updated dependencies
+
 ## v0.10.0 (2025-11-27)
 ### Features
 * Added helm
