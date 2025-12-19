@@ -23,6 +23,10 @@ func (p *NoopPlatform) FetchProject(project *common.Project) error {
 	return nil
 }
 
+func (p *NoopPlatform) LookupAuthor() (string, string, error) {
+	return "gonovate-bot", "bot@gonovate.org", nil
+}
+
 func (p *NoopPlatform) PrepareForChanges(updateGroup *common.UpdateGroup) error {
 	return nil
 }

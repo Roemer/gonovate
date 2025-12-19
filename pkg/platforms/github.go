@@ -52,6 +52,18 @@ func (p *GitHubPlatform) FetchProject(project *common.Project) error {
 	return err
 }
 
+func (p *GitHubPlatform) LookupAuthor() (string, string, error) {
+	client, err := p.createClient()
+	if err != nil {
+		return "", "", err
+	}
+	user, _, err := client.Users.Get(context.Background(), "")
+	if err != nil {
+		return "", "", err
+	}
+	return *user.Name, *user.Email, nil
+}
+
 func (p *GitHubPlatform) NotifyChanges(project *common.Project, updateGroup *common.UpdateGroup) error {
 	// Prepare the data for the API
 	owner, repository := project.SplitPath()

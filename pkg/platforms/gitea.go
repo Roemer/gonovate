@@ -53,6 +53,18 @@ func (p *GiteaPlatform) FetchProject(project *common.Project) error {
 	return err
 }
 
+func (p *GiteaPlatform) LookupAuthor() (string, string, error) {
+	client, err := p.createClient()
+	if err != nil {
+		return "", "", err
+	}
+	user, _, err := client.GetMyUserInfo()
+	if err != nil {
+		return "", "", err
+	}
+	return user.FullName, user.Email, nil
+}
+
 func (p *GiteaPlatform) NotifyChanges(project *common.Project, updateGroup *common.UpdateGroup) error {
 	// Prepare the data for the API
 	owner, repository := project.SplitPath()

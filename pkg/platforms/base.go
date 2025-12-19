@@ -14,6 +14,8 @@ type IPlatform interface {
 	FetchProject(project *common.Project) error
 	// Prepares the project to accept changes.
 	PrepareForChanges(updateGroup *common.UpdateGroup) error
+	// Looks up the author to use for commits.
+	LookupAuthor() (string, string, error)
 	// Submit the changes to the project locally.
 	SubmitChanges(updateGroup *common.UpdateGroup) error
 	// Checks if the remote already has the same changes.

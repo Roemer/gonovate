@@ -47,6 +47,18 @@ func (p *GitlabPlatform) FetchProject(project *common.Project) error {
 	return err
 }
 
+func (p *GitlabPlatform) LookupAuthor() (string, string, error) {
+	client, err := p.createClient()
+	if err != nil {
+		return "", "", err
+	}
+	user, _, err := client.Users.CurrentUser()
+	if err != nil {
+		return "", "", err
+	}
+	return user.Name, user.Email, nil
+}
+
 func (p *GitlabPlatform) NotifyChanges(project *common.Project, updateGroup *common.UpdateGroup) error {
 	// Create the client
 	client, err := p.createClient()

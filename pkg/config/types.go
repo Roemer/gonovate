@@ -32,12 +32,13 @@ type MatchStringPreset struct {
 // This type defines configurations regarding the platform.
 type PlatformConfig struct {
 	// The type of the platform to use.
-	Type      common.PlatformType `json:"type" yaml:"type"`
-	Token     string              `json:"token" yaml:"token"`
-	GitAuthor string              `json:"gitAuthor" yaml:"gitAuthor"`
-	Endpoint  string              `json:"endpoint" yaml:"endpoint"`
-	Inplace   *bool               `json:"inplace" yaml:"inplace"`
-	Projects  []string            `json:"projects" yaml:"projects"`
+	Type  common.PlatformType `json:"type" yaml:"type"`
+	Token string              `json:"token" yaml:"token"`
+	// The author to use when committing changes. Defaults to null which will use the platform credentials to get the author.
+	GitAuthor string   `json:"gitAuthor" yaml:"gitAuthor"`
+	Endpoint  string   `json:"endpoint" yaml:"endpoint"`
+	Inplace   *bool    `json:"inplace" yaml:"inplace"`
+	Projects  []string `json:"projects" yaml:"projects"`
 	// The name of the base branch, defaults to "main".
 	BaseBranch string `json:"baseBranch" yaml:"baseBranch"`
 	// The prefix for branches created by gonovate. Defaults to "gonovate/".

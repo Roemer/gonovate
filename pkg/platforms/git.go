@@ -33,6 +33,10 @@ func (p *GitPlatform) FetchProject(project *common.Project) error {
 	return nil
 }
 
+func (p *GitPlatform) LookupAuthor() (string, string, error) {
+	return "gonovate-bot", "bot@gonovate.org", nil
+}
+
 func (p *GitPlatform) PrepareForChanges(updateGroup *common.UpdateGroup) error {
 	p.logger.Debug(fmt.Sprintf("Creating branch '%s'", updateGroup.BranchName))
 	_, _, err := common.Git.Run("checkout", "-B", updateGroup.BranchName)
@@ -50,6 +54,14 @@ func (p *GitPlatform) SubmitChanges(updateGroup *common.UpdateGroup) error {
 	// Optionally set the committer if it is set
 	if p.settings != nil && p.settings.GitAuthor != "" {
 		name, email := splitAuthor(p.settings.GitAuthor)
+		args = append(args, "-c", "user.name="+name)
+		args = append(args, "-c", "user.email="+email)
+	} else {
+		// Or look it up from the platforms default
+		name, email, err := p.LookupAuthor()
+		if err != nil {
+			return err
+		}
 		args = append(args, "-c", "user.name="+name)
 		args = append(args, "-c", "user.email="+email)
 	}

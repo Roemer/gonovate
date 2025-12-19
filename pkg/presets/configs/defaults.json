@@ -2,7 +2,7 @@
     "platform": {
         "baseBranch": "main",
         "branchPrefix": "gonovate/",
-        "gitAuthor": "gonovate-bot <bot@gonovate.org>"
+        "gitAuthor": ""
     },
     "ignorePatterns": [
         "**/node_modules",
