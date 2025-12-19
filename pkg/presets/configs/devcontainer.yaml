@@ -28,8 +28,73 @@ rules:
           - property: gradleVersion
             datasource: gradle-version
             dependencyName: gradle
+        ghcr.io/postfinance/devcontainer-features/browsers:
+          - property: chromeVersion
+            datasource: browser-version
+            dependencyName: chrome
+          - property: firefoxVersion
+            datasource: browser-version
+            dependencyName: firefox
+        ghcr.io/postfinance/devcontainer-features/docker-out:
+          - property: version
+            datasource: github-tags
+            dependencyName: docker/cli
+          - property: composeVersion
+            datasource: github-tags
+            dependencyName: docker/compose
+          - property: buildxVersion
+            datasource: github-tags
+            dependencyName: docker/buildx
+        ghcr.io/postfinance/devcontainer-features/git-lfs:
+          - property: version
+            datasource: github-tags
+            dependencyName: git-lfs/git-lfs
+        ghcr.io/postfinance/devcontainer-features/gitlab-cli:
+          - property: version
+            datasource: gitlab-packages
+            dependencyName: gitlab-org/cli:glab
+        ghcr.io/postfinance/devcontainer-features/go:
+          - property: version
+            datasource: go-version
+            dependencyName: go-stable
+        ghcr.io/postfinance/devcontainer-features/goreleaser:
+          - property: version
+            datasource: github-tags
+            dependencyName: goreleaser/goreleaser
+        ghcr.io/postfinance/devcontainer-features/jfrog-cli:
+          - property: version
+            datasource: github-tags
+            dependencyName: jfrog/jfrog-cli
+        ghcr.io/postfinance/devcontainer-features/nginx:
+          - property: version
+            datasource: github-tags
+            dependencyName: nginx/nginx
+        ghcr.io/postfinance/devcontainer-features/node:
+          - property: version
+            datasource: nodejs
+            dependencyName: nodejs-stable
+          - property: npmVersion
+            datasource: npm
+            dependencyName: npm
+          - property: yarnVersion
+            datasource: npm
+            dependencyName: yarn
+          - property: pnpmVersion
+            datasource: github-tags
+            dependencyName: pnpm/pnpm
+        ghcr.io/postfinance/devcontainer-features/python:
+          - property: version
+            datasource: github-tags
+            dependencyName: python/cpython
+        ghcr.io/postfinance/devcontainer-features/sonar-scanner-cli:
+          - property: version
+            datasource: github-tags
+            dependencyName: SonarSource/sonar-scanner-cli
+        ghcr.io/postfinance/devcontainer-features/zig:
+          - property: version
+            datasource: github-tags
+            dependencyName: ziglang/zig
         ghcr.io/roemer/devcontainer-features/gonovate:
           - property: version
             datasource: github-tags
             dependencyName: roemer/gonovate
-
