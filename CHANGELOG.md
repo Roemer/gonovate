@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.10.3 (2025-12-19)
+### Features
+* Automatically lookup git author for platforms
+* Added more devcontainer feature configs
+
 ## v0.10.2 (2025-12-18)
 ### Features
 * Add CommitMessagePrefix
