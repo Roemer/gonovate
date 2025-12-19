@@ -19,6 +19,7 @@ func NewGitHubPlatform(settings *common.PlatformSettings) *GitHubPlatform {
 	platform := &GitHubPlatform{
 		GitPlatform: NewGitPlatform(settings),
 	}
+	platform.impl = platform
 	return platform
 }
 

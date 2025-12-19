@@ -41,6 +41,7 @@ type PlatformCleanupSettings struct {
 
 type platformBase struct {
 	logger   *slog.Logger
+	impl     IPlatform
 	settings *common.PlatformSettings
 }
 

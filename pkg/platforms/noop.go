@@ -12,6 +12,7 @@ func NewNoopPlatform(settings *common.PlatformSettings) IPlatform {
 	platform := &NoopPlatform{
 		platformBase: newPlatformBase(settings),
 	}
+	platform.impl = platform
 	return platform
 }
 

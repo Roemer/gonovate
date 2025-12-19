@@ -18,6 +18,7 @@ func NewGitlabPlatform(settings *common.PlatformSettings) *GitlabPlatform {
 	platform := &GitlabPlatform{
 		GitPlatform: NewGitPlatform(settings),
 	}
+	platform.impl = platform
 	return platform
 }
 

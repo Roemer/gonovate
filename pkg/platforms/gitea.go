@@ -18,6 +18,7 @@ func NewGiteaPlatform(settings *common.PlatformSettings) *GiteaPlatform {
 	platform := &GiteaPlatform{
 		GitPlatform: NewGitPlatform(settings),
 	}
+	platform.impl = platform
 	return platform
 }
 

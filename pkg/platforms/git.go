@@ -21,6 +21,7 @@ func NewGitPlatform(settings *common.PlatformSettings) *GitPlatform {
 	platform := &GitPlatform{
 		platformBase: newPlatformBase(settings),
 	}
+	platform.impl = platform
 	return platform
 }
 
@@ -58,7 +59,7 @@ func (p *GitPlatform) SubmitChanges(updateGroup *common.UpdateGroup) error {
 		args = append(args, "-c", "user.email="+email)
 	} else {
 		// Or look it up from the platforms default
-		name, email, err := p.LookupAuthor()
+		name, email, err := p.impl.LookupAuthor()
 		if err != nil {
 			return err
 		}
