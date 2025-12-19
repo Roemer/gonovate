@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.10.4 (2025-12-19)
+### Fixes
+* Use correct LookupAuthor from implementation
+
 ## v0.10.3 (2025-12-19)
 ### Features
 * Automatically lookup git author for platforms
