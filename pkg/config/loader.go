@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"os"
 	"path"
@@ -17,11 +18,26 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
+type ConfigLoader struct {
+	logger *slog.Logger
+}
+
+func NewConfigLoader(logger *slog.Logger) *ConfigLoader {
+	return &ConfigLoader{
+		logger: logger,
+	}
+}
+
+////////////////////////////////////////////////////////////
+// Public Methods
+////////////////////////////////////////////////////////////
+
 // Loads the given configuration
-func Load(configPath string) (*GonovateConfig, error) {
+func (cl *ConfigLoader) Load(configPath string) (*GonovateConfig, error) {
 	if configPath == "" {
 		configPath = "local:gonovate"
 	}
+	// By default, treat paths without type as local files
 	if !strings.Contains(configPath, ":") {
 		configPath = fmt.Sprintf("local:%s", configPath)
 	}
@@ -29,66 +45,24 @@ func Load(configPath string) (*GonovateConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	return loadConfig(nil, configInfo)
+	return cl.loadConfig(nil, configInfo)
 }
 
 ////////////////////////////////////////////////////////////
 // Internal
 ////////////////////////////////////////////////////////////
 
-const (
-	infoTypePreset string = "preset"
-	infoTypeLocal  string = "local"
-	infoTypeWeb    string = "web"
-)
-
-var httpSchemeRegex = regexp.MustCompile(`^https?://.+`)
-
-// Holds information about the type and location of a config
-type configInfo struct {
-	Type     string
-	Location string
-}
-
-func newConfigInfo(info string) (*configInfo, error) {
-	if info == "" {
-		return nil, fmt.Errorf("empty config info")
-	}
-
-	var configType, configLoc string
-
-	if httpSchemeRegex.MatchString(info) {
-		// The info is an url, so use web
-		configType = infoTypeWeb
-		configLoc = info
-	} else {
-		parts := strings.SplitN(info, ":", 2)
-		if len(parts) == 1 {
-			configType = infoTypePreset
-			configLoc = parts[0]
-		} else {
-			configType = parts[0]
-			configLoc = parts[1]
-		}
-	}
-	// Create the info object
-	return &configInfo{
-		Type:     configType,
-		Location: configLoc,
-	}, nil
-}
-
-func loadConfig(parentInfo, newInfo *configInfo) (*GonovateConfig, error) {
+func (cl *ConfigLoader) loadConfig(parentInfo, newInfo *configInfo) (*GonovateConfig, error) {
 	var newConfig *GonovateConfig
 	var err error
 	// Try load the config according to the type
 	switch newInfo.Type {
 	case infoTypePreset:
-		newConfig, err = loadConfigFromEmbeddedFile(newInfo.Location)
+		newConfig, err = cl.loadConfigFromEmbeddedFile(newInfo.Location)
 	case infoTypeLocal:
-		newConfig, err = loadConfigFromFile(parentInfo, newInfo)
+		newConfig, err = cl.loadConfigFromFile(parentInfo, newInfo)
 	case infoTypeWeb:
-		newConfig, err = loadConfigFromWeb(newInfo.Location)
+		newConfig, err = cl.loadConfigFromWeb(newInfo.Location)
 	default:
 		return nil, fmt.Errorf("unknown config type '%s'", newInfo.Type)
 	}
@@ -108,7 +82,7 @@ func loadConfig(parentInfo, newInfo *configInfo) (*GonovateConfig, error) {
 			return nil, err
 		}
 		// Read the extended preset
-		extendsConfig, err := loadConfig(newInfo, presetInfo)
+		extendsConfig, err := cl.loadConfig(newInfo, presetInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +96,7 @@ func loadConfig(parentInfo, newInfo *configInfo) (*GonovateConfig, error) {
 	return mergedConfig, nil
 }
 
-func loadConfigFromFile(parentInfo, newInfo *configInfo) (*GonovateConfig, error) {
+func (cl *ConfigLoader) loadConfigFromFile(parentInfo, newInfo *configInfo) (*GonovateConfig, error) {
 	// Build a list of paths that should be searched
 	searchPaths := []string{}
 	if filepath.IsAbs(newInfo.Location) {
@@ -177,6 +151,7 @@ func loadConfigFromFile(parentInfo, newInfo *configInfo) (*GonovateConfig, error
 
 	// Check if we have a valid path and if so, read it and return the config
 	if finalValidConfigPath != "" {
+		cl.logger.Debug("Loading config from file", slog.String("path", finalValidConfigPath))
 		// Open the file
 		configFile, err := os.Open(finalValidConfigPath)
 		if err != nil {
@@ -202,7 +177,7 @@ func loadConfigFromFile(parentInfo, newInfo *configInfo) (*GonovateConfig, error
 	return nil, fmt.Errorf("file not found for '%s'", newInfo.Location)
 }
 
-func loadConfigFromEmbeddedFile(configPath string) (*GonovateConfig, error) {
+func (cl *ConfigLoader) loadConfigFromEmbeddedFile(configPath string) (*GonovateConfig, error) {
 	// Adjust the path to the config as they are all in a subfolder
 	basePath := "configs"
 	configPath = path.Join(basePath, configPath)
@@ -222,6 +197,8 @@ func loadConfigFromEmbeddedFile(configPath string) (*GonovateConfig, error) {
 		configPath = path.Join(path.Dir(configPath), foundPath)
 	}
 
+	cl.logger.Debug("Loading config from embedded file", slog.String("path", configPath))
+	// Open the embedded file
 	configFile, err := presets.Presets.Open(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed opening embedded file '%s': %w", configPath, err)
@@ -241,7 +218,8 @@ func loadConfigFromEmbeddedFile(configPath string) (*GonovateConfig, error) {
 	return config, nil
 }
 
-func loadConfigFromWeb(urlString string) (*GonovateConfig, error) {
+func (cl *ConfigLoader) loadConfigFromWeb(urlString string) (*GonovateConfig, error) {
+	cl.logger.Debug("Loading config from web", slog.String("url", urlString))
 	// Check if the url is valid
 	parsedUrl, err := url.Parse(urlString)
 	if err != nil {
@@ -266,4 +244,53 @@ func loadConfigFromWeb(urlString string) (*GonovateConfig, error) {
 		}
 	}
 	return config, nil
+}
+
+////////////////////////////////////////////////////////////
+// Helper for parsing config paths
+////////////////////////////////////////////////////////////
+
+var httpSchemeRegex = regexp.MustCompile(`^https?://.+`)
+
+const (
+	// Integrated preset
+	infoTypePreset string = "preset"
+	// Local file
+	infoTypeLocal string = "local"
+	// Web URL
+	infoTypeWeb string = "web"
+)
+
+// Holds information about the type and location of a config
+type configInfo struct {
+	Type     string
+	Location string
+}
+
+func newConfigInfo(info string) (*configInfo, error) {
+	if info == "" {
+		return nil, fmt.Errorf("empty config info")
+	}
+
+	var configType, configLoc string
+
+	if httpSchemeRegex.MatchString(info) {
+		// The info is an url, so use web
+		configType = infoTypeWeb
+		configLoc = info
+	} else {
+		parts := strings.SplitN(info, ":", 2)
+		if len(parts) == 1 {
+			configType = infoTypePreset
+			configLoc = parts[0]
+		} else {
+			configType = parts[0]
+			configLoc = parts[1]
+		}
+	}
+	// Create the info object
+	return &configInfo{
+		Type:     configType,
+		Location: configLoc,
+	}, nil
 }

@@ -114,12 +114,14 @@ func RunCmd(args []string) error {
 		}
 	}
 
+	// Prepare the config loader
+	configLoader := config.NewConfigLoader(logger)
 	// Read the main configuration
 	mainConfig := ""
 	if len(configFiles) > 0 {
 		mainConfig = configFiles[0]
 	}
-	gonovateConfig, err := config.Load(mainConfig)
+	gonovateConfig, err := configLoader.Load(mainConfig)
 	if err != nil {
 		return err
 	}
@@ -127,7 +129,7 @@ func RunCmd(args []string) error {
 	// Merge additional config files
 	if len(configFiles) > 1 {
 		for _, configFile := range configFiles[1:] {
-			additionalConfig, err := config.Load(configFile)
+			additionalConfig, err := configLoader.Load(configFile)
 			if err != nil {
 				return err
 			}
@@ -202,19 +204,29 @@ func RunCmd(args []string) error {
 			if err := os.Chdir(platforms.ClonePath); err != nil {
 				return err
 			}
+			baseBranch := projectConfig.Platform.BaseBranch
+			// Reset the fetched project to the base branch
+			if err := platform.ResetToBase(baseBranch); err != nil {
+				return err
+			}
 			// If the project has its own config file, merge it
 			if foundPath, err := config.HasProjectConfig(); err != nil {
 				return err
 			} else if foundPath != "" {
-				projectConfigFromFile, err := config.Load(foundPath)
+				projectConfigFromFile, err := configLoader.Load(foundPath)
 				if err != nil {
 					return err
 				}
 				projectConfig.MergeWith(projectConfigFromFile)
-			}
-			// Reset the fetched project to the base branch
-			if err := platform.ResetToBase(projectConfig.Platform.BaseBranch); err != nil {
-				return err
+				// Sanitize some settings
+				if baseBranch != projectConfig.Platform.BaseBranch {
+					logger.Warn("Base branch cannot change after fetching a project")
+					// Reset the base branch
+					projectConfig.Platform.BaseBranch = baseBranch
+				}
+				if projectConfig.Platform.BranchPrefix == "" {
+					return fmt.Errorf("empty branch prefix not allowed")
+				}
 			}
 		} else {
 			logger.Debug("Using inplace project")

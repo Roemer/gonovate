@@ -17,7 +17,8 @@ func TestBrowserVersionChrome(t *testing.T) {
 	assert := assert.New(t)
 
 	// Load the defaults
-	cfg, err := config.Load("preset:defaults")
+	configLoader := config.NewConfigLoader(slog.Default())
+	cfg, err := configLoader.Load("preset:defaults")
 	assert.NoError(err)
 	assert.NotNil(cfg)
 
@@ -56,7 +57,8 @@ func TestDockerDigest(t *testing.T) {
 	assert := assert.New(t)
 
 	// Load the defaults
-	cfg, err := config.Load("preset:defaults")
+	configLoader := config.NewConfigLoader(slog.Default())
+	cfg, err := configLoader.Load("preset:defaults")
 	assert.NoError(err)
 	assert.NotNil(cfg)
 
@@ -96,7 +98,8 @@ func TestGitLabPackages(t *testing.T) {
 	assert := assert.New(t)
 
 	// Load the defaults
-	cfg, err := config.Load("preset:defaults")
+	configLoader := config.NewConfigLoader(slog.Default())
+	cfg, err := configLoader.Load("preset:defaults")
 	assert.NoError(err)
 	assert.NotNil(cfg)
 
@@ -137,7 +140,8 @@ func TestGoVersion(t *testing.T) {
 	assert := assert.New(t)
 
 	// Load the defaults
-	cfg, err := config.Load("preset:defaults")
+	configLoader := config.NewConfigLoader(slog.Default())
+	cfg, err := configLoader.Load("preset:defaults")
 	assert.NoError(err)
 	assert.NotNil(cfg)
 
