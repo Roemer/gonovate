@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.10.5 (2025-12-22)
+### Fixes
+* Switch to default branch before reading the project config
+
 ## v0.10.4 (2025-12-19)
 ### Fixes
 * Use correct LookupAuthor from implementation
