@@ -1,6 +1,8 @@
 package gonovate
 
 import (
+	"log/slog"
+
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/roemer/gonovate/pkg/config"
 	"github.com/roemer/gonovate/pkg/datasources"
@@ -18,11 +20,12 @@ func GetDatasource(datasourceType common.DatasourceType, settings *common.Dataso
 }
 
 // Load the default configuration.
-func LoadDefaultConfig() (*config.GonovateConfig, error) {
-	return LoadConfig("preset:defaults")
+func LoadDefaultConfig(logger *slog.Logger) (*config.GonovateConfig, error) {
+	return LoadConfig(logger, "preset:defaults")
 }
 
 // Load a given configuration.
-func LoadConfig(configPath string) (*config.GonovateConfig, error) {
-	return config.Load(configPath)
+func LoadConfig(logger *slog.Logger, configPath string) (*config.GonovateConfig, error) {
+	configLoader := config.NewConfigLoader(logger)
+	return configLoader.Load(configPath)
 }
