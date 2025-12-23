@@ -22,6 +22,7 @@ func RunCmd(args []string) error {
 	var configFiles stringSliceFlag
 	var workingDirectory string
 	var platformOverride string
+	var projectsOverride string
 	var exclusive string
 	flagSet := flag.NewFlagSet("run", flag.ExitOnError)
 	flagSet.BoolVar(&verbose, "verbose", false, "The flag to set in order to get verbose output.")
@@ -29,6 +30,7 @@ func RunCmd(args []string) error {
 	flagSet.Var(&configFiles, "config", "The path to the config file to read. Can be passed multiple times.")
 	flagSet.StringVar(&workingDirectory, "workDir", "", "The path to the working directory.")
 	flagSet.StringVar(&platformOverride, "platform", "", "Allows overriding the platform. Usefull for testing when setting to 'noop'.")
+	flagSet.StringVar(&projectsOverride, "projects", "", "Allows specifying one or multiple projects to process. Comma-separated values.")
 	flagSet.StringVar(&exclusive, "exclusive", "", "Allows defining criterias for exclusive updating. The format is: key1=value1|key2=value2\nValid Keys are: dependency, datasource, file, manager, managerType")
 	flagSet.StringVar(&exclusive, "e", exclusive, "Alias for -exclusive.")
 	flagSet.Usage = func() { printCmdUsage(flagSet, "run", "") }
@@ -143,6 +145,16 @@ func RunCmd(args []string) error {
 			gonovateConfig.Platform = &config.PlatformConfig{}
 		}
 		gonovateConfig.Platform.Type = common.PlatformType(platformOverride)
+	}
+	if projectsOverride != "" {
+		if gonovateConfig.Platform == nil {
+			gonovateConfig.Platform = &config.PlatformConfig{}
+		}
+		projects := strings.Split(projectsOverride, ",")
+		for i, p := range projects {
+			projects[i] = strings.TrimSpace(p)
+		}
+		gonovateConfig.Platform.Projects = projects
 	}
 
 	// Prepare the platform

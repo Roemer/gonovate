@@ -44,6 +44,7 @@ func main() {
 // Prints the base usage
 func printUsage() {
 	fmt.Fprintf(os.Stderr, "gonovate v%s", gonovate.Version)
+	fmt.Fprintln(os.Stderr, "A CLI tool for managing versions with gonovate")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "Usage:")
