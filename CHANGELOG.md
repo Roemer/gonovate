@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.11.0 (2026-01-07)
+### Breaking
+* Use full path for artifactory items instead of only the name
+
 ## v0.10.5 (2025-12-22)
 ### Fixes
 * Switch to default branch before reading the project config
