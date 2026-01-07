@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jfrog/jfrog-client-go/artifactory"
@@ -61,11 +62,14 @@ func (ds *ArtifactoryDatasource) GetReleases(dependency *common.Dependency) ([]*
 	releases := []*common.ReleaseInfo{}
 	for _, item := range items {
 		releases = append(releases, &common.ReleaseInfo{
-			VersionString: item.Name,
+			VersionString: strings.Join([]string{item.Repo, item.Path, item.Name}, "/"),
 			ReleaseDate:   item.Modified,
 			AdditionalData: map[string]string{
 				"md5":    item.Md5,
 				"sha256": item.Sha256,
+				"repo":   item.Repo,
+				"path":   item.Path,
+				"name":   item.Name,
 			},
 		})
 	}
