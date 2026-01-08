@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"slices"
+	"strings"
 
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/samber/lo"
@@ -72,6 +73,8 @@ func (p *GitlabPlatform) NotifyChanges(project *common.Project, updateGroup *com
 	for _, dep := range updateGroup.Dependencies {
 		content += fmt.Sprintf("- %s from %s to %s\n", dep.Name, dep.Version, dep.NewRelease.VersionString)
 	}
+	// Trim spaces / newlines
+	content = strings.TrimSpace(content)
 
 	// Search for an existing MR
 	mergeRequests, _, err := client.MergeRequests.ListProjectMergeRequests(project.Path, &gitlab.ListProjectMergeRequestsOptions{
@@ -87,11 +90,12 @@ func (p *GitlabPlatform) NotifyChanges(project *common.Project, updateGroup *com
 		p.logger.Info(fmt.Sprintf("MR already exists: %s", mergeRequests[0].WebURL))
 
 		// Update the MR if something changed
-		if mergeRequests[0].Title != updateGroup.Title || mergeRequests[0].Description != content {
+		if mergeRequests[0].Title != updateGroup.Title || mergeRequests[0].Description != content || !lo.ElementsMatch(mergeRequests[0].Labels, updateGroup.Labels) {
 			p.logger.Debug("Updating MR")
 			if _, _, err := client.MergeRequests.UpdateMergeRequest(project.Path, mergeRequests[0].IID, &gitlab.UpdateMergeRequestOptions{
 				Title:       gitlab.Ptr(updateGroup.Title),
 				Description: gitlab.Ptr(content),
+				Labels:      p.convertLabels(updateGroup.Labels),
 			}); err != nil {
 				return err
 			}
@@ -102,6 +106,7 @@ func (p *GitlabPlatform) NotifyChanges(project *common.Project, updateGroup *com
 			Description:  gitlab.Ptr(content),
 			SourceBranch: gitlab.Ptr(updateGroup.BranchName),
 			TargetBranch: gitlab.Ptr(p.settings.BaseBranch),
+			Labels:       p.convertLabels(updateGroup.Labels),
 		})
 		if err != nil {
 			return err
@@ -190,4 +195,15 @@ func (p *GitlabPlatform) createClient() (*gitlab.Client, error) {
 		endpoint = p.settings.EndpointExpanded()
 	}
 	return gitlab.NewClient(token, gitlab.WithBaseURL(endpoint))
+}
+
+func (p *GitlabPlatform) convertLabels(labels []string) *gitlab.LabelOptions {
+	if labels == nil {
+		return nil
+	} else if len(labels) == 0 {
+		empty := []string{}
+		return (*gitlab.LabelOptions)(&empty)
+	}
+	labelsClone := slices.Clone(labels)
+	return (*gitlab.LabelOptions)(&labelsClone)
 }

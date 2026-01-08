@@ -200,7 +200,7 @@ func (DependencyConfigA *DependencyConfig) MergeWith(DependencyConfigB *Dependen
 	if DependencyConfigB.AllowUnstable != nil {
 		DependencyConfigA.AllowUnstable = DependencyConfigB.AllowUnstable
 	}
-	// RegistryUrls
+	// RegistryUrls (merge)
 	DependencyConfigA.RegistryUrls = lo.Union(DependencyConfigA.RegistryUrls, DependencyConfigB.RegistryUrls)
 	// Versioning
 	if DependencyConfigB.Versioning != "" {
@@ -222,11 +222,15 @@ func (DependencyConfigA *DependencyConfig) MergeWith(DependencyConfigB *Dependen
 	if DependencyConfigB.Datasource != "" {
 		DependencyConfigA.Datasource = DependencyConfigB.Datasource
 	}
-	// PostUpgradeReplacements
+	// PostUpgradeReplacements (merge)
 	DependencyConfigA.PostUpgradeReplacements = lo.Union(DependencyConfigA.PostUpgradeReplacements, DependencyConfigB.PostUpgradeReplacements)
 	// GroupName
 	if DependencyConfigB.GroupName != "" {
 		DependencyConfigA.GroupName = DependencyConfigB.GroupName
+	}
+	// Labels (overwrite)
+	if DependencyConfigB.Labels != nil {
+		DependencyConfigA.Labels = slices.Clone(DependencyConfigB.Labels)
 	}
 }
 

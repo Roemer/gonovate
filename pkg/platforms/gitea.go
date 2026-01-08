@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"slices"
+	"strings"
 
 	"code.gitea.io/sdk/gitea"
 	"github.com/roemer/gonovate/pkg/common"
@@ -81,6 +82,8 @@ func (p *GiteaPlatform) NotifyChanges(project *common.Project, updateGroup *comm
 	for _, dep := range updateGroup.Dependencies {
 		content += fmt.Sprintf("- %s from %s to %s\n", dep.Name, dep.Version, dep.NewRelease.VersionString)
 	}
+	// Trim spaces / newlines
+	content = strings.TrimSpace(content)
 
 	// Search for an existing PR
 	pullRequests, _, err := client.ListRepoPullRequests(owner, repository, gitea.ListPullRequestsOptions{
@@ -92,15 +95,22 @@ func (p *GiteaPlatform) NotifyChanges(project *common.Project, updateGroup *comm
 	existingPr, prExists := lo.Find(pullRequests, func(pr *gitea.PullRequest) bool {
 		return pr.Head.Ref == updateGroup.BranchName && pr.Base.Ref == p.settings.BaseBranch
 	})
+	// Convert the labels
+	newLabels, err := p.convertLabels(client, owner, repository, updateGroup.Labels)
+	if err != nil {
+		return err
+	}
 	if prExists {
 		p.logger.Info(fmt.Sprintf("PR already exists: %s", existingPr.HTMLURL))
 
 		// Update the PR if something changed
-		if existingPr.Title != updateGroup.Title || existingPr.Body != content {
+		existingLabelIDs := lo.Map(existingPr.Labels, func(label *gitea.Label, _ int) int64 { return label.ID })
+		if existingPr.Title != updateGroup.Title || existingPr.Body != content || !lo.ElementsMatch(existingLabelIDs, newLabels) {
 			p.logger.Debug("Updating PR")
 			if _, _, err := client.EditPullRequest(owner, repository, existingPr.Index, gitea.EditPullRequestOption{
-				Title: updateGroup.Title,
-				Body:  gitea.OptionalString(content),
+				Title:  updateGroup.Title,
+				Body:   gitea.OptionalString(content),
+				Labels: newLabels,
 			}); err != nil {
 				return err
 			}
@@ -108,10 +118,11 @@ func (p *GiteaPlatform) NotifyChanges(project *common.Project, updateGroup *comm
 	} else {
 		// Create the PR
 		pr, _, err := client.CreatePullRequest(owner, repository, gitea.CreatePullRequestOption{
-			Title: updateGroup.Title,
-			Body:  content,
-			Head:  updateGroup.BranchName,
-			Base:  p.settings.BaseBranch,
+			Title:  updateGroup.Title,
+			Body:   content,
+			Head:   updateGroup.BranchName,
+			Base:   p.settings.BaseBranch,
+			Labels: newLabels,
 		})
 		if err != nil {
 			return err
@@ -203,4 +214,53 @@ func (p *GiteaPlatform) createClient() (*gitea.Client, error) {
 		endpoint = p.settings.EndpointExpanded()
 	}
 	return gitea.NewClient(endpoint, gitea.SetToken(token))
+}
+
+func (p *GiteaPlatform) convertLabels(client *gitea.Client, owner, repository string, labels []string) ([]int64, error) {
+	if labels == nil {
+		return nil, nil
+	} else if len(labels) == 0 {
+		return []int64{}, nil
+	}
+	allLabels, err := p.getAllLabels(client, owner, repository)
+	if err != nil {
+		return []int64{}, err
+	}
+	labelIDs := []int64{}
+	for _, label := range labels {
+		if labelID, exists := allLabels[label]; exists {
+			labelIDs = append(labelIDs, labelID)
+		} else {
+			p.logger.Debug(fmt.Sprintf("No mapping found for label '%s'", label))
+		}
+	}
+	return labelIDs, nil
+}
+
+func (p *GiteaPlatform) getAllLabels(client *gitea.Client, owner, repository string) (map[string]int64, error) {
+	labelsMap := make(map[string]int64)
+
+	// Lookup the repo labels
+	repoLabels, _, err := client.ListRepoLabels(owner, repository, gitea.ListLabelsOptions{})
+	if err != nil {
+		return nil, err
+	}
+	for _, label := range repoLabels {
+		labelsMap[label.Name] = label.ID
+	}
+
+	// Lookup the organization labels
+	orgLabels, resp, err := client.ListOrgLabels(owner, gitea.ListOrgLabelsOptions{})
+	if err != nil {
+		if resp != nil && resp.StatusCode == 404 {
+			// Organization not found (it is probably an user account), ignore
+			return labelsMap, nil
+		}
+		return nil, err
+	}
+	for _, label := range orgLabels {
+		labelsMap[label.Name] = label.ID
+	}
+
+	return labelsMap, nil
 }
