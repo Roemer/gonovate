@@ -45,6 +45,8 @@ type Dependency struct {
 	PostUpgradeReplacements []string
 	// An optional name of a group to group dependency updates together.
 	GroupName string
+	// A list of labels to add to the created PR for this dependency.
+	Labels []string
 
 	// Contains the information about the new release if any is found.
 	NewRelease *ReleaseInfo

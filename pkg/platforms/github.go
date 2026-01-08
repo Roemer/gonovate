@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"slices"
+	"strings"
 
 	"github.com/google/go-github/v80/github"
 	"github.com/roemer/gonovate/pkg/common"
@@ -80,6 +81,8 @@ func (p *GitHubPlatform) NotifyChanges(project *common.Project, updateGroup *com
 	for _, dep := range updateGroup.Dependencies {
 		content += fmt.Sprintf("- %s from %s to %s\n", dep.Name, dep.Version, dep.NewRelease.VersionString)
 	}
+	// Trim spaces / newlines
+	content = strings.TrimSpace(content)
 
 	// Search for an existing PR
 	existingRequest, _, err := client.PullRequests.List(context.Background(), owner, repository, &github.PullRequestListOptions{
@@ -97,12 +100,21 @@ func (p *GitHubPlatform) NotifyChanges(project *common.Project, updateGroup *com
 		p.logger.Info(fmt.Sprintf("PR already exists: %s", *existingPr.HTMLURL))
 
 		// Update the PR if something changed
-		if existingPr.Title == nil || *existingPr.Title != updateGroup.Title || existingPr.Body == nil || *existingPr.Body != content {
+		if existingPr.Title == nil || *existingPr.Title != updateGroup.Title ||
+			existingPr.Body == nil || *existingPr.Body != content {
 			p.logger.Debug("Updating PR")
 			if _, _, err := client.PullRequests.Edit(context.Background(), owner, repository, existingPr.GetNumber(), &github.PullRequest{
 				Title: github.Ptr(updateGroup.Title),
 				Body:  github.Ptr(content),
 			}); err != nil {
+				return err
+			}
+		}
+		existingLabels := lo.Map(existingPr.Labels, func(label *github.Label, _ int) string { return *label.Name })
+		if !lo.ElementsMatch(existingLabels, updateGroup.Labels) {
+			p.logger.Debug("Updating PR labels")
+			_, _, err := client.Issues.ReplaceLabelsForIssue(context.Background(), owner, repository, existingPr.GetNumber(), updateGroup.Labels)
+			if err != nil {
 				return err
 			}
 		}
@@ -118,6 +130,13 @@ func (p *GitHubPlatform) NotifyChanges(project *common.Project, updateGroup *com
 			return err
 		}
 		p.logger.Info(fmt.Sprintf("Created PR: %s", *pr.HTMLURL))
+		if len(updateGroup.Labels) > 0 {
+			// Labels need to be added separately
+			_, _, err := client.Issues.ReplaceLabelsForIssue(context.Background(), owner, repository, pr.GetNumber(), updateGroup.Labels)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
@@ -172,7 +191,7 @@ func (p *GitHubPlatform) Cleanup(cleanupSettings *PlatformCleanupSettings) error
 			// Close the PR
 			p.logger.Info(fmt.Sprintf("Closing associated PR: %s", *existingPr.HTMLURL))
 			if _, _, err := client.PullRequests.Edit(context.Background(), owner, repository, existingPr.GetNumber(), &github.PullRequest{
-				State: github.String("closed"),
+				State: github.Ptr("closed"),
 			}); err != nil {
 				return err
 			}

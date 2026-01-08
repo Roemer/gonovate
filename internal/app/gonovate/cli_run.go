@@ -336,11 +336,13 @@ func RunCmd(args []string) error {
 		for _, dependency := range dependenciesWithUpdates {
 			var title, branchName string
 			if dependency.GroupName != "" {
+				// Use the defined group name
 				title = fmt.Sprintf("Update group '%s'", dependency.GroupName)
 				branchName = fmt.Sprintf("%s%s",
 					projectConfig.Platform.BranchPrefix,
 					dependency.GroupName)
 			} else {
+				// Create a group name
 				title = fmt.Sprintf("Update '%s' to '%s'", dependency.Name, dependency.NewRelease.VersionString)
 				branchName = fmt.Sprintf("%s%s-%s-%s",
 					projectConfig.Platform.BranchPrefix,
@@ -363,6 +365,7 @@ func RunCmd(args []string) error {
 					Title:        title,
 					BranchName:   branchName,
 					Dependencies: []*common.Dependency{dependency},
+					Labels:       dependency.Labels,
 				}
 				updateGroups = append(updateGroups, newGroup)
 			}
@@ -440,14 +443,14 @@ func RunCmd(args []string) error {
 				if err := platform.PublishChanges(updateGroup); err != nil {
 					return err
 				}
+			}
 
-				// Notify
-				if hasProject {
-					// Only notify if a project was defined, otherwise we do not know where to notify
-					logger.Debug("Notifying the project about the changes")
-					if err := platform.NotifyChanges(project, updateGroup); err != nil {
-						return err
-					}
+			// Notify
+			if hasProject {
+				// Only notify if a project was defined, otherwise we do not know where to notify
+				logger.Debug("Notifying the project about the changes")
+				if err := platform.NotifyChanges(project, updateGroup); err != nil {
+					return err
 				}
 			}
 

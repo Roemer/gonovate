@@ -98,6 +98,8 @@ type DependencyConfig struct {
 	PostUpgradeReplacements []string `json:"postUpgradeReplacements" yaml:"postUpgradeReplacements"`
 	// An optional name of a group to group dependency updates together.
 	GroupName string `json:"groupName" yaml:"groupName"`
+	// A list of labels to add to the created PR for this dependency.
+	Labels []string `json:"labels" yaml:"labels"`
 }
 
 type Rule struct {
