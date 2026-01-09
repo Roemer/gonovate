@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.12.0 (2026-01-09)
+### Features
+* Add support for labels in mrs/prs
+### Chore
+* Updated dependencies
+
 ## v0.11.0 (2026-01-07)
 ### Breaking
 * Use full path for artifactory items instead of only the name
