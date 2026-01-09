@@ -6,15 +6,15 @@ require (
 	code.gitea.io/sdk/gitea v0.22.1
 	github.com/adhocore/jsonc v0.10.0
 	github.com/bmatcuk/doublestar/v4 v4.9.1
-	github.com/goccy/go-yaml v1.19.1
-	github.com/google/go-github/v80 v80.0.0
+	github.com/goccy/go-yaml v1.19.2
+	github.com/google/go-github/v81 v81.0.0
 	github.com/jfrog/jfrog-client-go v1.55.0
 	github.com/roemer/goext v0.8.1
 	github.com/roemer/gotaskr v0.7.0
 	github.com/roemer/gover v0.8.0
 	github.com/samber/lo v1.52.0
 	github.com/stretchr/testify v1.11.1
-	gitlab.com/gitlab-org/api/client-go v1.9.1
+	gitlab.com/gitlab-org/api/client-go v1.11.0
 )
 
 require (
@@ -39,7 +39,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
@@ -70,10 +70,10 @@ require (
 	golang.org/x/exp v0.0.0-20250813145105-42675adae3e6 // indirect
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/oauth2 v0.33.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

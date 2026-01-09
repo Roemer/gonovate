@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/google/go-github/v80/github"
+	"github.com/google/go-github/v81/github"
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/samber/lo"
 )
