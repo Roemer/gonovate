@@ -9,6 +9,7 @@ import (
 
 	"github.com/goccy/go-yaml"
 	"github.com/roemer/gonovate/pkg/common"
+	"github.com/samber/lo"
 )
 
 type HelmManager struct {
@@ -41,7 +42,7 @@ func (manager *HelmManager) ApplyDependencyUpdate(dependency *common.Dependency)
 		if err != nil {
 			return nil, err
 		}
-		newDep, err := manager.getSingleDependency(dependency.Name, newDeps)
+		newDep, err := manager.getSingleDependencyWithIndex(dependency.Name, dependency.Index, newDeps)
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +71,15 @@ func (manager *HelmManager) extractDependenciesFromString(fileContent string, fi
 		// Process it
 		for _, dependency := range yamlObject.Dependencies {
 			newDependency := manager.newDependency(dependency.Name, common.DATASOURCE_TYPE_HELM, dependency.Version, filePath)
-			newDependency.RegistryUrls = []string{dependency.Repository}
+			if len(dependency.Repository) > 0 {
+				newDependency.RegistryUrls = []string{dependency.Repository}
+			} else {
+				newDependency.Skip = common.TruePtr
+				newDependency.SkipReason = "no-repository"
+			}
+			newDependency.Index = lo.CountBy(foundDependencies, func(dep *common.Dependency) bool {
+				return dep.Name == newDependency.Name
+			})
 			foundDependencies = append(foundDependencies, newDependency)
 		}
 	}

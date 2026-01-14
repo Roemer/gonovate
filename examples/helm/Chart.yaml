@@ -11,3 +11,9 @@ dependencies:
   - name: victoria-metrics-single
     repository: https://victoriametrics.github.io/helm-charts
     version: 0.28.0
+  - name: ide-services-helm
+    version: 2025.6.0
+    alias: ide-local
+  - name: ide-services-helm
+    version: 2025.6.0
+    repository: https://download.jetbrains.com/ide-services/charts/stable
