@@ -36,6 +36,8 @@ func GetDatasource(datasourceType common.DatasourceType, settings *common.Dataso
 		return NewBrowserVersionDatasource(settings), nil
 	case common.DATASOURCE_TYPE_DOCKER:
 		return NewDockerDatasource(settings), nil
+	case common.DATASOURCE_TYPE_GIT_TAGS:
+		return NewGitTagsDatasource(settings), nil
 	case common.DATASOURCE_TYPE_GITHUB_RELEASES:
 		return NewGitHubReleasesDatasource(settings), nil
 	case common.DATASOURCE_TYPE_GITHUB_TAGS:
