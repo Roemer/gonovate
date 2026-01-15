@@ -3,6 +3,9 @@ rules:
       dependencyNames:
         - ahmetb/kubectx
         - derailed/k9s
+        - docker/buildx
+        - docker/cli
+        - docker/compose
         - kubernetes/kubernetes
     dependencyConfig:
       extractVersion: v(.*)

@@ -12,3 +12,4 @@
 # Varia
 .devcontainer/.env
 **/node_modules/
+examples/temp-*/
