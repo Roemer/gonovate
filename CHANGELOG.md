@@ -1,5 +1,9 @@
 # Change Log
 
+## v0.13.0 (2026-01-15)
+### Features
+* Added a simple file cache
+
 ## v0.12.0 (2026-01-09)
 ### Features
 * Add support for labels in mrs/prs
