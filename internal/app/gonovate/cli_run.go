@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/roemer/gonovate/pkg/cache"
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/roemer/gonovate/pkg/config"
 	"github.com/roemer/gonovate/pkg/logging"
@@ -21,6 +22,7 @@ func RunCmd(args []string) error {
 	var verbose bool
 	var configFiles stringSliceFlag
 	var workingDirectory string
+	var cacheDir string
 	var platformOverride string
 	var projectsOverride string
 	var exclusive string
@@ -29,6 +31,7 @@ func RunCmd(args []string) error {
 	flagSet.BoolVar(&verbose, "v", verbose, "Alias for -verbose.")
 	flagSet.Var(&configFiles, "config", "The path to the config file to read. Can be passed multiple times.")
 	flagSet.StringVar(&workingDirectory, "workDir", "", "The path to the working directory.")
+	flagSet.StringVar(&cacheDir, "cacheDir", "", "The path to the cache directory.")
 	flagSet.StringVar(&platformOverride, "platform", "", "Allows overriding the platform. Usefull for testing when setting to 'noop'.")
 	flagSet.StringVar(&projectsOverride, "projects", "", "Allows specifying one or multiple projects to process. Comma-separated values.")
 	flagSet.StringVar(&exclusive, "exclusive", "", "Allows defining criterias for exclusive updating. The format is: key1=value1|key2=value2\nValid Keys are: dependency, datasource, file, manager, managerType")
@@ -164,6 +167,13 @@ func RunCmd(args []string) error {
 		return err
 	}
 	logger.Info(fmt.Sprintf("Prepared platform: %s", platform.Type()))
+
+	// Prepare the file cache
+	if cacheDir == "" {
+		cacheDir = ".gonovate-cache"
+	}
+	logger.Debug(fmt.Sprintf("Using cache directory: %s", cacheDir))
+	gonovateCache := cache.NewGonovateCache(cacheDir, logger)
 
 	// Get the projects
 	projects := []*common.Project{}
@@ -314,7 +324,7 @@ func RunCmd(args []string) error {
 			}
 
 			// Lookup the correct datasource
-			ds, err := projectConfig.GetDatasource(dependency.Datasource, logger)
+			ds, err := projectConfig.GetDatasource(dependency.Datasource, logger, gonovateCache)
 			if err != nil {
 				return err
 			}

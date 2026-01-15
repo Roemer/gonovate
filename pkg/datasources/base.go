@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/roemer/gonovate/pkg/cache"
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/roemer/gover"
 )
@@ -157,7 +156,6 @@ func (ds *datasourceBase) GetAdditionalData(dependency *common.Dependency, newRe
 // Searches for a new version update for the given dependency
 func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*common.ReleaseInfo, *gover.Version, error) {
 	// Setup everything for the releases lookup
-	cacheIdentifier := fmt.Sprintf("%s|%s", ds.datasourceType, dependency.Name)
 	allowUnstable := false
 	if dependency.AllowUnstable != nil {
 		allowUnstable = *dependency.AllowUnstable
@@ -181,46 +179,61 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*
 		}
 	}
 
-	// Try get releases from the cache
-	avaliableReleases := cache.DatasourceCache.GetCache(ds.datasourceType, cacheIdentifier)
-	if avaliableReleases == nil {
-		// No data in cache, fetch new data
+	// Try get releases from the cache or look them up from remote
+	var rawReleases []*common.ReleaseInfo = nil
+	cache := ds.settings.Cache
+	cacheIdentifier := dependency.Name
+	if cache != nil {
+		// Fetch from cache
+		rawReleases, err = cache.Get(ds.datasourceType, cacheIdentifier)
+		if err != nil {
+			// Cache failed
+			return nil, nil, err
+		}
+	}
+	if rawReleases != nil {
+		ds.logger.Debug("Returned releases from cache")
+	} else {
+		// No data from cache, fetch new data
 		ds.logger.Debug("Lookup releases from remote")
-		releases, err := ds.impl.GetReleases(dependency)
+		rawReleases, err = ds.impl.GetReleases(dependency)
 		if err != nil {
 			return nil, nil, err
 		}
-		// Convert the raw strings to versions
-		avaliableReleases = []*common.ReleaseInfo{}
-		for _, release := range releases {
-			// Extract the version number from the raw string if needed
-			if extractVersionRegex != nil {
-				m := extractVersionRegex.FindStringSubmatch(release.VersionString)
-				if m == nil {
-					if ignoreNoneMatching {
-						continue
-					} else {
-						return nil, nil, fmt.Errorf("could not extract version from '%s'", release.VersionString)
-					}
-				}
-				// Continue with only the matched part
-				release.VersionString = m[1]
-			}
-			version, err := gover.ParseVersionFromRegex(release.VersionString, versionRegex)
-			if err != nil {
-				if errors.Is(err, gover.ErrNoMatch) && ignoreNoneMatching {
-					ds.logger.Debug(fmt.Sprintf("Ignoring non matching version: %s", release.VersionString))
-					continue
-				}
-				return nil, nil, fmt.Errorf("failed parsing the version from '%s': %w", release.VersionString, err)
-			}
-			release.Version = version
-			avaliableReleases = append(avaliableReleases, release)
-		}
 		// Store in cache
-		cache.DatasourceCache.SetCache(ds.datasourceType, cacheIdentifier, avaliableReleases)
-	} else {
-		ds.logger.Debug("Returned releases from cache")
+		if cache != nil {
+			if err := cache.Set(ds.datasourceType, cacheIdentifier, rawReleases); err != nil {
+				return nil, nil, err
+			}
+		}
+	}
+
+	// Convert the raw releases to parsed versions
+	avaliableReleases := []*common.ReleaseInfo{}
+	for _, release := range rawReleases {
+		// Extract the version number from the raw string if needed
+		if extractVersionRegex != nil {
+			m := extractVersionRegex.FindStringSubmatch(release.VersionString)
+			if m == nil {
+				if ignoreNoneMatching {
+					continue
+				} else {
+					return nil, nil, fmt.Errorf("could not extract version from '%s'", release.VersionString)
+				}
+			}
+			// Continue with only the matched part
+			release.VersionString = m[1]
+		}
+		version, err := gover.ParseVersionFromRegex(release.VersionString, versionRegex)
+		if err != nil {
+			if errors.Is(err, gover.ErrNoMatch) && ignoreNoneMatching {
+				ds.logger.Debug(fmt.Sprintf("Ignoring non matching version: %s", release.VersionString))
+				continue
+			}
+			return nil, nil, fmt.Errorf("failed parsing the version from '%s': %w", release.VersionString, err)
+		}
+		release.Version = version
+		avaliableReleases = append(avaliableReleases, release)
 	}
 
 	if len(avaliableReleases) == 0 {

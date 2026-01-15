@@ -1,5 +1,6 @@
 # Caches
 .go_cache/
+.gonovate-cache/
 
 # Build
 .build-output/

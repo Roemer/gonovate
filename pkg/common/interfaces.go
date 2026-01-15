@@ -1,6 +1,8 @@
 package common
 
-import "log/slog"
+import (
+	"log/slog"
+)
 
 // This is the interface for the gonovate engine.
 type IEngine interface {
@@ -38,4 +40,11 @@ type IDatasource interface {
 	GetAdditionalData(dependency *Dependency, newRelease *ReleaseInfo, dataType string) (string, error)
 	// Handles the dependency update searching.
 	SearchDependencyUpdate(dependency *Dependency) (*ReleaseInfo, error)
+}
+
+type ICache interface {
+	// Gets the cached releases for the given datasource type and identifier.
+	Get(datasourceType DatasourceType, cacheIdentifier string) ([]*ReleaseInfo, error)
+	// Sets the cached releases for the given datasource type and identifier.
+	Set(datasourceType DatasourceType, cacheIdentifier string, releases []*ReleaseInfo) error
 }

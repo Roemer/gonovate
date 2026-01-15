@@ -81,10 +81,11 @@ func (config *GonovateConfig) GetManager(managerId string, managerType common.Ma
 }
 
 // Creates a datasource out of the config of the given datasource type.
-func (config *GonovateConfig) GetDatasource(datasourceType common.DatasourceType, logger *slog.Logger) (common.IDatasource, error) {
+func (config *GonovateConfig) GetDatasource(datasourceType common.DatasourceType, logger *slog.Logger, cache common.ICache) (common.IDatasource, error) {
 	datasourceSettings := &common.DatasourceSettings{
 		Logger:    logger,
 		HostRules: config.HostRules,
+		Cache:     cache,
 	}
 	return datasources.GetDatasource(datasourceType, datasourceSettings)
 }

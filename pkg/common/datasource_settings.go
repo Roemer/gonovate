@@ -7,4 +7,6 @@ type DatasourceSettings struct {
 	Logger *slog.Logger
 	// Host rules that might apply when using this datasource.
 	HostRules []*HostRule
+	// An optional cache to use.
+	Cache ICache
 }
