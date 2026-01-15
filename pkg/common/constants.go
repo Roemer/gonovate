@@ -34,6 +34,7 @@ const (
 	DATASOURCE_TYPE_ARTIFACTORY     DatasourceType = "artifactory"
 	DATASOURCE_TYPE_BROWSERVERSION  DatasourceType = "browser-version"
 	DATASOURCE_TYPE_DOCKER          DatasourceType = "docker"
+	DATASOURCE_TYPE_GIT_TAGS        DatasourceType = "git-tags"
 	DATASOURCE_TYPE_GITHUB_RELEASES DatasourceType = "github-releases"
 	DATASOURCE_TYPE_GITHUB_TAGS     DatasourceType = "github-tags"
 	DATASOURCE_TYPE_GITLAB_PACKAGES DatasourceType = "gitlab-packages"

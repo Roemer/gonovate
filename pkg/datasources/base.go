@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/roemer/gonovate/pkg/cache"
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/roemer/gover"
 )
@@ -37,6 +38,8 @@ func GetDatasource(datasourceType common.DatasourceType, settings *common.Dataso
 		return NewBrowserVersionDatasource(settings), nil
 	case common.DATASOURCE_TYPE_DOCKER:
 		return NewDockerDatasource(settings), nil
+	case common.DATASOURCE_TYPE_GIT_TAGS:
+		return NewGitTagsDatasource(settings), nil
 	case common.DATASOURCE_TYPE_GITHUB_RELEASES:
 		return NewGitHubReleasesDatasource(settings), nil
 	case common.DATASOURCE_TYPE_GITHUB_TAGS:
@@ -182,11 +185,10 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*
 
 	// Try get releases from the cache or look them up from remote
 	var rawReleases []*common.ReleaseInfo = nil
-	cache := ds.settings.Cache
-	cacheIdentifier := fmt.Sprintf("rel/%s/%s", ds.datasourceType, dependency.Name)
-	if cache != nil {
+	cacheIdentifier := fmt.Sprintf("rel/%s/%s", ds.datasourceType, cache.NormalizeFilePath(dependency.Name, false))
+	if ds.settings.Cache != nil {
 		// Fetch from cache
-		if releasesFromCache, exists, err := cache.Get(cacheIdentifier); err != nil {
+		if releasesFromCache, exists, err := ds.settings.Cache.Get(cacheIdentifier); err != nil {
 			// Cache failed
 			return nil, nil, err
 		} else if exists {
@@ -203,8 +205,8 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*
 			return nil, nil, err
 		}
 		// Store in cache
-		if cache != nil {
-			if err := cache.Set(cacheIdentifier, rawReleases, time.Hour); err != nil {
+		if ds.settings.Cache != nil {
+			if err := ds.settings.Cache.Set(cacheIdentifier, rawReleases, time.Hour); err != nil {
 				return nil, nil, err
 			}
 		}

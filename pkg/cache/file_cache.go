@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 )
 
@@ -95,9 +94,6 @@ func (c *FileCache[T]) Clear(cacheIdentifier string) error {
 func (c *FileCache[T]) getCacheFilePath(cacheIdentifier string) string {
 	// Sanitize the cache identifier to create a valid file name by removing invalid characters
 	// But we keep / to allow for subdirectories in the cache
-	sanitizedIdentifier := cacheIdentifier
-	for _, char := range []string{"\\", ":", "*", "?", "\"", "<", ">", "|"} {
-		sanitizedIdentifier = strings.ReplaceAll(sanitizedIdentifier, char, "_")
-	}
+	sanitizedIdentifier := NormalizeFilePath(cacheIdentifier, true)
 	return filepath.Join(c.cacheDir, sanitizedIdentifier+".json")
 }
