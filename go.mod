@@ -5,7 +5,7 @@ go 1.24.6
 require (
 	code.gitea.io/sdk/gitea v0.22.1
 	github.com/adhocore/jsonc v0.10.0
-	github.com/bmatcuk/doublestar/v4 v4.9.1
+	github.com/bmatcuk/doublestar/v4 v4.9.2
 	github.com/goccy/go-yaml v1.19.2
 	github.com/google/go-github/v81 v81.0.0
 	github.com/jfrog/jfrog-client-go v1.55.0
@@ -14,7 +14,7 @@ require (
 	github.com/roemer/gover v0.8.0
 	github.com/samber/lo v1.52.0
 	github.com/stretchr/testify v1.11.1
-	gitlab.com/gitlab-org/api/client-go v1.11.0
+	gitlab.com/gitlab-org/api/client-go v1.15.0
 )
 
 require (
