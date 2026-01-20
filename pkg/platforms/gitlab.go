@@ -102,11 +102,12 @@ func (p *GitlabPlatform) NotifyChanges(project *common.Project, updateGroup *com
 		}
 	} else {
 		mr, _, err := client.MergeRequests.CreateMergeRequest(project.Path, &gitlab.CreateMergeRequestOptions{
-			Title:        gitlab.Ptr(updateGroup.Title),
-			Description:  gitlab.Ptr(content),
-			SourceBranch: gitlab.Ptr(updateGroup.BranchName),
-			TargetBranch: gitlab.Ptr(p.settings.BaseBranch),
-			Labels:       p.convertLabels(updateGroup.Labels),
+			Title:              gitlab.Ptr(updateGroup.Title),
+			Description:        gitlab.Ptr(content),
+			SourceBranch:       gitlab.Ptr(updateGroup.BranchName),
+			TargetBranch:       gitlab.Ptr(p.settings.BaseBranch),
+			Labels:             p.convertLabels(updateGroup.Labels),
+			RemoveSourceBranch: gitlab.Ptr(true),
 		})
 		if err != nil {
 			return err
