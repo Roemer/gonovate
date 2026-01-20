@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.14.0 (2026-01-20)
+### Features
+* Enable remove_source_branch in GitLab MRs
+### Chore
+* Update dependencies
+
 ## v0.13.0 (2026-01-15)
 ### Features
 * Added a simple file cache
