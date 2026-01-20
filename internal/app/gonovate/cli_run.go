@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"regexp"
 	"slices"
@@ -412,6 +413,11 @@ func RunCmd(args []string) error {
 				// Run Post-Upgrade replacements
 				hasPostUpgradeReplacements := len(dependency.PostUpgradeReplacements) > 0
 				if hasPostUpgradeReplacements {
+					// Prepare the values for replacements
+					replacementValues := map[string]string{
+						"version": dependency.NewRelease.Version.Raw,
+					}
+					maps.Copy(replacementValues, dependency.NewRelease.AdditionalData)
 					// Read the file
 					fileContentBytes, err := os.ReadFile(dependency.FilePath)
 					if err != nil {
@@ -421,13 +427,7 @@ func RunCmd(args []string) error {
 					// Apply the replacements
 					for _, reStr := range dependency.PostUpgradeReplacements {
 						re := regexp.MustCompile(reStr)
-						fileContent, _ = common.ReplaceMatchesInRegex(re, fileContent, map[string]string{
-							"version": dependency.NewRelease.Version.Raw,
-							"sha1":    dependency.NewRelease.AdditionalData["sha1"],
-							"sha256":  dependency.NewRelease.AdditionalData["sha256"],
-							"sha512":  dependency.NewRelease.AdditionalData["sha512"],
-							"md5":     dependency.NewRelease.AdditionalData["md5"],
-						})
+						fileContent, _ = common.ReplaceMatchesInRegex(re, fileContent, replacementValues)
 					}
 					// Write the file with the changes
 					if err := os.WriteFile(dependency.FilePath, []byte(fileContent), os.ModePerm); err != nil {
