@@ -247,9 +247,10 @@ func RunCmd(args []string) error {
 					// Reset the base branch
 					projectConfig.Platform.BaseBranch = baseBranch
 				}
-				if projectConfig.Platform.BranchPrefix == "" {
-					return fmt.Errorf("empty branch prefix not allowed")
-				}
+			}
+			// Saveguard: Branch prefix cannot be empty to prevent gonovate from deleting all branches
+			if projectConfig.Platform.BranchPrefix == "" {
+				return fmt.Errorf("empty branch prefix not allowed")
 			}
 		} else {
 			logger.Debug("Using inplace project")
