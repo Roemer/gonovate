@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.14.1 (2026-01-21)
+### Fixes
+* Saveguard for empty branch prefix now works without project config file
+* Dynamically build the replacement values
+
 ## v0.14.0 (2026-01-20)
 ### Features
 * Enable remove_source_branch in GitLab MRs
