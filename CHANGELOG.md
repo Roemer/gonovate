@@ -1,5 +1,12 @@
 # Change Log
 
+## v0.15.0 (2026-01-22)
+### Features
+* Add commit sha to github-tags
+### Fixes
+* Make cache dir absolute before switching working directories for projects
+* Omit empty/zero values in cache
+
 ## v0.14.1 (2026-01-21)
 ### Fixes
 * Saveguard for empty branch prefix now works without project config file

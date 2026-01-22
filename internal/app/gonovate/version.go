@@ -1,3 +1,3 @@
 package gonovate
 
-const Version = "0.14.1"
+const Version = "0.15.0"
