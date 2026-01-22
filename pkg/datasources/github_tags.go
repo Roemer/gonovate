@@ -47,6 +47,10 @@ func (ds *GitHubTagsDatasource) GetReleases(dependency *common.Dependency) ([]*c
 		versionString := *entry.Name
 		releases = append(releases, &common.ReleaseInfo{
 			VersionString: versionString,
+			// ReleaseDate:   entry.Commit.Committer.Date.Time, // The API does not provide tag date here
+			AdditionalData: map[string]string{
+				"sha1": *entry.Commit.SHA,
+			},
 		})
 	}
 	return releases, nil
