@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"maps"
 	"os"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -172,6 +173,11 @@ func RunCmd(args []string) error {
 	// Prepare the file cache
 	if cacheDir == "" {
 		cacheDir = ".gonovate-cache"
+	}
+	// Make sure it is absolute to the working directory
+	cacheDir, err = filepath.Abs(cacheDir)
+	if err != nil {
+		return fmt.Errorf("failed making cacheDir '%s' absolute: %w", cacheDir, err)
 	}
 	logger.Debug(fmt.Sprintf("Using cache directory: %s", cacheDir))
 	gonovateCache := cache.NewGonovateCache(cacheDir, logger)
