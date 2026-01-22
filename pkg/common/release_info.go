@@ -16,6 +16,6 @@ type ReleaseInfo struct {
 	Version *gover.Version
 	// The digest of the release
 	Digest string
-	// Can contain additional data for the release like hashes
+	// Can contain additional data for the release like hashes or urls
 	AdditionalData map[string]string
 }
