@@ -150,6 +150,27 @@ func (config *GonovateConfig) applyRulesToDependency(dependency *common.Dependen
 			if len(rule.Matches.Datasources) > 0 && slices.IndexFunc(rule.Matches.Datasources, func(ds common.DatasourceType) bool { return ds == datasource }) < 0 {
 				continue
 			}
+			// CurrentVersion
+			if rule.Matches.CurrentVersion != "" {
+				versioning := dependency.Versioning
+				if versioning == "" {
+					versioning = mergedDependencyConfig.Versioning
+				}
+				// Resolve versioning presets
+				if versioning != "" {
+					if resolved, err := presets.ResolveVersioning(versioning, config.VersioningPresets); err == nil {
+						versioning = resolved
+					}
+				}
+				// Determine extractVersion
+				extractVersion := dependency.ExtractVersion
+				if extractVersion == "" {
+					extractVersion = mergedDependencyConfig.ExtractVersion
+				}
+				/*if matched, err := gover.MatchesConstraint(dependency.Version, rule.Matches.CurrentVersion, versioning, extractVersion); err != nil || !matched {
+					continue
+				}*/
+			}
 		}
 		mergedDependencyConfig.MergeWith(rule.DependencyConfig)
 	}

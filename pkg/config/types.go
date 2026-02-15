@@ -114,6 +114,8 @@ type RuleMatch struct {
 	Files           []string                `json:"files" yaml:"files"`
 	DependencyNames []string                `json:"dependencyNames" yaml:"dependencyNames"`
 	Datasources     []common.DatasourceType `json:"datasources" yaml:"datasources"`
+	// A version constraint expression to match against the current version of a dependency. Supports range operators like "<1.0.0", ">=2.0.0", "<=3.0.0", ">1.0.0".
+	CurrentVersion string `json:"currentVersion" yaml:"currentVersion"`
 }
 
 // A MatchAll rule is a rule that has no matches defined at all, so it will match everything.
@@ -122,5 +124,6 @@ func (rm *RuleMatch) IsMatchAll() bool {
 		len(rm.DependencyNames) == 0 &&
 		len(rm.Files) == 0 &&
 		len(rm.ManagerTypes) == 0 &&
-		len(rm.Managers) == 0)
+		len(rm.Managers) == 0 &&
+		rm.CurrentVersion == "")
 }
