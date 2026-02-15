@@ -96,11 +96,11 @@ func (config *GonovateConfig) ApplyToDependency(dependency *common.Dependency) e
 	config.applyRulesToDependency(dependency)
 
 	// Resolve the versioning
-	if resolvedVersioning, err := presets.ResolveVersioning(dependency.Versioning, config.VersioningPresets); err != nil {
+	resolvedVersioning, err := presets.ResolveVersioning(dependency.Versioning, config.VersioningPresets)
+	if err != nil {
 		return err
-	} else {
-		dependency.Versioning = resolvedVersioning
 	}
+	dependency.Versioning = resolvedVersioning
 
 	return nil
 }
@@ -143,14 +143,18 @@ func (config *GonovateConfig) applyRulesToDependency(dependency *common.Dependen
 				continue
 			}
 			// Datasources
-			if len(rule.Matches.Datasources) > 0 && slices.IndexFunc(rule.Matches.Datasources, func(ds common.DatasourceType) bool { return ds == dependency.Datasource }) < 0 {
+			datasource := dependency.Datasource
+			if datasource == "" {
+				datasource = mergedDependencyConfig.Datasource
+			}
+			if len(rule.Matches.Datasources) > 0 && slices.IndexFunc(rule.Matches.Datasources, func(ds common.DatasourceType) bool { return ds == datasource }) < 0 {
 				continue
 			}
 		}
 		mergedDependencyConfig.MergeWith(rule.DependencyConfig)
 	}
 
-	// Apply the rule settings where the dependency has no value yet
+	// Apply the rule settings where the dependency has no value yet (the plain dependency settings have priority)
 	if dependency.Name == "" {
 		dependency.Name = mergedDependencyConfig.DependencyName
 	}
