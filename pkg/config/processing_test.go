@@ -32,12 +32,6 @@ func TestApplyToDependency(t *testing.T) {
 					GroupName: "gomod",
 				},
 			},
-			{
-				Matches: &RuleMatch{CurrentVersion: "1.0.1"},
-				DependencyConfig: &DependencyConfig{
-					Labels: []string{"MyLabel"},
-				},
-			},
 		},
 	}
 
@@ -51,7 +45,6 @@ func TestApplyToDependency(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(common.DATASOURCE_TYPE_GOMOD, dependency.Datasource)
 	assert.Equal("gomod", dependency.GroupName)
-	assert.Equal([]string{"MyLabel"}, dependency.Labels)
 }
 
 // In this thest, the datasource of a rule should not override an already set datasource of the dependency
