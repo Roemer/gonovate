@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/google/go-github/v81/github"
+	"github.com/google/go-github/v82/github"
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/samber/lo"
 )
@@ -49,7 +49,7 @@ func (p *GitHubPlatform) FetchProject(project *common.Project) error {
 	if err != nil {
 		return err
 	}
-	cloneUrlWithCredentials.User = url.UserPassword("oauth2", p.settings.TokendExpanded())
+	cloneUrlWithCredentials.User = url.UserPassword("oauth2", p.settings.TokenExpanded())
 	_, _, err = common.Git.Run("clone", cloneUrlWithCredentials.String(), ClonePath)
 	return err
 }
@@ -63,7 +63,23 @@ func (p *GitHubPlatform) LookupAuthor() (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	return *user.Name, *user.Email, nil
+	if user == nil {
+		return "", "", fmt.Errorf("failed to lookup user information")
+	}
+	if user.Email == nil {
+		// Fetch the email separately
+		emails, _, err := client.Users.ListEmails(context.Background(), &github.ListOptions{})
+		if err != nil {
+			return "", "", fmt.Errorf("failed to lookup user email: %w", err)
+		}
+		if len(emails) == 0 {
+			return "", "", fmt.Errorf("email not found in user information. Has the token the correct scopes?")
+		}
+		// Use the first email
+		// TODO maybe: Prioritize the email which is marked as "primary" and "verified"
+		user.Email = emails[0].Email
+	}
+	return user.GetName(), user.GetEmail(), nil
 }
 
 func (p *GitHubPlatform) NotifyChanges(project *common.Project, updateGroup *common.UpdateGroup) error {
@@ -97,7 +113,7 @@ func (p *GitHubPlatform) NotifyChanges(project *common.Project, updateGroup *com
 	// The "Head" search parameter does not work without "user:", so just make sure that the returned list really contains the branch
 	existingPr, prExists := lo.Find(existingRequest, func(pr *github.PullRequest) bool { return pr.Head.GetRef() == updateGroup.BranchName })
 	if prExists {
-		p.logger.Info(fmt.Sprintf("PR already exists: %s", *existingPr.HTMLURL))
+		p.logger.Info(fmt.Sprintf("PR already exists: %s", existingPr.GetHTMLURL()))
 
 		// Update the PR if something changed
 		if existingPr.Title == nil || *existingPr.Title != updateGroup.Title ||
@@ -110,10 +126,21 @@ func (p *GitHubPlatform) NotifyChanges(project *common.Project, updateGroup *com
 				return err
 			}
 		}
-		existingLabels := lo.Map(existingPr.Labels, func(label *github.Label, _ int) string { return *label.Name })
+		existingLabels := lo.Map(existingPr.Labels, func(label *github.Label, _ int) string { return label.GetName() })
 		if !lo.ElementsMatch(existingLabels, updateGroup.Labels) {
 			p.logger.Debug("Updating PR labels")
 			_, _, err := client.Issues.ReplaceLabelsForIssue(context.Background(), owner, repository, existingPr.GetNumber(), updateGroup.Labels)
+			if err != nil {
+				return err
+			}
+		}
+		existingReviewers := lo.Map(existingPr.RequestedReviewers, func(reviewer *github.User, _ int) string { return reviewer.GetLogin() })
+		newReviewers := lo.Without(updateGroup.Reviewers, existingReviewers...)
+		if len(newReviewers) > 0 {
+			p.logger.Debug("Updating PR reviewers")
+			_, _, err := client.PullRequests.RequestReviewers(context.Background(), owner, repository, existingPr.GetNumber(), github.ReviewersRequest{
+				Reviewers: newReviewers,
+			})
 			if err != nil {
 				return err
 			}
@@ -129,10 +156,19 @@ func (p *GitHubPlatform) NotifyChanges(project *common.Project, updateGroup *com
 		if err != nil {
 			return err
 		}
-		p.logger.Info(fmt.Sprintf("Created PR: %s", *pr.HTMLURL))
+		p.logger.Info(fmt.Sprintf("Created PR: %s", pr.GetHTMLURL()))
 		if len(updateGroup.Labels) > 0 {
 			// Labels need to be added separately
 			_, _, err := client.Issues.ReplaceLabelsForIssue(context.Background(), owner, repository, pr.GetNumber(), updateGroup.Labels)
+			if err != nil {
+				return err
+			}
+		}
+		if len(updateGroup.Reviewers) > 0 {
+			// Request reviewers
+			_, _, err := client.PullRequests.RequestReviewers(context.Background(), owner, repository, pr.GetNumber(), github.ReviewersRequest{
+				Reviewers: updateGroup.Reviewers,
+			})
 			if err != nil {
 				return err
 			}
@@ -218,5 +254,5 @@ func (p *GitHubPlatform) createClient() (*github.Client, error) {
 	if p.settings == nil || p.settings.Token == "" {
 		return nil, fmt.Errorf("no platform token defined")
 	}
-	return github.NewClient(nil).WithAuthToken(p.settings.TokendExpanded()), nil
+	return github.NewClient(nil).WithAuthToken(p.settings.TokenExpanded()), nil
 }

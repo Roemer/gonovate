@@ -39,7 +39,7 @@ func (ds *ArtifactoryDatasource) GetReleases(dependency *common.Dependency) ([]*
 	user := ""
 	password := ""
 	if relevantHostRule != nil {
-		token = relevantHostRule.TokendExpanded()
+		token = relevantHostRule.TokenExpanded()
 		user = relevantHostRule.Username
 		password = relevantHostRule.Password
 	}

@@ -100,6 +100,8 @@ type DependencyConfig struct {
 	GroupName string `json:"groupName" yaml:"groupName"`
 	// A list of labels to add to the created PR for this dependency.
 	Labels []string `json:"labels" yaml:"labels"`
+	// A list of reviewers to add to the created PR for this dependency. Will never delete reviewers on update, only add.
+	Reviewers []string `json:"reviewers" yaml:"reviewers"`
 }
 
 type Rule struct {

@@ -1,6 +1,10 @@
 package common
 
-import "log/slog"
+import (
+	"log/slog"
+
+	"github.com/roemer/gonovate/pkg/cache"
+)
 
 type DatasourceSettings struct {
 	// The logger to use for the datasource.
@@ -8,5 +12,5 @@ type DatasourceSettings struct {
 	// Host rules that might apply when using this datasource.
 	HostRules []*HostRule
 	// An optional cache to use.
-	Cache ICache
+	Cache cache.Cache[[]*ReleaseInfo]
 }

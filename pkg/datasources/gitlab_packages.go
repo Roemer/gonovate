@@ -59,7 +59,7 @@ func (ds *GitLabPackagesDatasource) createClient(registryUrls []string) (*gitlab
 	relevantHostRule := ds.getHostRuleForHost(registryUrl)
 	token := ""
 	if relevantHostRule != nil {
-		token = relevantHostRule.TokendExpanded()
+		token = relevantHostRule.TokenExpanded()
 	}
 
 	// Create the client

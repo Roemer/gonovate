@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/samber/lo"
@@ -44,7 +45,7 @@ func (p *GitlabPlatform) FetchProject(project *common.Project) error {
 	if err != nil {
 		return err
 	}
-	cloneUrlWithCredentials.User = url.UserPassword("oauth2", p.settings.TokendExpanded())
+	cloneUrlWithCredentials.User = url.UserPassword("oauth2", p.settings.TokenExpanded())
 	_, _, err = common.Git.Run("clone", cloneUrlWithCredentials.String(), ClonePath)
 	return err
 }
@@ -89,26 +90,64 @@ func (p *GitlabPlatform) NotifyChanges(project *common.Project, updateGroup *com
 	if len(mergeRequests) > 0 {
 		p.logger.Info(fmt.Sprintf("MR already exists: %s", mergeRequests[0].WebURL))
 
+		// Calculate the new reviewer list
+		existingReviewerNames := lo.Map(mergeRequests[0].Reviewers, func(reviewer *gitlab.BasicUser, _ int) string {
+			return reviewer.Username
+		})
+		existingReviewerIds := lo.Map(mergeRequests[0].Reviewers, func(reviewer *gitlab.BasicUser, _ int) int64 {
+			return reviewer.ID
+		})
+		newReviewerNames := lo.Without(updateGroup.Reviewers, existingReviewerNames...)
+		newReviewerIds, err := p.getUserIds(client, newReviewerNames)
+		if err != nil {
+			return err
+		}
+
 		// Update the MR if something changed
-		if mergeRequests[0].Title != updateGroup.Title || mergeRequests[0].Description != content || !lo.ElementsMatch(mergeRequests[0].Labels, updateGroup.Labels) {
+		if mergeRequests[0].Title != updateGroup.Title ||
+			mergeRequests[0].Description != content ||
+			!lo.ElementsMatch(mergeRequests[0].Labels, updateGroup.Labels) ||
+			len(newReviewerIds) > 0 {
 			p.logger.Debug("Updating MR")
-			if _, _, err := client.MergeRequests.UpdateMergeRequest(project.Path, mergeRequests[0].IID, &gitlab.UpdateMergeRequestOptions{
+			// Prepare the options for updating the MR
+			updateOptions := &gitlab.UpdateMergeRequestOptions{
 				Title:       gitlab.Ptr(updateGroup.Title),
 				Description: gitlab.Ptr(content),
-				Labels:      p.convertLabels(updateGroup.Labels),
-			}); err != nil {
+				Labels:      p.convertLabels(updateGroup.Labels), // Always update the labels
+			}
+			// Fill the reviewers (if any)
+			allReviewerIds := append(existingReviewerIds, newReviewerIds...)
+			if len(allReviewerIds) > 0 {
+				updateOptions.ReviewerIDs = gitlab.Ptr(allReviewerIds)
+			}
+			// Perform the update
+			if _, _, err := client.MergeRequests.UpdateMergeRequest(project.Path, mergeRequests[0].IID, updateOptions); err != nil {
 				return err
 			}
 		}
 	} else {
-		mr, _, err := client.MergeRequests.CreateMergeRequest(project.Path, &gitlab.CreateMergeRequestOptions{
+		// Prepare the options for creating the MR
+		createOptions := &gitlab.CreateMergeRequestOptions{
 			Title:              gitlab.Ptr(updateGroup.Title),
 			Description:        gitlab.Ptr(content),
 			SourceBranch:       gitlab.Ptr(updateGroup.BranchName),
 			TargetBranch:       gitlab.Ptr(p.settings.BaseBranch),
-			Labels:             p.convertLabels(updateGroup.Labels),
 			RemoveSourceBranch: gitlab.Ptr(true),
-		})
+		}
+		// Fill the labels (if any)
+		if len(updateGroup.Labels) > 0 {
+			createOptions.Labels = p.convertLabels(updateGroup.Labels)
+		}
+		// Fill the reviewers (if any)
+		reviewerIds, err := p.getUserIds(client, updateGroup.Reviewers)
+		if err != nil {
+			return err
+		}
+		if len(reviewerIds) > 0 {
+			createOptions.ReviewerIDs = gitlab.Ptr(reviewerIds)
+		}
+		// Create the MR
+		mr, _, err := client.MergeRequests.CreateMergeRequest(project.Path, createOptions)
 		if err != nil {
 			return err
 		}
@@ -190,12 +229,17 @@ func (p *GitlabPlatform) createClient() (*gitlab.Client, error) {
 	if p.settings == nil || p.settings.Token == "" {
 		return nil, fmt.Errorf("no platform token defined")
 	}
+	endpoint := p.getEndpoint()
+	token := p.settings.TokenExpanded()
+	return gitlab.NewClient(token, gitlab.WithBaseURL(endpoint))
+}
+
+func (p *GitlabPlatform) getEndpoint() string {
 	endpoint := "https://gitlab.com/api/v4"
-	token := p.settings.TokendExpanded()
 	if p.settings.Endpoint != "" {
 		endpoint = p.settings.EndpointExpanded()
 	}
-	return gitlab.NewClient(token, gitlab.WithBaseURL(endpoint))
+	return endpoint
 }
 
 func (p *GitlabPlatform) convertLabels(labels []string) *gitlab.LabelOptions {
@@ -207,4 +251,44 @@ func (p *GitlabPlatform) convertLabels(labels []string) *gitlab.LabelOptions {
 	}
 	labelsClone := slices.Clone(labels)
 	return (*gitlab.LabelOptions)(&labelsClone)
+}
+
+func (p *GitlabPlatform) getUserIds(client *gitlab.Client, usernames []string) ([]int64, error) {
+	var userIds []int64
+	if len(usernames) == 0 {
+		return userIds, nil
+	}
+	for _, username := range usernames {
+		username = strings.TrimSpace(username)
+		if username == "" {
+			continue
+		}
+		// Try looking up the user id in the cache first
+		cacheIdentifier := fmt.Sprintf("gitlab_userid/%s/%s", p.getEndpoint(), username)
+		if p.settings.GitLabUserIdCache != nil {
+			if cachedId, exists, err := p.settings.GitLabUserIdCache.Get(cacheIdentifier); err != nil {
+				return nil, fmt.Errorf("failed to get user id from cache for '%s': %w", username, err)
+			} else if exists {
+				userIds = append(userIds, cachedId)
+				continue
+			}
+		}
+		// Lookup the user id via the API
+		users, _, err := client.Users.ListUsers(&gitlab.ListUsersOptions{
+			Username: gitlab.Ptr(username),
+		})
+		// TODO maybe: If user is not found, treat it as a group and return all groups member ids
+		if err != nil {
+			return nil, fmt.Errorf("failed to lookup user '%s': %w", username, err)
+		}
+		if len(users) == 0 {
+			return nil, fmt.Errorf("user '%s' not found", username)
+		}
+		userIds = append(userIds, users[0].ID)
+		// Cache the user id for future lookups
+		if p.settings.GitLabUserIdCache != nil {
+			p.settings.GitLabUserIdCache.Set(cacheIdentifier, users[0].ID, time.Hour)
+		}
+	}
+	return userIds, nil
 }

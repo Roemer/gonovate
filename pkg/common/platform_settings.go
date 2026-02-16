@@ -3,6 +3,8 @@ package common
 import (
 	"log/slog"
 	"os"
+
+	"github.com/roemer/gonovate/pkg/cache"
 )
 
 type PlatformSettings struct {
@@ -18,9 +20,11 @@ type PlatformSettings struct {
 	GitAuthor string
 	// The name of the base branch.
 	BaseBranch string
+	// Cache for gitlab user id lookups.
+	GitLabUserIdCache *cache.MemoryCache[int64]
 }
 
-func (ps *PlatformSettings) TokendExpanded() string {
+func (ps *PlatformSettings) TokenExpanded() string {
 	return os.ExpandEnv(ps.Token)
 }
 

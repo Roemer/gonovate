@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/roemer/gonovate/pkg/cache"
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/roemer/gonovate/pkg/datasources"
 	"github.com/roemer/gonovate/pkg/managers"
@@ -81,7 +82,7 @@ func (config *GonovateConfig) GetManager(managerId string, managerType common.Ma
 }
 
 // Creates a datasource out of the config of the given datasource type.
-func (config *GonovateConfig) GetDatasource(datasourceType common.DatasourceType, logger *slog.Logger, cache common.ICache) (common.IDatasource, error) {
+func (config *GonovateConfig) GetDatasource(datasourceType common.DatasourceType, logger *slog.Logger, cache cache.Cache[[]*common.ReleaseInfo]) (common.IDatasource, error) {
 	datasourceSettings := &common.DatasourceSettings{
 		Logger:    logger,
 		HostRules: config.HostRules,
@@ -189,6 +190,9 @@ func (config *GonovateConfig) applyRulesToDependency(dependency *common.Dependen
 	}
 	if len(dependency.Labels) == 0 {
 		dependency.Labels = slices.Clone(mergedDependencyConfig.Labels)
+	}
+	if len(dependency.Reviewers) == 0 {
+		dependency.Reviewers = slices.Clone(mergedDependencyConfig.Reviewers)
 	}
 }
 
