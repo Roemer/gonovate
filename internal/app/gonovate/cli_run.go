@@ -11,7 +11,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/roemer/gonovate/pkg/cache"
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/roemer/gonovate/pkg/config"
 	"github.com/roemer/gonovate/pkg/logging"
@@ -162,15 +161,7 @@ func RunCmd(args []string) error {
 		gonovateConfig.Platform.Projects = projects
 	}
 
-	// Prepare the platform
-	platformSettings := gonovateConfig.ToCommonPlatformSettings(logger)
-	platform, err := platforms.GetPlatform(platformSettings)
-	if err != nil {
-		return err
-	}
-	logger.Info(fmt.Sprintf("Prepared platform: %s", platform.Type()))
-
-	// Prepare the file cache
+	// Prepare the cache
 	if cacheDir == "" {
 		cacheDir = ".gonovate-cache"
 	}
@@ -180,7 +171,16 @@ func RunCmd(args []string) error {
 		return fmt.Errorf("failed making cacheDir '%s' absolute: %w", cacheDir, err)
 	}
 	logger.Debug(fmt.Sprintf("Using cache directory: %s", cacheDir))
-	gonovateCache := cache.NewGonovateCache(cacheDir, logger)
+	gonovateCache := common.NewGonovateCache(cacheDir, logger)
+
+	// Prepare the platform
+	platformSettings := gonovateConfig.ToCommonPlatformSettings(logger)
+	platformSettings.GitLabUserIdCache = gonovateCache.GitLabUserIdCache
+	platform, err := platforms.GetPlatform(platformSettings)
+	if err != nil {
+		return err
+	}
+	logger.Info(fmt.Sprintf("Prepared platform: %s", platform.Type()))
 
 	// Get the projects
 	projects := []*common.Project{}
@@ -332,7 +332,7 @@ func RunCmd(args []string) error {
 			}
 
 			// Lookup the correct datasource
-			ds, err := projectConfig.GetDatasource(dependency.Datasource, logger, gonovateCache)
+			ds, err := projectConfig.GetDatasource(dependency.Datasource, logger, gonovateCache.ReleaseCache)
 			if err != nil {
 				return err
 			}
@@ -377,6 +377,10 @@ func RunCmd(args []string) error {
 			if idx >= 0 {
 				// It does, so just add the dependency to the existing group
 				updateGroups[idx].Dependencies = append(updateGroups[idx].Dependencies, dependency)
+				// Merge the labels
+				updateGroups[idx].Labels = lo.Uniq(append(updateGroups[idx].Labels, dependency.Labels...))
+				// Merge the reviewers
+				updateGroups[idx].Reviewers = lo.Uniq(append(updateGroups[idx].Reviewers, dependency.Reviewers...))
 			} else {
 				// Create the group
 				newGroup := &common.UpdateGroup{
@@ -384,6 +388,7 @@ func RunCmd(args []string) error {
 					BranchName:   branchName,
 					Dependencies: []*common.Dependency{dependency},
 					Labels:       dependency.Labels,
+					Reviewers:    dependency.Reviewers,
 				}
 				updateGroups = append(updateGroups, newGroup)
 			}

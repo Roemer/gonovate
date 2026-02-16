@@ -232,6 +232,10 @@ func (DependencyConfigA *DependencyConfig) MergeWith(DependencyConfigB *Dependen
 	if DependencyConfigB.Labels != nil {
 		DependencyConfigA.Labels = slices.Clone(DependencyConfigB.Labels)
 	}
+	// Reviewers (overwrite)
+	if DependencyConfigB.Reviewers != nil {
+		DependencyConfigA.Reviewers = slices.Clone(DependencyConfigB.Reviewers)
+	}
 }
 
 func (objA *DevcontainerFeatureDependency) MergeWith(objB *DevcontainerFeatureDependency) {

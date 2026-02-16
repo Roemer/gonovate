@@ -25,6 +25,6 @@ func (hr *HostRule) PasswordExpanded() string {
 }
 
 // Expands the token with environment variables.
-func (hr *HostRule) TokendExpanded() string {
+func (hr *HostRule) TokenExpanded() string {
 	return os.ExpandEnv(hr.Token)
 }

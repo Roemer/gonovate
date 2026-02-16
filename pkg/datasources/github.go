@@ -1,6 +1,6 @@
 package datasources
 
-import "github.com/google/go-github/v81/github"
+import "github.com/google/go-github/v82/github"
 
 func getGitHubClient(ds *datasourceBase) *github.Client {
 	// Create a blank client
@@ -9,7 +9,7 @@ func getGitHubClient(ds *datasourceBase) *github.Client {
 	relevantHostRule := ds.getHostRuleForHost("api.github.com")
 	// Add the token to the client
 	if relevantHostRule != nil {
-		token := relevantHostRule.TokendExpanded()
+		token := relevantHostRule.TokenExpanded()
 		// But only if the token is set
 		if len(token) > 0 {
 			client = client.WithAuthToken(token)

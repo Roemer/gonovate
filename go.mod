@@ -3,18 +3,18 @@ module github.com/roemer/gonovate
 go 1.24.6
 
 require (
-	code.gitea.io/sdk/gitea v0.22.1
+	code.gitea.io/sdk/gitea v0.23.2
 	github.com/adhocore/jsonc v0.10.0
-	github.com/bmatcuk/doublestar/v4 v4.9.2
+	github.com/bmatcuk/doublestar/v4 v4.10.0
 	github.com/goccy/go-yaml v1.19.2
-	github.com/google/go-github/v81 v81.0.0
+	github.com/google/go-github/v82 v82.0.0
 	github.com/jfrog/jfrog-client-go v1.55.0
 	github.com/roemer/goext v0.8.1
 	github.com/roemer/gotaskr v0.7.0
 	github.com/roemer/gover v0.8.0
 	github.com/samber/lo v1.52.0
 	github.com/stretchr/testify v1.11.1
-	gitlab.com/gitlab-org/api/client-go v1.15.0
+	gitlab.com/gitlab-org/api/client-go v1.33.0
 )
 
 require (
@@ -69,7 +69,7 @@ require (
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/exp v0.0.0-20250813145105-42675adae3e6 // indirect
 	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/oauth2 v0.33.0 // indirect
+	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/term v0.32.0 // indirect

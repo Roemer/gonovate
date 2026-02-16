@@ -47,6 +47,8 @@ type Dependency struct {
 	GroupName string
 	// A list of labels to add to the created PR for this dependency.
 	Labels []string
+	// A list of reviewers to add to the created PR for this dependency.
+	Reviewers []string
 
 	// Contains the information about the new release if any is found.
 	NewRelease *ReleaseInfo

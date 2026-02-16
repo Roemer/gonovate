@@ -50,7 +50,7 @@ func (p *GiteaPlatform) FetchProject(project *common.Project) error {
 	if err != nil {
 		return err
 	}
-	cloneUrlWithCredentials.User = url.UserPassword("oauth2", p.settings.TokendExpanded())
+	cloneUrlWithCredentials.User = url.UserPassword("oauth2", p.settings.TokenExpanded())
 	_, _, err = common.Git.Run("clone", cloneUrlWithCredentials.String(), ClonePath)
 	return err
 }
@@ -115,14 +115,25 @@ func (p *GiteaPlatform) NotifyChanges(project *common.Project, updateGroup *comm
 				return err
 			}
 		}
+		existingReviewers := lo.Map(existingPr.RequestedReviewers, func(reviewer *gitea.User, _ int) string { return reviewer.UserName })
+		newReviewers := lo.Without(updateGroup.Reviewers, existingReviewers...)
+		if len(newReviewers) > 0 {
+			p.logger.Debug("Updating PR reviewers")
+			if _, err := client.CreateReviewRequests(owner, repository, existingPr.Index, gitea.PullReviewRequestOptions{
+				Reviewers: newReviewers,
+			}); err != nil {
+				return err
+			}
+		}
 	} else {
 		// Create the PR
 		pr, _, err := client.CreatePullRequest(owner, repository, gitea.CreatePullRequestOption{
-			Title:  updateGroup.Title,
-			Body:   content,
-			Head:   updateGroup.BranchName,
-			Base:   p.settings.BaseBranch,
-			Labels: newLabels,
+			Title:     updateGroup.Title,
+			Body:      content,
+			Head:      updateGroup.BranchName,
+			Base:      p.settings.BaseBranch,
+			Labels:    newLabels,
+			Reviewers: updateGroup.Reviewers,
 		})
 		if err != nil {
 			return err
@@ -208,12 +219,17 @@ func (p *GiteaPlatform) createClient() (*gitea.Client, error) {
 	if p.settings == nil || p.settings.Token == "" {
 		return nil, fmt.Errorf("no platform token defined")
 	}
+	endpoint := p.getEndpoint()
+	token := p.settings.TokenExpanded()
+	return gitea.NewClient(endpoint, gitea.SetToken(token))
+}
+
+func (p *GiteaPlatform) getEndpoint() string {
 	endpoint := "https://gitea.com"
-	token := p.settings.TokendExpanded()
 	if p.settings.Endpoint != "" {
 		endpoint = p.settings.EndpointExpanded()
 	}
-	return gitea.NewClient(endpoint, gitea.SetToken(token))
+	return endpoint
 }
 
 func (p *GiteaPlatform) convertLabels(client *gitea.Client, owner, repository string, labels []string) ([]int64, error) {

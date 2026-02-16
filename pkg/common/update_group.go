@@ -5,4 +5,5 @@ type UpdateGroup struct {
 	BranchName   string
 	Dependencies []*Dependency
 	Labels       []string
+	Reviewers    []string
 }

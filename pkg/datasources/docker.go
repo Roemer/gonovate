@@ -200,7 +200,7 @@ func (ds *DockerDatasource) getAuthToken(baseUrl *url.URL, dependencyName string
 		// For everything else we just use a bearer token (if provided), eg. Artifactory
 		bearerToken := ""
 		if hostRule != nil {
-			bearerToken = hostRule.TokendExpanded()
+			bearerToken = hostRule.TokenExpanded()
 		}
 		return bearerToken, nil
 	}

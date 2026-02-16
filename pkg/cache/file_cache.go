@@ -7,58 +7,58 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"regexp"
+	"strings"
 	"time"
-
-	"github.com/roemer/gonovate/pkg/common"
-	"github.com/samber/lo"
 )
 
-type fileCache struct {
-	CacheDir string
+// Make sure the cache interface is implemented
+var _ Cache[any] = (*FileCache[any])(nil)
+
+type FileCache[T any] struct {
+	cacheDir string
 	Logger   *slog.Logger
 }
 
-func (c *fileCache) Get(datasourceType common.DatasourceType, cacheIdentifier string) ([]*common.ReleaseInfo, error) {
-	cacheFilePath := c.getCacheFilePath(datasourceType, cacheIdentifier)
+func NewFileCache[T any](cacheDir string, logger *slog.Logger) *FileCache[T] {
+	return &FileCache[T]{
+		cacheDir: cacheDir,
+		Logger:   logger,
+	}
+}
+
+func (c *FileCache[T]) Get(cacheIdentifier string) (T, bool, error) {
+	var zeroValue T
+	cacheFilePath := c.getCacheFilePath(cacheIdentifier)
 	// Check if the file exists and if so, open and read it
 	fileDescriptor, err := os.Open(cacheFilePath)
 	if errors.Is(err, os.ErrNotExist) {
 		// File does not exist
-		return nil, nil
+		c.Logger.Debug("Cache miss", "cacheIdentifier", cacheIdentifier)
+		return zeroValue, false, nil
 	} else if err != nil {
 		// Error while reading the file
-		return nil, fmt.Errorf("error reading the cache file '%s': %w", cacheFilePath, err)
+		return zeroValue, false, fmt.Errorf("error reading the cache file '%s': %w", cacheFilePath, err)
 	}
 	// Read the file
 	defer fileDescriptor.Close()
-	var dataObject cacheInfo
+	var dataObject cacheEntry[T]
 	if err := json.NewDecoder(fileDescriptor).Decode(&dataObject); err != nil {
-		return nil, fmt.Errorf("error converting the cache file '%s' to json: %w", cacheFilePath, err)
+		return zeroValue, false, fmt.Errorf("error converting the cache file '%s' to json: %w", cacheFilePath, err)
 	}
 	if dataObject.ExpiresAt.Before(time.Now()) {
-		// Cache expired
-		return nil, nil
-	}
-	if dataObject.CacheIdentifier != cacheIdentifier {
-		// The identifier does not match (cleaned identifier might lead to a duplicate)
-		c.Logger.Warn(fmt.Sprintf("Cache identifier mismatch for file '%s': expected '%s', got '%s'", cacheFilePath, cacheIdentifier, dataObject.CacheIdentifier))
-		return nil, nil
-	}
-	// Convert the releases and return them
-	mappedReleases := lo.Map(dataObject.Releases, func(item *cacheRelease, index int) *common.ReleaseInfo {
-		return &common.ReleaseInfo{
-			ReleaseDate:    item.ReleaseDate,
-			VersionString:  item.VersionString,
-			Digest:         item.Digest,
-			AdditionalData: item.AdditionalData,
+		c.Logger.Debug("Cache expired", "cacheIdentifier", cacheIdentifier)
+		// Cache expired, clean it and return nil
+		if err := c.Clear(cacheIdentifier); err != nil {
+			return zeroValue, false, fmt.Errorf("error clearing expired cache file '%s': %w", cacheFilePath, err)
 		}
-	})
-	return mappedReleases, nil
+		return zeroValue, false, nil
+	}
+	c.Logger.Debug("Cache hit", "cacheIdentifier", cacheIdentifier)
+	return dataObject.CacheData, true, nil
 }
 
-func (c *fileCache) Set(datasourceType common.DatasourceType, cacheIdentifier string, releases []*common.ReleaseInfo) error {
-	cacheFilePath := c.getCacheFilePath(datasourceType, cacheIdentifier)
+func (c *FileCache[T]) Set(cacheIdentifier string, objectToCache T, ttl time.Duration) error {
+	cacheFilePath := c.getCacheFilePath(cacheIdentifier)
 	// Ensure the directory exists
 	if err := os.MkdirAll(filepath.Dir(cacheFilePath), os.ModePerm); err != nil {
 		return fmt.Errorf("error creating the cache directory for file '%s': %w", cacheFilePath, err)
@@ -69,22 +69,11 @@ func (c *fileCache) Set(datasourceType common.DatasourceType, cacheIdentifier st
 		return fmt.Errorf("error creating the cache file '%s': %w", cacheFilePath, err)
 	}
 	defer fileDescriptor.Close()
-	// Convert the releases
-	mappedReleases := lo.Map(releases, func(item *common.ReleaseInfo, index int) *cacheRelease {
-		return &cacheRelease{
-			ReleaseDate:    item.ReleaseDate,
-			VersionString:  item.VersionString,
-			Digest:         item.Digest,
-			AdditionalData: item.AdditionalData,
-		}
-	})
 	// Create the cache info object
-	dataObject := cacheInfo{
-		DatasourceType:  datasourceType,
-		CacheIdentifier: cacheIdentifier,
-		FetchedAt:       time.Now(),
-		ExpiresAt:       time.Now().Add(10 * time.Minute),
-		Releases:        mappedReleases,
+	dataObject := cacheEntry[T]{
+		FetchedAt: time.Now(),
+		ExpiresAt: time.Now().Add(ttl),
+		CacheData: objectToCache,
 	}
 	// Write the file
 	encoder := json.NewEncoder(fileDescriptor)
@@ -95,8 +84,20 @@ func (c *fileCache) Set(datasourceType common.DatasourceType, cacheIdentifier st
 	return nil
 }
 
-func (c *fileCache) getCacheFilePath(datasourceType common.DatasourceType, cacheIdentifier string) string {
-	re := regexp.MustCompile(`[^a-zA-Z0-9*,\. ]+`)
-	clearedIdentifier := re.ReplaceAllString(cacheIdentifier, "-")
-	return filepath.Join(c.CacheDir, string(datasourceType), clearedIdentifier+".json")
+func (c *FileCache[T]) Clear(cacheIdentifier string) error {
+	cacheFilePath := c.getCacheFilePath(cacheIdentifier)
+	if err := os.Remove(cacheFilePath); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("error deleting the cache file '%s': %w", cacheFilePath, err)
+	}
+	return nil
+}
+
+func (c *FileCache[T]) getCacheFilePath(cacheIdentifier string) string {
+	// Sanitize the cache identifier to create a valid file name by removing invalid characters
+	// But we keep / to allow for subdirectories in the cache
+	sanitizedIdentifier := cacheIdentifier
+	for _, char := range []string{"\\", ":", "*", "?", "\"", "<", ">", "|"} {
+		sanitizedIdentifier = strings.ReplaceAll(sanitizedIdentifier, char, "_")
+	}
+	return filepath.Join(c.cacheDir, sanitizedIdentifier+".json")
 }

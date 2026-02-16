@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/roemer/gover"
@@ -182,13 +183,14 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*
 	// Try get releases from the cache or look them up from remote
 	var rawReleases []*common.ReleaseInfo = nil
 	cache := ds.settings.Cache
-	cacheIdentifier := dependency.Name
+	cacheIdentifier := fmt.Sprintf("rel/%s/%s", ds.datasourceType, dependency.Name)
 	if cache != nil {
 		// Fetch from cache
-		rawReleases, err = cache.Get(ds.datasourceType, cacheIdentifier)
-		if err != nil {
+		if releasesFromCache, exists, err := cache.Get(cacheIdentifier); err != nil {
 			// Cache failed
 			return nil, nil, err
+		} else if exists {
+			rawReleases = releasesFromCache
 		}
 	}
 	if rawReleases != nil {
@@ -202,7 +204,7 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*
 		}
 		// Store in cache
 		if cache != nil {
-			if err := cache.Set(ds.datasourceType, cacheIdentifier, rawReleases); err != nil {
+			if err := cache.Set(cacheIdentifier, rawReleases, time.Hour); err != nil {
 				return nil, nil, err
 			}
 		}
