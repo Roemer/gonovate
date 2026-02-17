@@ -1,0 +1,33 @@
+platform:
+  type: noop
+  inplace: true
+
+extends:
+  - defaults
+
+managers:
+  - id: dockerfile
+    type: regex
+    managerConfig:
+      filePatterns:
+        - '**/[Dd]ockerfile'
+      matchStrings:
+        - "(?m)^FROM alpine:(?P<version>.*) # (?P<datasource>.*?)\/(?P<dependencyName>.*?)\\s*$"
+        - "(?m)^ENV .*?_VERSION=(?P<version>.*) # (?P<datasource>.*?)\/(?P<dependencyName>.*?)\\s*$"
+    dependencyConfig:
+      updateTypes: [major]
+      ignoreNonMatching: true
+
+rules:
+  - matches:
+      dependencyNames:
+        - lodash
+    dependencyConfig:
+      postUpgradeReplacements:
+        - "(?m)^.*\"Lodash Hash:[[:blank:]]*(?P<sha512>.+)\".*$"
+      updateTypes: [major, minor]
+  - matches:
+      dependencyNames:
+        - alpine
+    dependencyConfig:
+      updateTypes: [minor]

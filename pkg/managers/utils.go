@@ -28,13 +28,13 @@ func splitDockerDependency(dependencyString string) (string, string, string) {
 }
 
 // This method returns the full Docker version, including a digest if any is given
-func getDockerCurrentAndNewFullVersion(dependency *common.Dependency) (string, string) {
+func getDockerCurrentAndNewFullVersion(dependency *common.Dependency, newRelease *common.ReleaseInfo) (string, string) {
 	oldVersion := dependency.Version
-	newVersion := dependency.NewRelease.VersionString
+	newVersion := newRelease.VersionString
 	// Enrich with digest (if any)
 	if dependency.HasDigest() {
 		oldVersion += "@" + dependency.Digest
-		newVersion += "@" + dependency.NewRelease.Digest
+		newVersion += "@" + newRelease.Digest
 	}
 	return oldVersion, newVersion
 }
@@ -59,7 +59,7 @@ func setSkipVersionCheckIfVersionMatchesKeyword(dependency *common.Dependency, s
 }
 
 // Replaces a dependency version in a file and checks, if the right version was updated and if not, continues replacing the next occurence.
-func replaceDependencyVersionInFileWithCheck(dependency *common.Dependency, refetchDependencyFunc func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error)) error {
+func replaceDependencyVersionInFileWithCheck(dependency *common.Dependency, newRelease *common.ReleaseInfo, refetchDependencyFunc func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error)) error {
 	// Read the file
 	fileContentBytes, err := os.ReadFile(dependency.FilePath)
 	if err != nil {
@@ -69,11 +69,11 @@ func replaceDependencyVersionInFileWithCheck(dependency *common.Dependency, refe
 
 	// Set the strings to search and replace
 	oldString := dependency.Version
-	newString := dependency.NewRelease.VersionString
+	newString := newRelease.VersionString
 
 	// Handle docker dependency which can have a digest
 	if dependency.Datasource == common.DATASOURCE_TYPE_DOCKER {
-		oldFullVersion, newFullVersion := getDockerCurrentAndNewFullVersion(dependency)
+		oldFullVersion, newFullVersion := getDockerCurrentAndNewFullVersion(dependency, newRelease)
 		oldString = oldFullVersion
 		newString = newFullVersion
 	}
@@ -94,7 +94,7 @@ func replaceDependencyVersionInFileWithCheck(dependency *common.Dependency, refe
 		if err != nil {
 			return err
 		}
-		if newDependency.Version == dependency.NewRelease.VersionString {
+		if newDependency.Version == newRelease.VersionString {
 			// If so, set the new content and break out of the loop
 			fileContent = tempContent
 			dependencyUpdated = true

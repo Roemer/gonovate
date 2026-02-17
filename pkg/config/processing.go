@@ -6,12 +6,12 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/roemer/goext"
 	"github.com/roemer/gonovate/pkg/cache"
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/roemer/gonovate/pkg/datasources"
 	"github.com/roemer/gonovate/pkg/managers"
 	"github.com/roemer/gonovate/pkg/presets"
-	"github.com/roemer/gotaskr/goext"
 	"github.com/samber/lo"
 )
 
@@ -35,7 +35,7 @@ func (c *GonovateConfig) PostLoadProcess() {
 				newRule.DependencyConfig.MergeWith(managerConfig.DependencyConfig)
 				managerConfig.DependencyConfig = nil
 			}
-			c.Rules = goext.Prepend(c.Rules, newRule)
+			c.Rules = goext.SlicePrepend(c.Rules, newRule)
 		}
 	}
 }
@@ -168,8 +168,8 @@ func (config *GonovateConfig) applyRulesToDependency(dependency *common.Dependen
 	if dependency.SkipReason == "" {
 		dependency.SkipReason = mergedDependencyConfig.SkipReason
 	}
-	if dependency.MaxUpdateType == "" {
-		dependency.MaxUpdateType = mergedDependencyConfig.MaxUpdateType
+	if len(dependency.UpdateTypes) == 0 {
+		dependency.UpdateTypes = slices.Clone(mergedDependencyConfig.UpdateTypes)
 	}
 	if dependency.AllowUnstable == nil {
 		dependency.AllowUnstable = mergedDependencyConfig.AllowUnstable

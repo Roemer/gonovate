@@ -55,3 +55,19 @@ const (
 	UPDATE_TYPE_MINOR UpdateType = "minor"
 	UPDATE_TYPE_PATCH UpdateType = "patch"
 )
+
+func (a UpdateType) IsLessSignificant(b UpdateType) bool {
+	toPriority := func(t UpdateType) int {
+		switch t {
+		case UPDATE_TYPE_PATCH:
+			return 0
+		case UPDATE_TYPE_MINOR:
+			return 1
+		case UPDATE_TYPE_MAJOR:
+			return 2
+		default:
+			return 3 // Unknown update types are considered most significant/impactful
+		}
+	}
+	return toPriority(a) < toPriority(b)
+}

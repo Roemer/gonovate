@@ -10,10 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/google/go-github/v82/github"
+	"github.com/google/go-github/v84/github"
+	"github.com/roemer/goext"
 	"github.com/roemer/gonovate/internal/app/gonovate"
 	"github.com/roemer/gotaskr"
-	"github.com/roemer/gotaskr/execr"
 	"github.com/roemer/gotaskr/log"
 )
 
@@ -100,16 +100,16 @@ func init() {
 			return err
 		}
 		goTestReport := filepath.Join(reportsDirectory, "go-test-report.txt")
-		stdout, _, execErr := execr.RunGetOutput(false, "go", execr.SplitArgumentString("test -v ./...")...)
+		stdout, _, execErr := goext.CmdRunners.Default.RunGetOutput("go", goext.Cmd.SplitArgs("test -v ./...")...)
 		if err := os.WriteFile(goTestReport, []byte(stdout), os.ModePerm); err != nil {
 			return err
 		}
 
 		junitTestReport := filepath.Join(reportsDirectory, "junit-test-report.xml")
-		if err := execr.Run(true, "go", "install", "github.com/jstemmer/go-junit-report/v2@v2.1.0"); err != nil {
+		if err := goext.CmdRunners.Console.Run("go", "install", "github.com/jstemmer/go-junit-report/v2@v2.1.0"); err != nil {
 			return err
 		}
-		if err := execr.Run(true, filepath.Join(build.Default.GOPATH, "bin/go-junit-report"), "-in", goTestReport, "-set-exit-code", "-out", junitTestReport); err != nil {
+		if err := goext.CmdRunners.Console.Run(filepath.Join(build.Default.GOPATH, "bin/go-junit-report"), "-in", goTestReport, "-set-exit-code", "-out", junitTestReport); err != nil {
 			return err
 		}
 		return execErr
@@ -177,7 +177,7 @@ func main() {
 
 func compile(ext string) (string, error) {
 	outputFile := filepath.Join(outputDirectory, "gonovate"+ext)
-	return outputFile, execr.Run(true, "go", "build", "-o", outputFile, "./cmd/gonovate")
+	return outputFile, goext.CmdRunners.Console.Run("go", "build", "-o", outputFile, "./cmd/gonovate")
 }
 
 func zipRelease(file string) error {

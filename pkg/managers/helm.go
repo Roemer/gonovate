@@ -35,8 +35,8 @@ func (manager *HelmManager) ExtractDependencies(filePath string) ([]*common.Depe
 	return manager.extractDependenciesFromString(fileContent, filePath)
 }
 
-func (manager *HelmManager) ApplyDependencyUpdate(dependency *common.Dependency) error {
-	return replaceDependencyVersionInFileWithCheck(dependency, func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error) {
+func (manager *HelmManager) ApplyDependencyUpdate(dependency *common.Dependency, newRelease *common.ReleaseInfo) error {
+	return replaceDependencyVersionInFileWithCheck(dependency, newRelease, func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error) {
 		newDeps, err := manager.extractDependenciesFromString(newFileContent, dependency.FilePath)
 		if err != nil {
 			return nil, err

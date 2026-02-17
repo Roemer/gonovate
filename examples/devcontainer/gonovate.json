@@ -11,7 +11,7 @@
             "id": "devcontainer",
             "type": "devcontainer",
             "dependencyConfig": {
-                "maxUpdateType": "major",
+                "updateTypes": ["major"],
                 "ignoreNonMatching": true
             }
         }

@@ -78,8 +78,10 @@ type DependencyConfig struct {
 	Skip *bool `json:"skip" yaml:"skip"`
 	// An optional text to describe, why a dependency was disabled.
 	SkipReason string `json:"skipReason" yaml:"skipReason"`
-	// Defines how much the dependency is allowed to update. Can be "major", "minor", or "patch".
+	// Deprecated, use UpdateTypes.
 	MaxUpdateType common.UpdateType `json:"maxUpdateType" yaml:"maxUpdateType"`
+	// A list of update types that are allowed. Can be "major", "minor", or "patch".
+	UpdateTypes []common.UpdateType `json:"updateTypes" yaml:"updateTypes"`
 	// This flag defines if unstable releases are allowed. Unstable usually means a version that also has parts with text.
 	AllowUnstable *bool `json:"allowUnstable" yaml:"allowUnstable"`
 	// A list of registry urls to use. Allows overwriting the default. Depends on the datasource.

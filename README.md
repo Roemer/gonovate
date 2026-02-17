@@ -82,7 +82,7 @@ Example:
         ]
     },
     "dependencyConfig": {
-        "maxUpdateType": "major"
+        "updateTypes": ["major"]
     }
 }
 ```

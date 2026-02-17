@@ -34,8 +34,8 @@ func (manager *InlineManager) ExtractDependencies(filePath string) ([]*common.De
 	return manager.extractDependenciesFromString(fileContent, filePath)
 }
 
-func (manager *InlineManager) ApplyDependencyUpdate(dependency *common.Dependency) error {
-	return replaceDependencyVersionInFileWithCheck(dependency, func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error) {
+func (manager *InlineManager) ApplyDependencyUpdate(dependency *common.Dependency, newRelease *common.ReleaseInfo) error {
+	return replaceDependencyVersionInFileWithCheck(dependency, newRelease, func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error) {
 		newDeps, err := manager.extractDependenciesFromString(newFileContent, dependency.FilePath)
 		if err != nil {
 			return nil, err
@@ -98,7 +98,7 @@ func (manager *InlineManager) extractDependenciesFromString(fileContent string, 
 		datasourceObject, datasourceOk := match["datasource"]
 		dependencyObject, dependencyOk := match["dependencyName"]
 		versioningObject, versioningOk := match["versioning"]
-		maxUpdateTypeObject, maxUpdateTypeOk := match["maxUpdateType"]
+		updateTypesObject, updateTypesOk := match["updateTypes"]
 		extractVersionObject, extractVersionOk := match["extractVersion"]
 
 		// Build the dependency object
@@ -118,10 +118,13 @@ func (manager *InlineManager) extractDependenciesFromString(fileContent string, 
 		} else if inlineConfig.Versioning != "" {
 			newDependency.Versioning = inlineConfig.Versioning
 		}
-		if maxUpdateTypeOk {
-			newDependency.MaxUpdateType = common.UpdateType(maxUpdateTypeObject[0].Value)
-		} else if inlineConfig.MaxUpdateType != "" {
-			newDependency.MaxUpdateType = inlineConfig.MaxUpdateType
+		if updateTypesOk {
+			newDependency.UpdateTypes = []common.UpdateType{}
+			for _, updateType := range updateTypesObject {
+				newDependency.UpdateTypes = append(newDependency.UpdateTypes, common.UpdateType(updateType.Value))
+			}
+		} else if len(inlineConfig.UpdateTypes) > 0 {
+			newDependency.UpdateTypes = inlineConfig.UpdateTypes
 		}
 		if extractVersionOk {
 			newDependency.ExtractVersion = extractVersionObject[0].Value
@@ -142,6 +145,6 @@ type inlineManagerConfig struct {
 	Datasource     common.DatasourceType `json:"datasource"`
 	MatchString    string                `json:"matchString"`
 	Versioning     string                `json:"versioning"`
-	MaxUpdateType  common.UpdateType     `json:"maxUpdateType"`
+	UpdateTypes    []common.UpdateType   `json:"updateTypes"`
 	ExtractVersion string                `json:"extractVersion"`
 }

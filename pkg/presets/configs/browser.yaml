@@ -7,7 +7,7 @@ rules:
         - chrome-for-testing
     dependencyConfig:
       versioning: "^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$"
-      maxUpdateType: major
+      updateTypes: [major]
   - matches:
       datasources:
         - browser-version
@@ -15,4 +15,4 @@ rules:
         - firefox
     dependencyConfig:
       versioning: "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:([a-z]+)(\\d+))?$"
-      maxUpdateType: major
+      updateTypes: [major]

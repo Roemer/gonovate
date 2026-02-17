@@ -4,6 +4,7 @@ import (
 	"maps"
 	"slices"
 
+	"github.com/roemer/gonovate/pkg/common"
 	"github.com/samber/lo"
 )
 
@@ -181,6 +182,21 @@ func (ManagerConfigA *ManagerConfig) MergeWith(ManagerConfigB *ManagerConfig) {
 }
 
 func (DependencyConfigA *DependencyConfig) MergeWith(DependencyConfigB *DependencyConfig) {
+	// Convert the deprecated MaxUpdateType to UpdateTypes
+	// Can be removed once MaxUpdateType is removed
+	if DependencyConfigA != nil {
+		if len(DependencyConfigA.UpdateTypes) == 0 && DependencyConfigA.MaxUpdateType != "" {
+			DependencyConfigA.UpdateTypes = []common.UpdateType{DependencyConfigA.MaxUpdateType}
+			DependencyConfigA.MaxUpdateType = ""
+		}
+	}
+	if DependencyConfigB != nil {
+		if len(DependencyConfigB.UpdateTypes) == 0 && DependencyConfigB.MaxUpdateType != "" {
+			DependencyConfigB.UpdateTypes = []common.UpdateType{DependencyConfigB.MaxUpdateType}
+			DependencyConfigB.MaxUpdateType = ""
+		}
+	}
+
 	if DependencyConfigB == nil {
 		return
 	}
@@ -192,9 +208,9 @@ func (DependencyConfigA *DependencyConfig) MergeWith(DependencyConfigB *Dependen
 	if DependencyConfigB.SkipReason != "" {
 		DependencyConfigA.SkipReason = DependencyConfigB.SkipReason
 	}
-	// MaxUpdateType
-	if DependencyConfigB.MaxUpdateType != "" {
-		DependencyConfigA.MaxUpdateType = DependencyConfigB.MaxUpdateType
+	// UpdateTypes (overwrite)
+	if DependencyConfigB.UpdateTypes != nil {
+		DependencyConfigA.UpdateTypes = slices.Clone(DependencyConfigB.UpdateTypes)
 	}
 	// AllowUnstable
 	if DependencyConfigB.AllowUnstable != nil {
