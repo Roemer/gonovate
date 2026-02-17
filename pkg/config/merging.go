@@ -236,6 +236,14 @@ func (DependencyConfigA *DependencyConfig) MergeWith(DependencyConfigB *Dependen
 	if DependencyConfigB.Reviewers != nil {
 		DependencyConfigA.Reviewers = slices.Clone(DependencyConfigB.Reviewers)
 	}
+	// TitleTemplate
+	if DependencyConfigB.TitleTemplate != "" {
+		DependencyConfigA.TitleTemplate = DependencyConfigB.TitleTemplate
+	}
+	// BranchNameTemplate
+	if DependencyConfigB.BranchNameTemplate != "" {
+		DependencyConfigA.BranchNameTemplate = DependencyConfigB.BranchNameTemplate
+	}
 }
 
 func (objA *DevcontainerFeatureDependency) MergeWith(objB *DevcontainerFeatureDependency) {
