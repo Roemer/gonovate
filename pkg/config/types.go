@@ -102,6 +102,10 @@ type DependencyConfig struct {
 	Labels []string `json:"labels" yaml:"labels"`
 	// A list of reviewers to add to the created PR for this dependency. Will never delete reviewers on update, only add.
 	Reviewers []string `json:"reviewers" yaml:"reviewers"`
+	// A template for the title when committing and creating an MR/PR.
+	TitleTemplate string `json:"titleTemplate" yaml:"titleTemplate"`
+	// A template for the branch name when creating an MR/PR.
+	BranchNameTemplate string `json:"branchNameTemplate" yaml:"branchNameTemplate"`
 }
 
 type Rule struct {

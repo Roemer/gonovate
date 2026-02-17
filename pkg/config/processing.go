@@ -194,6 +194,12 @@ func (config *GonovateConfig) applyRulesToDependency(dependency *common.Dependen
 	if len(dependency.Reviewers) == 0 {
 		dependency.Reviewers = slices.Clone(mergedDependencyConfig.Reviewers)
 	}
+	if dependency.TitleTemplate == "" {
+		dependency.TitleTemplate = mergedDependencyConfig.TitleTemplate
+	}
+	if dependency.BranchNameTemplate == "" {
+		dependency.BranchNameTemplate = mergedDependencyConfig.BranchNameTemplate
+	}
 }
 
 func matchStringMatches(input string, matchString string) bool {

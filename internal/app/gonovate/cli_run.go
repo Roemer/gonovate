@@ -352,24 +352,35 @@ func RunCmd(args []string) error {
 		// Group the dependencies which have updates according to group names
 		updateGroups := []*common.UpdateGroup{}
 		for _, dependency := range dependenciesWithUpdates {
-			var title, branchName string
-			if dependency.GroupName != "" {
-				// Use the defined group name
-				title = fmt.Sprintf("Update group '%s'", dependency.GroupName)
-				branchName = fmt.Sprintf("%s%s",
-					projectConfig.Platform.BranchPrefix,
-					dependency.GroupName)
-			} else {
-				// Create a group name
-				title = fmt.Sprintf("Update '%s' to '%s'", dependency.Name, dependency.NewRelease.VersionString)
-				branchName = fmt.Sprintf("%s%s-%s-%s",
-					projectConfig.Platform.BranchPrefix,
-					common.NormalizeString(projectConfig.Platform.BaseBranch, 20),
-					common.NormalizeString(dependency.Name, 40),
-					common.NormalizeString(dependency.NewRelease.VersionString, 0))
+			// Build the title
+			title, err := common.BuildTitle(&common.TitleBuilderSettings{
+				TitleTemplate:  dependency.TitleTemplate,
+				DependencyName: dependency.Name,
+				GroupName:      dependency.GroupName,
+				NewRelease:     dependency.NewRelease,
+				UpdateType:     dependency.MaxUpdateType,
+			})
+			if err != nil {
+				return err
 			}
+			// Build the branch name
+			branchName, err := common.BuildBranchName(&common.BranchNameBuilderSettings{
+				BranchNameTemplate: dependency.BranchNameTemplate,
+				BaseBranch:         projectConfig.Platform.BaseBranch,
+				DependencyName:     dependency.Name,
+				GroupName:          dependency.GroupName,
+				NewRelease:         dependency.NewRelease,
+				UpdateType:         dependency.MaxUpdateType,
+			})
+			if err != nil {
+				return err
+			}
+			// Add the prefixes
 			if projectConfig.Platform.CommitMessagePrefix != "" {
-				title = fmt.Sprintf("%s%s", projectConfig.Platform.CommitMessagePrefix, title)
+				title = projectConfig.Platform.CommitMessagePrefix + title
+			}
+			if projectConfig.Platform.BranchPrefix != "" {
+				branchName = projectConfig.Platform.BranchPrefix + branchName
 			}
 
 			// Check if such a group already exists

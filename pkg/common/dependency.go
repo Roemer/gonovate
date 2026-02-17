@@ -49,6 +49,10 @@ type Dependency struct {
 	Labels []string
 	// A list of reviewers to add to the created PR for this dependency.
 	Reviewers []string
+	// A template for the title when committing and creating an MR/PR.
+	TitleTemplate string
+	// A template for the branch name when creating an MR/PR.
+	BranchNameTemplate string
 
 	// Contains the information about the new release if any is found.
 	NewRelease *ReleaseInfo
