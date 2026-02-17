@@ -72,9 +72,9 @@ func (manager *DockerfileManager) ExtractDependencies(filePath string) ([]*commo
 	return foundDependencies, nil
 }
 
-func (manager *DockerfileManager) ApplyDependencyUpdate(dependency *common.Dependency) error {
+func (manager *DockerfileManager) ApplyDependencyUpdate(dependency *common.Dependency, newRelease *common.ReleaseInfo) error {
 	data := dependency.ManagerInfo.ManagerData.(*dockerfileData)
-	oldFullVersion, newFullVersion := getDockerCurrentAndNewFullVersion(dependency)
+	oldFullVersion, newFullVersion := getDockerCurrentAndNewFullVersion(dependency, newRelease)
 	return replaceVersionInFileLine(dependency.FilePath, oldFullVersion, newFullVersion, data.lineNumber)
 }
 

@@ -72,7 +72,7 @@ func (p *GitlabPlatform) NotifyChanges(project *common.Project, updateGroup *com
 	// Build the content of the MR
 	content := ""
 	for _, dep := range updateGroup.Dependencies {
-		content += fmt.Sprintf("- %s from %s to %s\n", dep.Name, dep.Version, dep.NewRelease.VersionString)
+		content += fmt.Sprintf("- %s from %s to %s\n", dep.Dependency.Name, dep.Dependency.Version, dep.NewRelease.VersionString)
 	}
 	// Trim spaces / newlines
 	content = strings.TrimSpace(content)

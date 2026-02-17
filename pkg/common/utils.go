@@ -46,7 +46,6 @@ type TitleBuilderSettings struct {
 	DependencyName string
 	GroupName      string
 	NewRelease     *ReleaseInfo
-	UpdateType     UpdateType
 }
 
 type BranchNameBuilderSettings struct {
@@ -55,7 +54,6 @@ type BranchNameBuilderSettings struct {
 	DependencyName     string
 	GroupName          string
 	NewRelease         *ReleaseInfo
-	UpdateType         UpdateType
 }
 
 func BuildTitle(settings *TitleBuilderSettings) (string, error) {
@@ -75,6 +73,10 @@ func BuildTitle(settings *TitleBuilderSettings) (string, error) {
 	if settings.NewRelease != nil {
 		newVersion = settings.NewRelease.VersionString
 	}
+	updateType := ""
+	if settings.NewRelease != nil {
+		updateType = string(settings.NewRelease.UpdateType)
+	}
 
 	// Prepare the template data
 	data := struct {
@@ -86,7 +88,7 @@ func BuildTitle(settings *TitleBuilderSettings) (string, error) {
 		GroupName:      settings.GroupName,
 		DependencyName: settings.DependencyName,
 		NewVersion:     newVersion,
-		UpdateType:     string(settings.UpdateType),
+		UpdateType:     updateType,
 	}
 
 	var buf bytes.Buffer
@@ -119,6 +121,10 @@ func BuildBranchName(settings *BranchNameBuilderSettings) (string, error) {
 	if settings.NewRelease != nil {
 		newVersion = settings.NewRelease.VersionString
 	}
+	updateType := ""
+	if settings.NewRelease != nil {
+		updateType = string(settings.NewRelease.UpdateType)
+	}
 
 	// Prepare the template data
 	data := struct {
@@ -138,7 +144,7 @@ func BuildBranchName(settings *BranchNameBuilderSettings) (string, error) {
 		BaseBranch:     NormalizeString(settings.BaseBranch, 20),
 		DependencyName: NormalizeString(settings.DependencyName, 40),
 		NewVersion:     NormalizeString(newVersion, 0),
-		UpdateType:     string(settings.UpdateType),
+		UpdateType:     NormalizeString(updateType, 0),
 		// Raw values
 		GroupNameRaw:      settings.GroupName,
 		BaseBranchRaw:     settings.BaseBranch,

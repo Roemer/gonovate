@@ -17,18 +17,19 @@ func TestGitTagsDatasource_GetReleases(t *testing.T) {
 	cache := common.NewGonovateCache(cacheDir, logger)
 	ds := NewGitTagsDatasource(&common.DatasourceSettings{Logger: logger, Cache: cache.ReleaseCache})
 	dep := &common.Dependency{
-		Name:          "https://github.com/Roemer/gonovate.git",
-		Version:       "v0.0.3",
-		Versioning:    `v([0-9]+)\.([0-9]+)\.([0-9]+)`,
-		MaxUpdateType: common.UPDATE_TYPE_MAJOR,
+		Name:        "https://github.com/Roemer/gonovate.git",
+		Version:     "v0.2.0",
+		Versioning:  `v([0-9]+)\.([0-9]+)\.([0-9]+)`,
+		UpdateTypes: []common.UpdateType{common.UPDATE_TYPE_MINOR, common.UPDATE_TYPE_PATCH},
 	}
 	releases, err := ds.GetReleases(dep)
 	require.NoError(t, err)
 	assert.Greater(t, len(releases), 0)
 
-	releaseInfo, err := ds.SearchDependencyUpdate(dep)
+	newReleases, err := ds.SearchDependencyUpdates(dep)
 	require.NoError(t, err)
-	require.NotNil(t, releaseInfo)
+	require.NotNil(t, newReleases)
+	assert.Len(t, newReleases, 2)
 
 	// Verify that the releases list contains v0.6.4 and v0.15.0
 	hasVersion := func(v string) bool {

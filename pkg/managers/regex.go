@@ -33,8 +33,8 @@ func (manager *RegexManager) ExtractDependencies(filePath string) ([]*common.Dep
 	return manager.extractDependenciesFromString(fileContent, filePath)
 }
 
-func (manager *RegexManager) ApplyDependencyUpdate(dependency *common.Dependency) error {
-	return replaceDependencyVersionInFileWithCheck(dependency, func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error) {
+func (manager *RegexManager) ApplyDependencyUpdate(dependency *common.Dependency, newRelease *common.ReleaseInfo) error {
+	return replaceDependencyVersionInFileWithCheck(dependency, newRelease, func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error) {
 		newDeps, err := manager.extractDependenciesFromString(newFileContent, dependency.FilePath)
 		if err != nil {
 			return nil, err
@@ -89,7 +89,7 @@ func (manager *RegexManager) extractDependenciesFromString(fileContent string, f
 			datasourceObject, datasourceOk := match["datasource"]
 			dependencyObject, dependencyOk := match["dependencyName"]
 			versioningObject, versioningOk := match["versioning"]
-			maxUpdateTypeObject, maxUpdateTypeOk := match["maxUpdateType"]
+			updateTypesObject, updateTypesOk := match["updateTypes"]
 			extractVersionObject, extractVersionOk := match["extractVersion"]
 
 			// Build the dependency object
@@ -103,8 +103,11 @@ func (manager *RegexManager) extractDependenciesFromString(fileContent string, f
 			if versioningOk {
 				newDependency.Versioning = versioningObject[0].Value
 			}
-			if maxUpdateTypeOk {
-				newDependency.MaxUpdateType = common.UpdateType(maxUpdateTypeObject[0].Value)
+			if updateTypesOk {
+				newDependency.UpdateTypes = []common.UpdateType{}
+				for _, updateType := range updateTypesObject {
+					newDependency.UpdateTypes = append(newDependency.UpdateTypes, common.UpdateType(updateType.Value))
+				}
 			}
 			if extractVersionOk {
 				newDependency.ExtractVersion = extractVersionObject[0].Value

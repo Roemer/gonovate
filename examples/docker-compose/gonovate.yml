@@ -8,5 +8,5 @@ managers:
 - id: docker-compose
   type: docker-compose
   dependencyConfig:
-    maxUpdateType: major
+    updateTypes: ["major"]
     ignoreNonMatching: true

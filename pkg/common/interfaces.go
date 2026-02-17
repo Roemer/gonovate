@@ -27,7 +27,7 @@ type IManager interface {
 	// Extracts all dependencies from the manager.
 	ExtractDependencies(filePath string) ([]*Dependency, error)
 	// Applies a dependency update with the manager.
-	ApplyDependencyUpdate(dependency *Dependency) error
+	ApplyDependencyUpdate(dependency *Dependency, newRelease *ReleaseInfo) error
 }
 
 // This is the interface that needs to be implemented by all datasources.
@@ -39,5 +39,5 @@ type IDatasource interface {
 	// Gets additional data for the dependency and the new release.
 	GetAdditionalData(dependency *Dependency, newRelease *ReleaseInfo, dataType string) (string, error)
 	// Handles the dependency update searching.
-	SearchDependencyUpdate(dependency *Dependency) (*ReleaseInfo, error)
+	SearchDependencyUpdates(dependency *Dependency) ([]*ReleaseInfo, error)
 }

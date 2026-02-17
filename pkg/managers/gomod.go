@@ -72,12 +72,12 @@ func (manager *GoModManager) ExtractDependencies(filePath string) ([]*common.Dep
 	return foundDependencies, nil
 }
 
-func (manager *GoModManager) ApplyDependencyUpdate(dependency *common.Dependency) error {
+func (manager *GoModManager) ApplyDependencyUpdate(dependency *common.Dependency, newRelease *common.ReleaseInfo) error {
 	dependencyName := dependency.Name
 	if dependency.Type == "golang" {
 		dependencyName = "go"
 	}
-	outStr, errStr, err := common.Execute.RunGetOutput(false, "go", "get", fmt.Sprintf("%s@%s", dependencyName, dependency.NewRelease.VersionString))
+	outStr, errStr, err := common.Execute.RunGetOutput(false, "go", "get", fmt.Sprintf("%s@%s", dependencyName, newRelease.VersionString))
 	if err != nil {
 		return fmt.Errorf("go command failed: error: %w, stdout: %s, stderr: %s", err, outStr, errStr)
 	}

@@ -313,7 +313,7 @@ func RunCmd(args []string) error {
 
 		// Search for updates for the dependencies
 		logger.Info("Searching for dependency updates")
-		dependenciesWithUpdates := []*common.Dependency{}
+		updateDependencies := []*common.DependencyWithUpdate{}
 		for _, dependency := range allDependencies {
 			logger.Info(fmt.Sprintf("Processing dependency '%s' (%s) from %s with version %s", dependency.Name, dependency.Datasource, dependency.ManagerInfo.ManagerId, dependency.Version))
 			// Apply the config to the dependency
@@ -337,28 +337,34 @@ func RunCmd(args []string) error {
 				return err
 			}
 
-			// Search for a new version
-			newReleaseInfo, err := ds.SearchDependencyUpdate(dependency)
+			// Search for new releases
+			newReleases, err := ds.SearchDependencyUpdates(dependency)
 			if err != nil {
 				return err
 			}
-			if newReleaseInfo != nil {
-				dependency.NewRelease = newReleaseInfo
-				dependenciesWithUpdates = append(dependenciesWithUpdates, dependency)
+			if len(newReleases) > 0 {
+				logger.Debug(fmt.Sprintf("Found %d new release(s) for dependency", len(newReleases)))
+				for _, newRelease := range newReleases {
+					updateDependencies = append(updateDependencies, &common.DependencyWithUpdate{
+						Dependency: dependency,
+						NewRelease: newRelease,
+					})
+				}
 			}
 		}
-		logger.Info(fmt.Sprintf("Found %d dependencies with updates", len(dependenciesWithUpdates)))
+		logger.Info(fmt.Sprintf("Found %d dependencies with updates", len(updateDependencies)))
 
 		// Group the dependencies which have updates according to group names
 		updateGroups := []*common.UpdateGroup{}
-		for _, dependency := range dependenciesWithUpdates {
+		for _, dependencyWithUpdate := range updateDependencies {
+			dependency := dependencyWithUpdate.Dependency
+			newRelease := dependencyWithUpdate.NewRelease
 			// Build the title
 			title, err := common.BuildTitle(&common.TitleBuilderSettings{
 				TitleTemplate:  dependency.TitleTemplate,
 				DependencyName: dependency.Name,
 				GroupName:      dependency.GroupName,
-				NewRelease:     dependency.NewRelease,
-				UpdateType:     dependency.MaxUpdateType,
+				NewRelease:     newRelease,
 			})
 			if err != nil {
 				return err
@@ -369,8 +375,7 @@ func RunCmd(args []string) error {
 				BaseBranch:         projectConfig.Platform.BaseBranch,
 				DependencyName:     dependency.Name,
 				GroupName:          dependency.GroupName,
-				NewRelease:         dependency.NewRelease,
-				UpdateType:         dependency.MaxUpdateType,
+				NewRelease:         newRelease,
 			})
 			if err != nil {
 				return err
@@ -386,8 +391,17 @@ func RunCmd(args []string) error {
 			// Check if such a group already exists
 			idx := slices.IndexFunc(updateGroups, func(g *common.UpdateGroup) bool { return g.BranchName == branchName })
 			if idx >= 0 {
-				// It does, so just add the dependency to the existing group
-				updateGroups[idx].Dependencies = append(updateGroups[idx].Dependencies, dependency)
+				// Check if the same dependency with another update type already exists in the group
+				existingDependencyIndex := slices.IndexFunc(updateGroups[idx].Dependencies, func(d *common.DependencyWithUpdate) bool {
+					return d.Dependency == dependency
+				})
+				// If it does, abort
+				if existingDependencyIndex >= 0 {
+					return fmt.Errorf("conflicting updates found for dependency '%s' in group '%s'", dependency.Name, branchName)
+				}
+
+				// Else just add the dependency to the existing group
+				updateGroups[idx].Dependencies = append(updateGroups[idx].Dependencies, dependencyWithUpdate)
 				// Merge the labels
 				updateGroups[idx].Labels = lo.Uniq(append(updateGroups[idx].Labels, dependency.Labels...))
 				// Merge the reviewers
@@ -397,7 +411,7 @@ func RunCmd(args []string) error {
 				newGroup := &common.UpdateGroup{
 					Title:        title,
 					BranchName:   branchName,
-					Dependencies: []*common.Dependency{dependency},
+					Dependencies: []*common.DependencyWithUpdate{dependencyWithUpdate},
 					Labels:       dependency.Labels,
 					Reviewers:    dependency.Reviewers,
 				}
@@ -417,8 +431,10 @@ func RunCmd(args []string) error {
 			}
 
 			// Apply the changes
-			for _, dependency := range updateGroup.Dependencies {
-				logger.Info(fmt.Sprintf("Updating '%s' from '%s' to '%s'", dependency.Name, dependency.Version, dependency.NewRelease.VersionString))
+			for _, dependencyWithUpdate := range updateGroup.Dependencies {
+				dependency := dependencyWithUpdate.Dependency
+				newRelease := dependencyWithUpdate.NewRelease
+				logger.Info(fmt.Sprintf("Updating '%s' from '%s' to '%s'", dependency.Name, dependency.Version, newRelease.VersionString))
 				// Get the manager config the for the manager that created the dependency
 				managerConfig := projectConfig.GetManagerConfigById(dependency.ManagerInfo.ManagerId)
 
@@ -429,7 +445,7 @@ func RunCmd(args []string) error {
 				}
 
 				// Apply the update to the dependency
-				if err := manager.ApplyDependencyUpdate(dependency); err != nil {
+				if err := manager.ApplyDependencyUpdate(dependency, newRelease); err != nil {
 					return err
 				}
 
@@ -438,9 +454,9 @@ func RunCmd(args []string) error {
 				if hasPostUpgradeReplacements {
 					// Prepare the values for replacements
 					replacementValues := map[string]string{
-						"version": dependency.NewRelease.Version.Raw,
+						"version": newRelease.VersionString,
 					}
-					maps.Copy(replacementValues, dependency.NewRelease.AdditionalData)
+					maps.Copy(replacementValues, newRelease.AdditionalData)
 					// Read the file
 					fileContentBytes, err := os.ReadFile(dependency.FilePath)
 					if err != nil {

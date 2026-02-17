@@ -8,5 +8,5 @@ managers:
 - id: helm
   type: helm
   dependencyConfig:
-    maxUpdateType: major
+    updateTypes: ["major"]
     ignoreNonMatching: true

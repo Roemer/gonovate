@@ -32,8 +32,8 @@ func (manager *DevcontainerManager) ExtractDependencies(filePath string) ([]*com
 	return manager.extractDependenciesFromString(string(fileContentBytes), filePath)
 }
 
-func (manager *DevcontainerManager) ApplyDependencyUpdate(dependency *common.Dependency) error {
-	return replaceDependencyVersionInFileWithCheck(dependency, func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error) {
+func (manager *DevcontainerManager) ApplyDependencyUpdate(dependency *common.Dependency, newRelease *common.ReleaseInfo) error {
+	return replaceDependencyVersionInFileWithCheck(dependency, newRelease, func(dependency *common.Dependency, newFileContent string) (*common.Dependency, error) {
 		newDeps, err := manager.extractDependenciesFromString(newFileContent, dependency.FilePath)
 		if err != nil {
 			return nil, err

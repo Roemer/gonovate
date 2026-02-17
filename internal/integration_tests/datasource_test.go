@@ -8,7 +8,9 @@ import (
 	"github.com/roemer/gonovate/pkg/common"
 	"github.com/roemer/gonovate/pkg/config"
 	"github.com/roemer/gonovate/pkg/datasources"
+	"github.com/roemer/gover"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBrowserVersionChrome(t *testing.T) {
@@ -44,11 +46,13 @@ func TestBrowserVersionChrome(t *testing.T) {
 	}
 
 	// Search for an update
-	ri, err := ds.SearchDependencyUpdate(dep)
+	ri, err := ds.SearchDependencyUpdates(dep)
 	assert.NoError(err)
 	assert.NotNil(ri)
-	fmt.Println("Update found to version:")
-	fmt.Println(ri.VersionString)
+	fmt.Println("Updates found to version:")
+	for _, update := range ri {
+		fmt.Println(update.VersionString)
+	}
 }
 
 func TestDockerDigest(t *testing.T) {
@@ -127,11 +131,13 @@ func TestGitLabPackages(t *testing.T) {
 	}
 
 	// Search for an update
-	ri, err := ds.SearchDependencyUpdate(dep)
+	ri, err := ds.SearchDependencyUpdates(dep)
 	assert.NoError(err)
 	assert.NotNil(ri)
-	fmt.Println("Update found to version:")
-	fmt.Println(ri.VersionString)
+	fmt.Println("Updates found to version:")
+	for _, update := range ri {
+		fmt.Println(update.VersionString)
+	}
 }
 
 func TestGoVersion(t *testing.T) {
@@ -154,7 +160,7 @@ func TestGoVersion(t *testing.T) {
 
 	// Create the dependency and enrich it with rules from the config
 	dep := &common.Dependency{Name: "go-stable", Datasource: common.DATASOURCE_TYPE_GOVERSION, Version: "1.23.0"}
-	dep.MaxUpdateType = common.UPDATE_TYPE_PATCH
+	dep.UpdateTypes = []common.UpdateType{common.UPDATE_TYPE_PATCH}
 	//dep.ExtractVersion
 	dep.IgnoreNonMatching = common.TruePtr
 	err = cfg.ApplyToDependency(dep)
@@ -170,9 +176,53 @@ func TestGoVersion(t *testing.T) {
 	}
 
 	// Search for an update
-	ri, err := ds.SearchDependencyUpdate(dep)
+	ri, err := ds.SearchDependencyUpdates(dep)
 	assert.NoError(err)
 	assert.NotNil(ri)
-	fmt.Println("Update found to version:")
-	fmt.Println(ri.VersionString)
+	fmt.Println("Updates found to version:")
+	for _, update := range ri {
+		fmt.Println(update.VersionString)
+	}
+}
+
+func TestMultipleUpdateTypes(t *testing.T) {
+	t.Skip("This test is for local debugging only")
+
+	assert := assert.New(t)
+	require := require.New(t)
+
+	// Load the defaults
+	configLoader := config.NewConfigLoader(slog.Default())
+	cfg, err := configLoader.Load("preset:defaults")
+	require.NoError(err)
+	require.NotNil(cfg)
+
+	// Prepare the datasource
+	settings := &common.DatasourceSettings{
+		Logger:    slog.Default(),
+		HostRules: cfg.HostRules,
+	}
+	ds := datasources.NewGoVersionDatasource(settings)
+
+	// Create the dependency and enrich it with rules from the config
+	dep := &common.Dependency{Name: "go-stable", Datasource: common.DATASOURCE_TYPE_GOVERSION, Version: "1.23.2"}
+	dep.UpdateTypes = []common.UpdateType{common.UPDATE_TYPE_MINOR, common.UPDATE_TYPE_PATCH}
+	dep.IgnoreNonMatching = common.TruePtr
+	err = cfg.ApplyToDependency(dep)
+	require.NoError(err)
+
+	updates, err := ds.SearchDependencyUpdates(dep)
+	require.NoError(err)
+	require.NotNil(updates)
+	fmt.Println("Updates found to version:")
+	for _, update := range updates {
+		switch update.UpdateType {
+		case common.UPDATE_TYPE_MINOR:
+			assert.True(update.Version.GreaterThanOrEqual(gover.MustParseVersionFromRegex("1.24.0", gover.RegexpSimple)))
+		case common.UPDATE_TYPE_PATCH:
+			assert.True(update.Version.GreaterThanOrEqual(gover.MustParseVersionFromRegex("1.23.2", gover.RegexpSimple)))
+			assert.True(update.Version.LessThan(gover.MustParseVersionFromRegex("1.24.0", gover.RegexpSimple)))
+		}
+		fmt.Printf("- %s (update type: %s)\n", update.VersionString, update.UpdateType)
+	}
 }

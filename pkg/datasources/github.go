@@ -1,6 +1,6 @@
 package datasources
 
-import "github.com/google/go-github/v82/github"
+import "github.com/google/go-github/v84/github"
 
 func getGitHubClient(ds *datasourceBase) *github.Client {
 	// Create a blank client

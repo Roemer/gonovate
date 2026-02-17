@@ -34,7 +34,7 @@ func (manager *NpmManager) ExtractDependencies(filePath string) ([]*common.Depen
 	return manager.extractDependenciesFromString(fileContent, filePath)
 }
 
-func (manager *NpmManager) ApplyDependencyUpdate(dependency *common.Dependency) error {
+func (manager *NpmManager) ApplyDependencyUpdate(dependency *common.Dependency, newRelease *common.ReleaseInfo) error {
 	workingDir := filepath.Dir(dependency.FilePath)
 	// Prepare the command
 	params := []string{"install", "--save-exact"}
@@ -42,7 +42,7 @@ func (manager *NpmManager) ApplyDependencyUpdate(dependency *common.Dependency) 
 		params = append(params, "--save-dev")
 	}
 	// Add the package
-	params = append(params, fmt.Sprintf("%s@%s", dependency.Name, dependency.NewRelease.VersionString))
+	params = append(params, fmt.Sprintf("%s@%s", dependency.Name, newRelease.VersionString))
 
 	// Execute the command
 	outStr, errStr, err := goext.CmdRunners.Default.WithWorkingDirectory(workingDir).RunGetOutput("npm", params...)

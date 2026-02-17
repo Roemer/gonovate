@@ -22,8 +22,8 @@ type Dependency struct {
 	// The filepath from where this dependency was found.
 	FilePath string
 
-	// Defines how much the dependency is allowed to update. Can be "major", "minor", or "patch".
-	MaxUpdateType UpdateType
+	// A list of update types that are allowed. Can be "major", "minor", or "patch".
+	UpdateTypes []UpdateType
 	// This flag defines if unstable releases are allowed. Unstable usually means a version that also has parts with text.
 	AllowUnstable *bool
 	// A list of registry urls to use. Allows overwriting the default. Depends on the datasource.
@@ -53,9 +53,6 @@ type Dependency struct {
 	TitleTemplate string
 	// A template for the branch name when creating an MR/PR.
 	BranchNameTemplate string
-
-	// Contains the information about the new release if any is found.
-	NewRelease *ReleaseInfo
 
 	// Contains information about the manager from which this dependency was found from. Is "nil" if the dependency is not from a manager.
 	ManagerInfo *ManagerInfo

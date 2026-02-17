@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -66,19 +67,25 @@ func GetDatasource(datasourceType common.DatasourceType, settings *common.Dataso
 	return nil, fmt.Errorf("no datasource defined for '%s'", datasourceType)
 }
 
-func (ds *datasourceBase) SearchDependencyUpdate(dependency *common.Dependency) (*common.ReleaseInfo, error) {
+func (ds *datasourceBase) SearchDependencyUpdates(dependency *common.Dependency) ([]*common.ReleaseInfo, error) {
 	ds.logger.Info(fmt.Sprintf("Searching an update for '%s'", dependency.Name))
 	skipVersionCheck := false
 	if dependency.SkipVersionCheck != nil {
 		skipVersionCheck = *dependency.SkipVersionCheck
 	}
 
+	// The process is as follows:
+	// 1. If skipVersionCheck is true, only check for a digest update for the current version if a digest is defined.
+	// 2. If skipVersionCheck is false, search for new releases.
+	// 2.1 If there are no updates, also check for a digest update for the current version if a digest is defined.
+	// 2.2 If there are updates, use them but also check for digest updates for them.
+
 	// Check if the dependency has a digest
 	hasDigest := dependency.HasDigest()
 
 	// Prepare some state variables
-	var newRelease *common.ReleaseInfo
-	var versionDiffers bool
+	updates := []*common.ReleaseInfo{}
+	var currentVersion *gover.Version = nil
 
 	// Special condition for when the update version check should be skipped (eg. Docker latest)
 	if skipVersionCheck {
@@ -87,63 +94,99 @@ func (ds *datasourceBase) SearchDependencyUpdate(dependency *common.Dependency) 
 			ds.logger.Warn("Version check is disabled and no digest is defined, skipping check")
 			return nil, nil
 		}
-		// The new release keeps the current version
-		newRelease = &common.ReleaseInfo{
+		// Use the current version, the digest might still be updated
+		updates = append(updates, &common.ReleaseInfo{
 			VersionString: dependency.Version,
-		}
-		versionDiffers = false
+		})
 	} else {
-		// Search for an updated release
-		updatedRelease, currentVersion, err := ds.searchUpdatedVersion(dependency)
+		// Search for new releases for the dependency
+		foundUpdates, cv, err := ds.searchUpdatedVersion(dependency)
 		if err != nil {
 			return nil, err
 		}
-		if updatedRelease != nil {
+		currentVersion = cv
+		if len(foundUpdates) > 0 {
 			// Assign the new release
-			versionDiffers = !updatedRelease.Version.Equals(currentVersion)
-			newRelease = updatedRelease
+			updates = append(updates, foundUpdates...)
 		} else {
-			// Use the current version, there is still possibly a digest that can change
-			newRelease = &common.ReleaseInfo{
+			// Use the current version, the digest might still be updated
+			updates = append(updates, &common.ReleaseInfo{
 				VersionString: dependency.Version,
-			}
-			versionDiffers = false
+			})
 		}
 	}
 
-	// Special handling for digest (eg. for Docker)
-	digestDiffers := false
-	// Check if the dependency has a digest set
+	// Special handling for digest (eg. for Docker) if a digest is set
 	if hasDigest {
-		// Get the digest for the maximum valid release from the datasource
-		newDigest, err := ds.impl.GetDigest(dependency, newRelease.VersionString)
-		if err != nil {
-			return nil, err
+		for _, newUpdate := range updates {
+			// Get the digest for the new release version from the datasource
+			newDigest, err := ds.impl.GetDigest(dependency, newUpdate.VersionString)
+			if err != nil {
+				return nil, err
+			}
+			// Make sure the digest is assigned
+			newUpdate.Digest = newDigest
 		}
-		// Check if the digest differs
-		if dependency.Digest != newDigest {
-			digestDiffers = true
-		}
-		// Make sure the digest is assigned
-		newRelease.Digest = newDigest
 	}
 
-	// Check if the version and digest is the same
-	if !versionDiffers && !digestDiffers {
+	// Verify if there is a version or digest update
+	changedUpdates := []*common.ReleaseInfo{}
+	for _, newUpdate := range updates {
+		versionDiffers := false
+		digestDiffers := false
+
+		if newUpdate.Version != nil && currentVersion != nil {
+			versionDiffers = !newUpdate.Version.Equals(currentVersion)
+		}
+		if hasDigest {
+			digestDiffers = newUpdate.Digest != dependency.Digest
+		}
+
+		// Check if the version and digest is the same
+		if !versionDiffers && !digestDiffers {
+			// If so, skip this release
+			continue
+		}
+
+		// Check if a release with the same version/digest already exists
+		// And if so, use the one with the lowest update-type
+		sameUpdateIndex := slices.IndexFunc(changedUpdates, func(update *common.ReleaseInfo) bool {
+			return update.VersionString == newUpdate.VersionString && update.Digest == newUpdate.Digest
+		})
+		if sameUpdateIndex >= 0 {
+			existingUpdate := changedUpdates[sameUpdateIndex]
+			// If the existing update has a higher update type than the new update, replace it with the new update
+			if newUpdate.UpdateType.IsLessSignificant(existingUpdate.UpdateType) {
+				changedUpdates[sameUpdateIndex] = newUpdate
+			}
+			continue
+		}
+
+		// Else add the update to the list of changed updates
+		changedUpdates = append(changedUpdates, newUpdate)
+
+		// Write an info about the new version
+		changeList := []string{}
+		if versionDiffers {
+			changeList = append(changeList, newUpdate.Version.Raw)
+		}
+		if digestDiffers {
+			changeList = append(changeList, "Digest Changed")
+		}
+		if newUpdate.UpdateType != "" {
+			changeList = append(changeList, string(newUpdate.UpdateType))
+		}
+		ds.logger.Info(fmt.Sprintf("Update found: %s", strings.Join(changeList, " / ")))
+	}
+
+	// Write an info if no update at all was found
+	if len(changedUpdates) == 0 {
 		ds.logger.Info("No update found")
 		return nil, nil
 	}
 
-	// It is not the same, return the new version
-	changeList := []string{}
-	if versionDiffers {
-		changeList = append(changeList, newRelease.Version.Raw)
-	}
-	if digestDiffers {
-		changeList = append(changeList, "Digest Changed")
-	}
-	ds.logger.Info(fmt.Sprintf("Update found: %s", strings.Join(changeList, " / ")))
-	return newRelease, nil
+	// Return the new updates
+	return changedUpdates, nil
 }
 
 func (ds *datasourceBase) GetDigest(dependency *common.Dependency, releaseVersion string) (string, error) {
@@ -157,8 +200,13 @@ func (ds *datasourceBase) GetAdditionalData(dependency *common.Dependency, newRe
 	return "", fmt.Errorf("additional data for '%s' not found in dependency '%s'", dataType, dependency.Name)
 }
 
-// Searches for a new version update for the given dependency
-func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*common.ReleaseInfo, *gover.Version, error) {
+// Searches for new releases for each update type for the dependency.
+func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) ([]*common.ReleaseInfo, *gover.Version, error) {
+	// Ensure that at least one update type is configured
+	if len(dependency.UpdateTypes) == 0 {
+		return nil, nil, fmt.Errorf("no update types configured for dependency")
+	}
+
 	// Setup everything for the releases lookup
 	allowUnstable := false
 	if dependency.AllowUnstable != nil {
@@ -213,7 +261,7 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*
 	}
 
 	// Convert the raw releases to parsed versions
-	avaliableReleases := []*common.ReleaseInfo{}
+	availableReleases := []*common.ReleaseInfo{}
 	for _, release := range rawReleases {
 		// Extract the version number from the raw string if needed
 		if extractVersionRegex != nil {
@@ -237,10 +285,10 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*
 			return nil, nil, fmt.Errorf("failed parsing the version from '%s': %w", release.VersionString, err)
 		}
 		release.Version = version
-		avaliableReleases = append(avaliableReleases, release)
+		availableReleases = append(availableReleases, release)
 	}
 
-	if len(avaliableReleases) == 0 {
+	if len(availableReleases) == 0 {
 		ds.logger.Warn("No releases found to check for versions")
 		return nil, nil, nil
 	}
@@ -250,28 +298,51 @@ func (ds *datasourceBase) searchUpdatedVersion(dependency *common.Dependency) (*
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed parsing the current version '%s': %w", dependency.Version, err)
 	}
-	// Get the reference version to search
-	refVersion, err := getReferenceVersionForUpdateType(dependency.MaxUpdateType, currentVersion)
-	if err != nil {
-		return nil, nil, err
+
+	// Search for new releases for each update type and collect them in a list
+	updates := []*common.ReleaseInfo{}
+	for _, currentUpdateType := range dependency.UpdateTypes {
+		// Get the reference version for the update type
+		refVersion, err := getReferenceVersionForUpdateType(currentUpdateType, currentVersion)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// Search for an update
+		newUpdate := gover.FindMaxGeneric(availableReleases, func(x *common.ReleaseInfo) *gover.Version { return x.Version }, refVersion, !allowUnstable)
+
+		// Early exit if no update was found at all
+		if newUpdate == nil {
+			ds.logger.Warn("No valid releases found within the desired limits")
+			continue
+		}
+
+		// The current version somehow is bigger than the maximum found version
+		if newUpdate.Version.LessThan(currentVersion) {
+			ds.logger.Warn(fmt.Sprintf("Max found version is less than the current version: %s < %s", newUpdate.VersionString, currentVersion.Raw))
+			continue
+		}
+
+		// Check if an existing update with the same version already exists
+		existingUpdateIndex := slices.IndexFunc(updates, func(release *common.ReleaseInfo) bool {
+			return release.Version.Equals(newUpdate.Version)
+		})
+		if existingUpdateIndex >= 0 {
+			existingUpdate := updates[existingUpdateIndex]
+			// If the existing update has a higher update type than the new update, update the update type
+			if currentUpdateType.IsLessSignificant(existingUpdate.UpdateType) {
+				updates[existingUpdateIndex].UpdateType = currentUpdateType
+			}
+			continue
+		}
+
+		// A new update was found, add a clone of it to the list of updates (because the same releaseInfo can be used for multiple update types)
+		newUpdateClone := newUpdate.Clone()
+		newUpdateClone.UpdateType = currentUpdateType
+		updates = append(updates, newUpdateClone)
 	}
 
-	// Search for an update
-	newRelease := gover.FindMaxGeneric(avaliableReleases, func(x *common.ReleaseInfo) *gover.Version { return x.Version }, refVersion, !allowUnstable)
-
-	// Early exit if no release was found at all
-	if newRelease == nil {
-		ds.logger.Warn("No valid releases found within the desired limits")
-		return nil, nil, nil
-	}
-
-	// The current version somehow is bigger than the maximum found version
-	if newRelease.Version.LessThan(currentVersion) {
-		ds.logger.Warn(fmt.Sprintf("Max found version is less than the current version: %s < %s", newRelease.VersionString, currentVersion.Raw))
-		return nil, nil, nil
-	}
-
-	return newRelease, currentVersion, nil
+	return updates, currentVersion, nil
 }
 
 func (ds *datasourceBase) getRegistryUrl(baseUrl string, customRegistryUrls []string) string {

@@ -1,4 +1,4 @@
 rules:
   - dependencyConfig:
-      maxUpdateType: minor
+      updateTypes: [minor]
       versioning: preset:major-minor-patch
