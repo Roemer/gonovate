@@ -1,0 +1,14 @@
+rules:
+  - matches:
+      managerTypes:
+      - nuget
+    managerConfig:
+      filePatterns:
+      - "**/*.csproj"
+      - "**/*.vbproj"
+      - "**/*.fsproj"
+  - matches:
+      datasources:
+        - nuget
+    dependencyConfig:
+      versioning: "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:-([^+]+))?(?:\\+(.*))?$"
