@@ -14,7 +14,7 @@ rules:
       - docker-compose
     managerConfig:
       filePatterns:
-        - "**/docker-compose.yml"
+        - "**/docker-compose.{yml,yaml}"
 
   # Docker images versioning
   - matches:
