@@ -18,7 +18,8 @@
         "go",
         "helm",
         "java",
-        "node"
+        "node",
+        "nuget"
     ],
     "matchStringPresets": {
         "dependency-colon-version": {

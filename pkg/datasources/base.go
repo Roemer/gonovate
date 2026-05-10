@@ -63,6 +63,8 @@ func GetDatasource(datasourceType common.DatasourceType, settings *common.Dataso
 		return NewNodeJsDatasource(settings), nil
 	case common.DATASOURCE_TYPE_NPM:
 		return NewNpmDatasource(settings), nil
+	case common.DATASOURCE_TYPE_NUGET:
+		return NewNugetDatasource(settings), nil
 	}
 	return nil, fmt.Errorf("no datasource defined for '%s'", datasourceType)
 }

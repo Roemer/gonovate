@@ -23,6 +23,7 @@ const (
 	MANAGER_TYPE_HELM           ManagerType = "helm"
 	MANAGER_TYPE_INLINE         ManagerType = "inline"
 	MANAGER_TYPE_KUBERNETES     ManagerType = "kubernetes"
+	MANAGER_TYPE_NUGET          ManagerType = "nuget"
 	MANAGER_TYPE_REGEX          ManagerType = "regex"
 	MANAGER_TYPE_NPM            ManagerType = "npm"
 )
@@ -46,6 +47,7 @@ const (
 	DATASOURCE_TYPE_MAVEN           DatasourceType = "maven"
 	DATASOURCE_TYPE_NODEJS          DatasourceType = "nodejs"
 	DATASOURCE_TYPE_NPM             DatasourceType = "npm"
+	DATASOURCE_TYPE_NUGET           DatasourceType = "nuget"
 )
 
 type UpdateType string
