@@ -151,6 +151,52 @@ func TestVaria(t *testing.T) {
 	runAndValidateTestCases(assert, testCases)
 }
 
+func TestGetDockerJwtTokenAuthUrl(t *testing.T) {
+	assert := assert.New(t)
+
+	testCases := []struct {
+		host        string
+		expectedUrl string
+		expectedOk  bool
+	}{
+		{
+			host:        "index.docker.io",
+			expectedUrl: "https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull",
+			expectedOk:  true,
+		},
+		{
+			host:        "ghcr.io",
+			expectedUrl: "https://ghcr.io/token?service=ghcr.io&scope=repository:%s:pull",
+			expectedOk:  true,
+		},
+		{
+			host:        "gcr.io",
+			expectedUrl: "https://gcr.io/v2/token?service=gcr.io&scope=repository:%s:pull",
+			expectedOk:  true,
+		},
+		{
+			host:        "quay.io",
+			expectedUrl: "https://quay.io/v2/auth?service=quay.io&scope=repository:%s:pull",
+			expectedOk:  true,
+		},
+		{
+			host:        "codeberg.org",
+			expectedUrl: "https://codeberg.org/v2/token?service=container_registry&scope=*",
+			expectedOk:  true,
+		},
+		{
+			host:       "example.registry.local",
+			expectedOk: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		url, ok := getDockerJwtTokenAuthUrl(tc.host)
+		assert.Equal(tc.expectedOk, ok, "unexpected ok for host %s", tc.host)
+		assert.Equal(tc.expectedUrl, url, "unexpected auth url for host %s", tc.host)
+	}
+}
+
 func runAndValidateTestCases(assert *assert.Assertions, testCases []testCase) {
 	for _, tc := range testCases {
 		host, path, err := getDockerRegistry(tc.inputDependencyName, tc.inputRegistryUrl)

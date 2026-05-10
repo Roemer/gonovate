@@ -187,29 +187,49 @@ func ensureTrailingSlash(url string) string {
 }
 
 func (ds *DockerDatasource) getAuthToken(baseUrl *url.URL, dependencyName string, hostRule *common.HostRule) (string, error) {
-	// Different handling for different sites
-	if strings.Contains(baseUrl.Host, "index.docker.io") {
-		return ds.getJwtToken("https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull", dependencyName, hostRule)
-	} else if strings.Contains(baseUrl.Host, "ghcr.io") {
-		return ds.getJwtToken("https://ghcr.io/token?service=ghcr.io&scope=repository:%s:pull", dependencyName, hostRule)
-	} else if strings.Contains(baseUrl.Host, "gcr.io") {
-		return ds.getJwtToken("https://gcr.io/v2/token?service=gcr.io&scope=repository:%s:pull", dependencyName, hostRule)
-	} else if strings.Contains(baseUrl.Host, "quay.io") {
-		return ds.getJwtToken("https://quay.io/v2/auth?service=quay.io&scope=repository:%s:pull", dependencyName, hostRule)
-	} else {
-		// For everything else we just use a bearer token (if provided), eg. Artifactory
-		bearerToken := ""
-		if hostRule != nil {
-			bearerToken = hostRule.TokenExpanded()
-		}
-		return bearerToken, nil
+	if authUrl, ok := getDockerJwtTokenAuthUrl(baseUrl.Host); ok {
+		return ds.getJwtToken(authUrl, dependencyName, hostRule)
 	}
+
+	// For everything else we just use a bearer token (if provided), eg. Artifactory
+	bearerToken := ""
+	if hostRule != nil {
+		bearerToken = hostRule.TokenExpanded()
+	}
+	return bearerToken, nil
+}
+
+func getDockerJwtTokenAuthUrl(host string) (string, bool) {
+	// Different handling for different sites.
+	if strings.Contains(host, "index.docker.io") {
+		return "https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull", true
+	}
+	if strings.Contains(host, "ghcr.io") {
+		return "https://ghcr.io/token?service=ghcr.io&scope=repository:%s:pull", true
+	}
+	if strings.Contains(host, "gcr.io") {
+		return "https://gcr.io/v2/token?service=gcr.io&scope=repository:%s:pull", true
+	}
+	if strings.Contains(host, "quay.io") {
+		return "https://quay.io/v2/auth?service=quay.io&scope=repository:%s:pull", true
+	}
+	if strings.Contains(host, "codeberg.org") {
+		return "https://codeberg.org/v2/token?service=container_registry&scope=*", true
+	}
+
+	return "", false
 }
 
 // Creates a request to get a token and returns the token. Uses basic auth uf username/password is provided.
 func (ds *DockerDatasource) getJwtToken(authUrl string, dependencyName string, hostRule *common.HostRule) (string, error) {
+	// Only some urls require the dependency name
+	tokenUrl := authUrl
+	if strings.Contains(authUrl, "%s") {
+		tokenUrl = fmt.Sprintf(authUrl, dependencyName)
+	}
+
 	// Get a token
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(authUrl, dependencyName), nil)
+	req, err := http.NewRequest(http.MethodGet, tokenUrl, nil)
 	if err != nil {
 		return "", err
 	}

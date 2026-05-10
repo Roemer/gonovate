@@ -1,0 +1,23 @@
+{
+    "platform": {
+        "type": "noop",
+        "inplace": true
+    },
+    "extends": [
+        "defaults"
+    ],
+    "managers": [
+        {
+            "id": "dockerfile",
+            "type": "dockerfile",
+            "managerConfig": {
+                "filePatterns": [
+                    "Dockerfile"
+                ]
+            },
+            "dependencyConfig": {
+                "ignoreNonMatching": true
+            }
+        }
+    ]
+}
