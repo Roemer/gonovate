@@ -1,5 +1,15 @@
 # Change Log
 
+## v0.16.0 (2026-05-10)
+### Features
+* Allow adding reviewers to PRs/Mrs
+* Added git-tags datasource
+* Add configurable template for title and branch-name
+* Introduce updateTypes and deprecate maxUpdateType
+* Also use yaml for compose files
+### Fixes
+* Rule with datasource now matches if a previous rule modified the datasource
+
 ## v0.15.0 (2026-01-22)
 ### Features
 * Add commit sha to github-tags
