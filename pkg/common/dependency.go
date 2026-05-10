@@ -21,6 +21,8 @@ type Dependency struct {
 	AdditionalData map[string]string
 	// The filepath from where this dependency was found.
 	FilePath string
+	// An optional index to identify the dependency in case multiple dependencies with the same name exist in one file.
+	Index int
 
 	// A list of update types that are allowed. Can be "major", "minor", or "patch".
 	UpdateTypes []UpdateType

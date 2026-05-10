@@ -11,3 +11,19 @@ dependencies:
   - name: victoria-metrics-single
     repository: https://victoriametrics.github.io/helm-charts
     version: 0.28.0
+  - name: ide-services-helm
+    version: 2025.6.0
+    alias: ide-local
+  - name: ide-services-helm
+    version: 2025.6.0
+    repository: https://download.jetbrains.com/ide-services/charts/stable
+  - name: oauth2-proxy
+    alias: production
+    version: 8.3.3
+    repository: https://oauth2-proxy.github.io/manifests
+    condition: production.enabled
+  - name: oauth2-proxy
+    alias: staging
+    version: 8.3.3
+    repository: https://oauth2-proxy.github.io/manifests
+    condition: staging.enabled
