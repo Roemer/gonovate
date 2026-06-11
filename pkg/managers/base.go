@@ -84,3 +84,14 @@ func (manager *managerBase) getSingleDependency(dependencyName string, allDepend
 	}
 	return allDependencies[idx], nil
 }
+
+// Returns a single dependency from a dependency slice with the given index.
+func (manager *managerBase) getSingleDependencyWithIndex(dependencyName string, index int, allDependencies []*common.Dependency) (*common.Dependency, error) {
+	idx := slices.IndexFunc(allDependencies, func(dep *common.Dependency) bool {
+		return dep.Name == dependencyName && dep.Index == index
+	})
+	if idx < 0 {
+		return nil, fmt.Errorf("failed to find dependency '%s' with index %d", dependencyName, index)
+	}
+	return allDependencies[idx], nil
+}
