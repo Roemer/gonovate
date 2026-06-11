@@ -1,5 +1,10 @@
 # Change Log
 
+## v0.17.0 (2026-06-11)
+### Features
+* Add support for codeberg docker registry
+* Added gitea releases datasource
+
 ## v0.16.0 (2026-05-10)
 ### Features
 * Allow adding reviewers to PRs/Mrs
